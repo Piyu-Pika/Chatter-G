@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../widgets/messagebox.dart';
-// import 'package:flutter_gemini/flutter_gemini.dart';
-// import 'package:flutter_markdown/flutter_markdown.dart';
-// import 'package:my_ai/screens/ai_live_call_screen.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
-// import 'dart:convert';
+import '../../widgets/message_box.dart';
 
 class ChatScreen extends StatefulWidget {
   final String reciver;
@@ -13,11 +8,11 @@ class ChatScreen extends StatefulWidget {
   final Function(List<ChatMessage>) onMessagesUpdated;
 
   const ChatScreen({
-    Key? key,
+    super.key,
     required this.reciver,
     required this.messages,
     required this.onMessagesUpdated,
-  }) : super(key: key);
+  });
 
   @override
   _ChatScreenState createState() => _ChatScreenState();
@@ -27,7 +22,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final _textController = TextEditingController();
   final _scrollController = ScrollController();
   // final gemini = Gemini.instance;
-  bool _isLoading = false;
+  final bool _isLoading = false;
   late List<ChatMessage> _messages;
 
   @override

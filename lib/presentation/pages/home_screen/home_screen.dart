@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../chatScreen/chatScreen.dart';
-import '../profile/profileScreen.dart';
 
-import '../../widgets/messagebox.dart';
+import '../../widgets/message_box.dart';
+import '../chat_screen/chat_screen.dart';
+import '../profile_screen/ProfileScreen.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
 // import 'dart:convert';
 
@@ -173,8 +173,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
-        child: const Icon(Icons.add),
         tooltip: 'Create new chat',
+        child: const Icon(Icons.add),
       ),
     );
   }

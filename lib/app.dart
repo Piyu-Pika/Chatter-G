@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'core/theme/themedata.dart';
-import 'pages/splashscreen/splashscreen.dart';
+import 'core/theme/app_theme.dart';
+import 'presentation/pages/splashscreen/splashscreen.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

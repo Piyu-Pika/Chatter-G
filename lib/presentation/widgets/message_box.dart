@@ -4,8 +4,7 @@ class ChatMessage extends StatelessWidget {
   final String text;
   final bool isUser;
 
-  const ChatMessage({Key? key, required this.text, required this.isUser})
-      : super(key: key);
+  const ChatMessage({super.key, required this.text, required this.isUser});
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
     return ChatMessage(

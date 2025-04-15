@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../core/theme/themedata.dart';
-import '../loginpage/loginPage.dart';
+import '../../../core/theme/app_theme.dart';
+import '../login_page/login_page.dart';
 // Assuming you have a home screen defined elsewhere, e.g., 'home_screen.dart'
 // import 'package:godzilla/presentation/screens/home_screen.dart';
 
@@ -34,7 +34,7 @@ class _SplashscreenState extends State<Splashscreen> {
 
   Future<void> _navigateToHome() async {
     // Simulate a delay for loading resources, checking auth, etc.
-    await Future.delayed(const Duration(seconds: 90));
+    await Future.delayed(const Duration(seconds: 3));
 
     // Ensure the widget is still mounted before navigating
     if (mounted) {
@@ -43,7 +43,7 @@ class _SplashscreenState extends State<Splashscreen> {
         context,
         MaterialPageRoute(
             builder: (context) =>
-                const Loginpage()), // Navigate to your actual home screen
+                const LoginPage()), // Navigate to your actual home screen
       );
     }
   }
@@ -70,7 +70,7 @@ class _SplashscreenState extends State<Splashscreen> {
             ),
             const SizedBox(height: 30),
             Text(
-              'GoDZilla',
+              'GodZilla',
               style: TextStyle(
                 fontSize: 32, // Slightly larger font size
                 fontWeight: FontWeight.bold,
