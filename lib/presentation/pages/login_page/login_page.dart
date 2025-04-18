@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../home_screen/home_screen.dart';
+import '../signup_page/signup_page.dart';
 
 final emailProvider = StateProvider<String>((ref) => '');
 final passwordProvider = StateProvider<String>((ref) => '');
@@ -288,7 +289,10 @@ class LoginForm extends ConsumerWidget {
                   style: TextStyle(color: Colors.grey[600])),
               TextButton(
                 onPressed: () {
-                  // Navigate to signup page
+                  Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const SignupPage()));
                 },
                 child: Text(
                   'Sign Up',
@@ -349,7 +353,3 @@ class LoginForm extends ConsumerWidget {
     );
   }
 }
-
-// Don't forget to add flutter_riverpod to your pubspec.yaml:
-// dependencies:
-//   flutter_riverpod: ^2.4.0
