@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../data/datasources/remote/cockroachdb_data_source.dart';
 import '../../providers/auth_provider.dart';
 import '../login_page/login_page.dart'; // Renamed from signup_page.dart
 
@@ -20,7 +23,7 @@ class SignupPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final bottomSheetHeight = screenHeight * 0.75; // Adjusted height slightly
+    final bottomSheetHeight = screenHeight * 0.79; // Adjusted height slightly
 
     // Listen for errors from AuthService
     ref.listen<String?>(
@@ -55,7 +58,7 @@ class SignupPage extends ConsumerWidget {
           children: [
             // App Logo in the upper portion
             Positioned(
-              top: screenHeight * 0.08,
+              top: screenHeight * 0.06,
               left: 0,
               right: 0,
               child: Column(
@@ -142,6 +145,12 @@ class _SignupFormState extends ConsumerState<SignupForm> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>(); // For form validation
+  final _cockroachDBDataSource = CockroachDBDataSource();
+  var _dbData = {
+    "name": "",
+    "email": "",
+    "uuid": "",
+  };
 
   @override
   void dispose() {
@@ -197,6 +206,15 @@ class _SignupFormState extends ConsumerState<SignupForm> {
 
       // No navigation or success message here - AuthWrapper handles navigation
       // Error display is handled by the listener in SignupPage build method
+      _dbData["name"] = _nameController.text;
+      _dbData["email"] = email;
+      _dbData["uuid"] = ref.read(authServiceProvider).uid!;
+      print(_dbData); // Debug print to check data
+      _cockroachDBDataSource.saveData(jsonEncode(_dbData)).then((value) {
+        // Handle success if needed
+      }).catchError((error) {
+        // Handle error if needed
+      });
     }
 
     void handleGoogleSignIn() async {
@@ -513,7 +531,7 @@ class _SignupFormState extends ConsumerState<SignupForm> {
                             Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => const LoginPage()));
+                                    builder: (context) => LoginPage()));
                           },
                     child: Text(
                       'Sign In',

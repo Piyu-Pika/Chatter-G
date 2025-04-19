@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:godzilla/presentation/providers/auth_provider.dart'; // Import Auth Service Provider
+import '../../../data/datasources/remote/cockroachdb_data_source.dart';
 import '../signup_page/signup_page.dart';
 
 // final emailProvider = StateProvider<String>((ref) => '');
@@ -9,12 +10,12 @@ final isPasswordVisibleProvider = StateProvider<bool>((ref) => false);
 // final isLoadingProvider = StateProvider<bool>((ref) => false);
 
 class LoginPage extends ConsumerWidget {
-  const LoginPage({super.key});
+  LoginPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final bottomSheetHeight = screenHeight * 0.65;
+    final bottomSheetHeight = screenHeight * 0.67;
 
     // Listen for errors from AuthService and show SnackBar
     ref.listen<String?>(
@@ -79,14 +80,14 @@ class LoginPage extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Sign in to continue',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
-                  ),
+                  // const SizedBox(height: 8),
+                  // const Text(
+                  //   'Sign in to continue',
+                  //   style: TextStyle(
+                  //     color: Colors.white,
+                  //     fontSize: 16,
+                  //   ),
+                  // ),
                 ],
               ),
             ),
@@ -133,6 +134,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>(); // Optional: for form validation
+  final _cockroachDBDataSource = CockroachDBDataSource();
 
   @override
   void dispose() {
@@ -169,6 +171,15 @@ class _LoginFormState extends ConsumerState<LoginForm> {
       await ref
           .read(authServiceProvider)
           .signInWithEmailPassword(email, password);
+
+      //get the user data from the database
+      _cockroachDBDataSource.getData().then((value) {
+        // Handle success if needed
+        print(value);
+      }).catchError((error) {
+        // Handle error if needed
+        print(error);
+      });
 
       // No navigation here - AuthWrapper handles it based on state change
       // No manual loading state management here - AuthService handles it

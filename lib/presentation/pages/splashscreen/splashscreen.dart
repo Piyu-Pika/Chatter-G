@@ -20,7 +20,7 @@ class AuthWrapper extends ConsumerWidget {
         if (user != null) {
           return const HomeScreen(); // User logged in
         } else {
-          return const LoginPage(); // User logged out
+          return LoginPage(); // User logged out
         }
       },
       loading: () => const Scaffold(

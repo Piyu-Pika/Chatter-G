@@ -25,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    var isDarkMode = true;
+    var isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       key: _scaffoldKey,
@@ -34,18 +34,20 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: isDarkMode ? Colors.black : Colors.white,
         elevation: 0,
         title: Text(
-          'Pikachu',
+          'Godzilla',
           style: TextStyle(
+            fontSize: 24,
             color: isDarkMode ? Colors.white : Colors.black,
             fontWeight: FontWeight.bold,
           ),
         ),
-        centerTitle: true,
         actions: [
           IconButton(
             icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
             onPressed: () {
-              // themeProvider.toggleTheme();
+              setState(() {
+                isDarkMode = !isDarkMode;
+              });
             },
             color: isDarkMode ? Colors.white : Colors.black,
           ),
