@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "422469730222",
+    "project_id": "godzilla-1b569",
+    "storage_bucket": "godzilla-1b569.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:422469730222:android:84c58c3aad0d1301bb523f",
+        "android_client_info": {
+          "package_name": "com.piyush.godzilla"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "422469730222-fhd0a5f2kh9e27eg7gpfm3bnu898ilrg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDsqFq1tRB6AlsEldUPYrbj07qEpNGI2ZY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "422469730222-fhd0a5f2kh9e27eg7gpfm3bnu898ilrg.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "422469730222-23kqr2kf04594mv6sc5tjsr1erhvfdr9.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.piyush.godzilla"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

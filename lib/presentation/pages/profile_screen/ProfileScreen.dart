@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ProfileScreen extends StatelessWidget {
+import '../../providers/auth_provider.dart';
+
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -50,6 +53,42 @@ class ProfileScreen extends StatelessWidget {
                 fontSize: 16,
                 color: isDarkMode ? Colors.white70 : Colors.black54,
               ),
+            ),
+            const SizedBox(height: 30),
+            Consumer(
+              builder: (context, ref, child) {
+                // Watch the provider to react to loading state changes
+                final authService = ref.watch(authServiceProvider);
+                return ElevatedButton(
+                  onPressed: authService.isLoading
+                      ? null // Disable button if already signing out
+                      : () async {
+                          // Read the provider once to trigger the sign-out action
+                          await ref.read(authServiceProvider).signOut();
+                          // Note: Navigation logic (e.g., popping the screen)
+                          // might be needed here or handled by an auth state listener elsewhere.
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor:
+                        Theme.of(context).colorScheme.onPrimary, // Text color
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 30, vertical: 15),
+                    textStyle: const TextStyle(fontSize: 16),
+                  ),
+                  // Show a progress indicator inside the button when loading
+                  child: authService.isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white, // Color for the spinner
+                          ),
+                        )
+                      : const Text('Sign Out'),
+                );
+              },
             ),
           ],
         ),

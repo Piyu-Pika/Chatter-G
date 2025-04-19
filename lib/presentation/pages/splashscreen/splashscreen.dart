@@ -1,49 +1,64 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../login_page/login_page.dart';
+import '../../providers/auth_provider.dart'; // Import Auth Provider
+import '../home_screen/home_screen.dart'; // Import Home Screen
 // Assuming you have a home screen defined elsewhere, e.g., 'home_screen.dart'
 // import 'package:godzilla/presentation/screens/home_screen.dart';
 
-// Placeholder for HomeScreen if not defined
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class AuthWrapper extends ConsumerWidget {
+  const AuthWrapper({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Home Screen')),
-      body: const Center(child: Text('Welcome to GoDZilla!')),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authStateChangesProvider);
+
+    return authState.when(
+      data: (user) {
+        if (user != null) {
+          return const HomeScreen(); // User logged in
+        } else {
+          return const LoginPage(); // User logged out
+        }
+      },
+      loading: () => const Scaffold(
+        body: Center(
+            child: CircularProgressIndicator()), // Show loading indicator
+      ),
+      error: (error, stack) => Scaffold(
+        body: Center(child: Text('Something went wrong: $error')), // Show error
+      ),
     );
   }
 }
 
-class Splashscreen extends StatefulWidget {
+class Splashscreen extends ConsumerStatefulWidget {
   const Splashscreen({super.key});
 
   @override
-  State<Splashscreen> createState() => _SplashscreenState();
+  ConsumerState<Splashscreen> createState() => _SplashscreenState();
 }
 
-class _SplashscreenState extends State<Splashscreen> {
+class _SplashscreenState extends ConsumerState<Splashscreen> {
   @override
   void initState() {
     super.initState();
-    _navigateToHome();
+    _checkAuthAndNavigate();
   }
 
-  Future<void> _navigateToHome() async {
-    // Simulate a delay for loading resources, checking auth, etc.
+  Future<void> _checkAuthAndNavigate() async {
+    // Wait for splash screen duration AND for the initial auth state to resolve
     await Future.delayed(const Duration(seconds: 3));
 
-    // Ensure the widget is still mounted before navigating
+    // Check the initial auth state after the delay
+    // The authStateChangesProvider might still be loading initially,
+    // but navigating to AuthWrapper handles all states (data, loading, error).
     if (mounted) {
-      // Replace the splash screen with the home screen
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-            builder: (context) =>
-                const LoginPage()), // Navigate to your actual home screen
+        MaterialPageRoute(builder: (context) => const AuthWrapper()),
       );
     }
   }
