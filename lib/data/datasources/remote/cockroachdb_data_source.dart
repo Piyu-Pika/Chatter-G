@@ -3,9 +3,14 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class CockroachDBDataSource {
-  Future<String> saveData(String data) async {
+  final Map<String, dynamic> data = Map<String, dynamic>.from({
+    'name': '',
+    'email': '',
+    'uuid': '',
+  });
+  Future<String> saveData(data) async {
     final response = await http.post(
-      Uri.parse('https://godzilla-api.herokuapp.com/api/v1/godzilla'),
+      Uri.parse('https://localhost:8080/api/v1/godzilla'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
@@ -25,6 +30,11 @@ class CockroachDBDataSource {
     );
 
     if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final name = data['name'];
+      final email = data['email'];
+      final uuid = data['uuid'];
+
       return response.body;
     } else {
       throw Exception('Failed to load data');
