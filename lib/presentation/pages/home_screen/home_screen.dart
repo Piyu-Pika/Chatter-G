@@ -34,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: isDarkMode ? Colors.black : Colors.white,
         elevation: 0,
         title: Text(
-          'Godzilla',
+          'Chatter G',
           style: TextStyle(
             fontSize: 24,
             color: isDarkMode ? Colors.white : Colors.black,

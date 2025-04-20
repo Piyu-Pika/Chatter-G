@@ -26,7 +26,7 @@ class CockroachDBDataSource {
 
   Future<String> getData() async {
     final response = await http.get(
-      Uri.parse('https://godzilla-api.herokuapp.com/api/v1/godzilla'),
+      Uri.parse('https://localhost:8080/api/v1/godzilla'),
     );
 
     if (response.statusCode == 200) {

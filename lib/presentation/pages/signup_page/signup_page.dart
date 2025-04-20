@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:chatterg/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/datasources/remote/cockroachdb_data_source.dart';
@@ -45,14 +46,7 @@ class SignupPage extends ConsumerWidget {
       body: Container(
         constraints: const BoxConstraints.expand(),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Colors.green[900]!, // Dark Green
-              Colors.green[600]!, // Lighter Green
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+          gradient: context.backgroundGradient,
         ),
         child: Stack(
           children: [
@@ -66,7 +60,7 @@ class SignupPage extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(20),
                     child: Image.asset(
-                      "assets/images/godzilla.png",
+                      "assets/images/chatter-g.jpg",
                       width: 100,
                       height: 100,
                     ),
@@ -218,7 +212,7 @@ class _SignupFormState extends ConsumerState<SignupForm> {
     }
 
     void handleGoogleSignIn() async {
-      await ref.read(authServiceProvider).signInWithGoogle();
+      await ref.read(authServiceProvider).signInWithGoogle(context);
       // Navigation and error handling are managed elsewhere
     }
 
@@ -250,7 +244,7 @@ class _SignupFormState extends ConsumerState<SignupForm> {
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Colors.green[900],
+                      color: appTheme.textTheme.titleLarge!.color,
                     ),
                   ),
                 ],
@@ -278,7 +272,8 @@ class _SignupFormState extends ConsumerState<SignupForm> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.green[700]!, width: 2),
+                    borderSide: BorderSide(
+                        color: appTheme.colorScheme.outline, width: 2),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -317,7 +312,8 @@ class _SignupFormState extends ConsumerState<SignupForm> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.green[700]!, width: 2),
+                    borderSide: BorderSide(
+                        color: appTheme.colorScheme.outline, width: 2),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -364,7 +360,8 @@ class _SignupFormState extends ConsumerState<SignupForm> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.green[700]!, width: 2),
+                    borderSide: BorderSide(
+                        color: appTheme.colorScheme.outline, width: 2),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -410,7 +407,8 @@ class _SignupFormState extends ConsumerState<SignupForm> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.green[700]!, width: 2),
+                    borderSide: BorderSide(
+                        color: appTheme.colorScheme.outline, width: 2),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -486,7 +484,9 @@ class _SignupFormState extends ConsumerState<SignupForm> {
                     ? null
                     : handleSignup, // Use isLoading from authService
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[700],
+                  backgroundColor: appTheme
+                      .elevatedButtonTheme.style!.backgroundColor
+                      ?.resolve({}), // Resolve MaterialStateProperty to Color
                   foregroundColor: Colors.white,
                   disabledBackgroundColor: Colors.green[200],
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -536,7 +536,7 @@ class _SignupFormState extends ConsumerState<SignupForm> {
                     child: Text(
                       'Sign In',
                       style: TextStyle(
-                        color: Colors.green[700],
+                        color: appTheme.colorScheme.primary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -560,13 +560,8 @@ class _SignupFormState extends ConsumerState<SignupForm> {
                       _socialSignupButton(Icons.g_mobiledata, 'Google',
                           handleGoogleSignIn, isLoading),
                       const SizedBox(width: 16),
-                      _socialSignupButton(Icons.facebook, 'Facebook', () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content:
-                                  Text('Facebook Sign Up not implemented')),
-                        );
-                      }, isLoading), // Pass isLoading
+                      _socialSignupButton(Icons.facebook, 'Facebook', () {},
+                          isLoading), // Pass isLoading
                     ],
                   ),
                 ],

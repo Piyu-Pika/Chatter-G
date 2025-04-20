@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'dart:async'; // Required for StreamSubscription
+import 'dart:async';
+
+import '../pages/home_screen/home_screen.dart'; // Required for StreamSubscription
 
 // Provider for FirebaseAuth instance
 final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
@@ -16,18 +18,22 @@ final googleSignInProvider = Provider<GoogleSignIn>((ref) {
 
 // Auth state changes stream provider
 final authStateChangesProvider = StreamProvider<User?>((ref) {
+  // This stream provider is useful for reacting to auth state changes
+  // in the UI layer (e.g., redirecting in main.dart or a wrapper widget),
+  // which is generally the recommended approach for navigation.
   return ref.watch(firebaseAuthProvider).authStateChanges();
 });
 
 // Main Auth Provider
 final authServiceProvider = ChangeNotifierProvider<AuthService>((ref) {
   return AuthService(
-      ref.watch(firebaseAuthProvider), ref.watch(googleSignInProvider));
+      ref.watch(firebaseAuthProvider), ref.watch(googleSignInProvider), ref);
 });
 
 class AuthService extends ChangeNotifier {
   final FirebaseAuth _firebaseAuth;
   final GoogleSignIn _googleSignIn;
+  final Ref _ref; // Store Ref to potentially read other providers if needed
   StreamSubscription? _authStateSubscription;
 
   User? _user;
@@ -41,7 +47,7 @@ class AuthService extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  AuthService(this._firebaseAuth, this._googleSignIn) {
+  AuthService(this._firebaseAuth, this._googleSignIn, this._ref) {
     // Listen to auth state changes immediately
     _authStateSubscription =
         _firebaseAuth.authStateChanges().listen(_onAuthStateChanged);
@@ -50,12 +56,18 @@ class AuthService extends ChangeNotifier {
   }
 
   void _setLoading(bool value) {
-    _isLoading = value;
-    notifyListeners();
+    if (_isLoading != value) {
+      _isLoading = value;
+      notifyListeners();
+    }
   }
 
   void _clearError() {
-    _errorMessage = null;
+    if (_errorMessage != null) {
+      _errorMessage = null;
+      // Optionally notify listeners if UI reacts to error clearing
+      notifyListeners();
+    }
   }
 
   void _setError(String message) {
@@ -64,6 +76,9 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
   }
 
+  // This listener updates the internal state and notifies listeners.
+  // UI reacting to authServiceProvider or authStateChangesProvider
+  // can handle navigation based on these state changes.
   void _onAuthStateChanged(User? user) {
     _user = user;
     _isLoading = false; // Stop loading when auth state changes
@@ -79,17 +94,20 @@ class AuthService extends ChangeNotifier {
         email: email,
         password: password,
       );
-      // Auth state listener will handle the update
+      // Sign-up success triggers the authStateChanges stream.
+      // The _onAuthStateChanged listener will update the state.
+      // Navigation should ideally be handled by the UI listening to auth state.
     } on FirebaseAuthException catch (e) {
       _setError(e.message ?? 'Registration failed');
     } catch (e) {
       _setError('An unexpected error occurred: ${e.toString()}');
-    } finally {
-      // Loading state is handled by _onAuthStateChanged or _setError
     }
+    // No finally _setLoading(false) needed here if relying on _onAuthStateChanged or _setError
   }
 
-  Future<void> signInWithEmailPassword(String email, String password) async {
+  // Modified to include BuildContext for navigation
+  Future<void> signInWithEmailPassword(
+      BuildContext context, String email, String password) async {
     _clearError();
     _setLoading(true);
     try {
@@ -97,17 +115,35 @@ class AuthService extends ChangeNotifier {
         email: email,
         password: password,
       );
-      // Auth state listener will handle the update
+      // Sign-in success triggers the authStateChanges stream.
+      // The _onAuthStateChanged listener will update the state.
+
+      // Direct navigation after successful sign-in:
+      // Note: It's generally preferred to handle navigation in the UI layer
+      // by listening to auth state changes (e.g., using authStateChangesProvider).
+      // This keeps the service layer decoupled from the UI.
+      if (_firebaseAuth.currentUser != null && context.mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (Route<dynamic> route) => false, // Remove all previous routes
+        );
+      } else {
+        // If user is null after await or context is unmounted, handle error state
+        _setLoading(
+            false); // Manually set loading false if navigation doesn't happen
+      }
     } on FirebaseAuthException catch (e) {
       _setError(e.message ?? 'Login failed');
     } catch (e) {
       _setError('An unexpected error occurred: ${e.toString()}');
-    } finally {
-      // Loading state is handled by _onAuthStateChanged or _setError
     }
+    // No finally _setLoading(false) needed here if relying on _onAuthStateChanged,
+    // _setError, or successful navigation path.
   }
 
-  Future<void> signInWithGoogle() async {
+  // Modified to include BuildContext for navigation
+  Future<void> signInWithGoogle(BuildContext context) async {
     _clearError();
     _setLoading(true);
     try {
@@ -128,151 +164,87 @@ class AuthService extends ChangeNotifier {
       );
 
       await _firebaseAuth.signInWithCredential(credential);
-      // Auth state listener will handle the update
+      // Sign-in success triggers the authStateChanges stream.
+      // The _onAuthStateChanged listener will update the state.
+
+      // Direct navigation after successful sign-in:
+      // Note: It's generally preferred to handle navigation in the UI layer
+      // by listening to auth state changes (e.g., using authStateChangesProvider).
+      if (_firebaseAuth.currentUser != null && context.mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (Route<dynamic> route) => false, // Remove all previous routes
+        );
+      } else {
+        // If user is null after await or context is unmounted, handle error state
+        _setLoading(
+            false); // Manually set loading false if navigation doesn't happen
+      }
     } on FirebaseAuthException catch (e) {
       _setError(e.message ?? 'Google Sign-In failed');
     } catch (e) {
       _setError(
           'An unexpected error occurred during Google Sign-In: ${e.toString()}');
-    } finally {
-      // Loading state is handled by _onAuthStateChanged or _setError
     }
+    // No finally _setLoading(false) needed here if relying on _onAuthStateChanged,
+    // _setError, or successful navigation path.
   }
 
-  Future<void> signOut() async {
+  // Import necessary for Facebook Auth
+  // facebook sign in method
+
+  //Forgot password method
+  Future<void> forgotPassword(String email) async {
     _clearError();
     _setLoading(true);
     try {
-      // It's good practice to sign out from GoogleSignIn as well
-      // if the user signed in with Google. Check if the provider is Google.
-      if (_user?.providerData.any((userInfo) =>
-              userInfo.providerId == GoogleAuthProvider.PROVIDER_ID) ??
-          false) {
+      await _firebaseAuth.sendPasswordResetEmail(email: email);
+      // Sign-out success triggers the authStateChanges stream.
+      // The _onAuthStateChanged listener will update the state.
+      // Navigation (e.g., back to login screen) should be handled in the UI layer
+      // listening to the auth state.
+    } on FirebaseAuthException catch (e) {
+      _setError(e.message ?? 'Forgot password failed');
+    } catch (e) {
+      _setError(
+          'An unexpected error occurred during forgot password: ${e.toString()}');
+    }
+    // No finally _setLoading(false) needed here if relying on _onAuthStateChanged,
+    // _setError, successful navigation path, or manual _setLoading(false) in cancel case.
+  }
+
+  Future<void> signOut(context) async {
+    _clearError();
+    // Don't necessarily need to set loading true for sign out unless there's UI feedback
+    // _setLoading(true);
+    try {
+      // Check if the user signed in with Google to sign out from there too.
+      final isGoogleUser = _user?.providerData.any(
+              (info) => info.providerId == GoogleAuthProvider.PROVIDER_ID) ??
+          false;
+      if (isGoogleUser) {
+        // Condition ensures we only call Google SignOut if it was used.
         await _googleSignIn.signOut();
       }
       await _firebaseAuth.signOut();
-      // Auth state listener will handle the update
+      Navigator.popUntil(context, (route) => route.isFirst);
+      // Sign-out success triggers the authStateChanges stream.
+      // The _onAuthStateChanged listener will update the state.
+      // Navigation (e.g., back to login screen) should be handled in the UI layer
+      // listening to the auth state.
     } on FirebaseAuthException catch (e) {
       _setError(e.message ?? 'Sign out failed');
     } catch (e) {
       _setError(
           'An unexpected error occurred during sign out: ${e.toString()}');
-    } finally {
-      // Loading state is handled by _onAuthStateChanged or _setError
     }
+    // _setLoading handled by _onAuthStateChanged or _setError
   }
 
   @override
   void dispose() {
     _authStateSubscription?.cancel(); // Cancel the subscription
     super.dispose();
-  }
-}
-
-// Example Usage (Optional, shows how to use the provider)
-class AuthScreen extends ConsumerWidget {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final authService = ref.watch(authServiceProvider);
-    final authState = ref.watch(authStateChangesProvider);
-
-    return Scaffold(
-      appBar: AppBar(title: Text('Firebase Auth Example')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Center(
-          child: authState.when(
-            data: (user) {
-              if (authService.isLoading) {
-                return CircularProgressIndicator();
-              }
-              if (user != null) {
-                // User is logged in
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('Welcome!'),
-                    Text('Email: ${user.email ?? 'N/A'}'),
-                    Text('UID: ${user.uid}'),
-                    SizedBox(height: 20),
-                    if (authService.errorMessage != null)
-                      Text('Error: ${authService.errorMessage}',
-                          style: TextStyle(color: Colors.red)),
-                    ElevatedButton(
-                      onPressed: () => ref.read(authServiceProvider).signOut(),
-                      child: Text('Sign Out'),
-                    ),
-                  ],
-                );
-              } else {
-                // User is logged out
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (authService.errorMessage != null)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 10.0),
-                        child: Text('Error: ${authService.errorMessage}',
-                            style: TextStyle(color: Colors.red)),
-                      ),
-                    TextField(
-                      controller: _emailController,
-                      decoration: InputDecoration(labelText: 'Email'),
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    TextField(
-                      controller: _passwordController,
-                      decoration: InputDecoration(labelText: 'Password'),
-                      obscureText: true,
-                    ),
-                    SizedBox(height: 20),
-                    if (authService.isLoading)
-                      CircularProgressIndicator()
-                    else ...[
-                      ElevatedButton(
-                        onPressed: () {
-                          final email = _emailController.text.trim();
-                          final password = _passwordController.text.trim();
-                          if (email.isNotEmpty && password.isNotEmpty) {
-                            ref
-                                .read(authServiceProvider)
-                                .signInWithEmailPassword(email, password);
-                          }
-                        },
-                        child: Text('Sign In with Email'),
-                      ),
-                      SizedBox(height: 10),
-                      ElevatedButton(
-                        onPressed: () {
-                          final email = _emailController.text.trim();
-                          final password = _passwordController.text.trim();
-                          if (email.isNotEmpty && password.isNotEmpty) {
-                            ref
-                                .read(authServiceProvider)
-                                .registerWithEmailPassword(email, password);
-                          }
-                        },
-                        child: Text('Register with Email'),
-                      ),
-                      SizedBox(height: 10),
-                      ElevatedButton(
-                        onPressed: () =>
-                            ref.read(authServiceProvider).signInWithGoogle(),
-                        child: Text('Sign In with Google'),
-                      ),
-                    ],
-                  ],
-                );
-              }
-            },
-            loading: () => CircularProgressIndicator(),
-            error: (error, stack) => Text('Auth Stream Error: $error'),
-          ),
-        ),
-      ),
-    );
   }
 }

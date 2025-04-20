@@ -1,13 +1,11 @@
+import 'package:chatterg/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:godzilla/presentation/providers/auth_provider.dart'; // Import Auth Service Provider
 import '../../../data/datasources/remote/cockroachdb_data_source.dart';
+import '../../providers/auth_provider.dart';
 import '../signup_page/signup_page.dart';
 
-// final emailProvider = StateProvider<String>((ref) => '');
-// final passwordProvider = StateProvider<String>((ref) => '');
 final isPasswordVisibleProvider = StateProvider<bool>((ref) => false);
-// final isLoadingProvider = StateProvider<bool>((ref) => false);
 
 class LoginPage extends ConsumerWidget {
   LoginPage({super.key});
@@ -38,14 +36,7 @@ class LoginPage extends ConsumerWidget {
       body: Container(
         constraints: const BoxConstraints.expand(),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Colors.green[900]!, // Dark Green
-              Colors.green[600]!, // Lighter Green
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+          gradient: context.backgroundGradient,
         ),
         child: Stack(
           children: [
@@ -59,7 +50,7 @@ class LoginPage extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(20),
                     child: Image.asset(
-                      "assets/images/godzilla.png",
+                      "assets/images/chatter-g.jpg",
                       width: 100,
                       height: 100,
                     ),
@@ -154,9 +145,9 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     // ... handleLogin and handleGoogleSignIn methods ...
     void handleLogin() async {
       // Optional: Validate form
-      // if (!_formKey.currentState!.validate()) {
-      //   return;
-      // }
+      if (!_formKey.currentState!.validate()) {
+        return;
+      }
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
 
@@ -170,16 +161,16 @@ class _LoginFormState extends ConsumerState<LoginForm> {
       // Call the login method from AuthService
       await ref
           .read(authServiceProvider)
-          .signInWithEmailPassword(email, password);
+          .signInWithEmailPassword(context, email, password);
 
       //get the user data from the database
-      _cockroachDBDataSource.getData().then((value) {
-        // Handle success if needed
-        print(value);
-      }).catchError((error) {
-        // Handle error if needed
-        print(error);
-      });
+      // _cockroachDBDataSource.getData().then((value) {
+      //   // Handle success if needed
+      //   print(value);
+      // }).catchError((error) {
+      //   // Handle error if needed
+      //   print(error);
+      // });
 
       // No navigation here - AuthWrapper handles it based on state change
       // No manual loading state management here - AuthService handles it
@@ -187,8 +178,19 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     }
 
     void handleGoogleSignIn() async {
-      await ref.read(authServiceProvider).signInWithGoogle();
+      await ref.read(authServiceProvider).signInWithGoogle(context);
       // Navigation and error handling are managed by AuthWrapper and the listener
+    }
+
+    void handleForgotPassword() async {
+      await ref.read(authServiceProvider).forgotPassword(_emailController.text);
+
+      // Navigation and error handling are managed by AuthWrapper and the listener
+      SnackBar snackBar = SnackBar(
+        content: Text('Password reset email sent'),
+        backgroundColor: appTheme.snackBarTheme.backgroundColor,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
     }
 
     return Padding(
@@ -201,7 +203,6 @@ class _LoginFormState extends ConsumerState<LoginForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ... (Handle and Title) ...
               Column(
                 children: [
                   const SizedBox(height: 12),
@@ -219,7 +220,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Colors.green[900],
+                      color: appTheme.textTheme.titleLarge!.color,
                     ),
                   ),
                 ],
@@ -240,14 +241,15 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                 decoration: InputDecoration(
                   labelText: 'Email',
                   hintText: 'Enter your email address',
-                  prefixIcon:
-                      Icon(Icons.email_outlined, color: Colors.green[700]),
+                  prefixIcon: Icon(Icons.email_outlined,
+                      color: appTheme.iconTheme.color),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.green[700]!, width: 2),
+                    borderSide: BorderSide(
+                        color: appTheme.colorScheme.outline, width: 2),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -274,7 +276,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                   labelText: 'Password',
                   hintText: 'Enter your password',
                   prefixIcon:
-                      Icon(Icons.lock_outline, color: Colors.green[700]),
+                      Icon(Icons.lock_outline, color: appTheme.iconTheme.color),
                   suffixIcon: IconButton(
                     icon: Icon(
                       isPasswordVisible
@@ -290,9 +292,9 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.green[700]!, width: 2),
-                  ),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                          color: appTheme.colorScheme.outline, width: 2)),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: Colors.grey[300]!, width: 1),
@@ -305,16 +307,12 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () {
-                    // TODO: Handle forgot password - e.g., navigate to a forgot password screen
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              'Forgot Password clicked (not implemented)')),
-                    );
+                    handleForgotPassword();
+                    // Optionally navigate to a Forgot Password page
                   },
                   child: Text(
                     'Forgot Password?',
-                    style: TextStyle(color: Colors.green[700]),
+                    style: TextStyle(color: appTheme.colorScheme.primary),
                   ),
                 ),
               ),
@@ -327,7 +325,9 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                     ? null
                     : handleLogin, // Use isLoading from authService
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[700],
+                  backgroundColor: appTheme
+                      .elevatedButtonTheme.style?.backgroundColor
+                      ?.resolve({}),
                   foregroundColor: Colors.white,
                   disabledBackgroundColor: Colors.green[200],
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -374,7 +374,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                     child: Text(
                       'Sign Up',
                       style: TextStyle(
-                        color: Colors.green[700],
+                        color: appTheme.colorScheme.primary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -400,13 +400,8 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                           handleGoogleSignIn, isLoading),
                       const SizedBox(width: 16),
                       // Facebook Button (Placeholder)
-                      _socialLoginButton(Icons.facebook, 'Facebook', () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content:
-                                  Text('Facebook Sign In not implemented')),
-                        );
-                      }, isLoading), // Pass isLoading
+                      _socialLoginButton(Icons.facebook, 'Facebook', () {},
+                          isLoading), // Pass isLoading
                     ],
                   ),
                 ],

@@ -64,8 +64,8 @@ class ProfileScreen extends ConsumerWidget {
                       ? null // Disable button if already signing out
                       : () async {
                           // Read the provider once to trigger the sign-out action
-                          await ref.read(authServiceProvider).signOut();
-                          Navigator.popUntil(context, (route) => route.isFirst);
+                          await ref.read(authServiceProvider).signOut(context);
+
                           // Note: Navigation logic (e.g., popping the screen)
                           // might be needed here or handled by an auth state listener elsewhere.
                         },
