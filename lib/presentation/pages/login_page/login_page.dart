@@ -125,7 +125,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>(); // Optional: for form validation
-  final _cockroachDBDataSource = CockroachDBDataSource();
+  // final _cockroachDBDataSource = CockroachDBDataSource();
 
   @override
   void dispose() {

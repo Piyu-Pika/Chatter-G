@@ -1,3 +1,4 @@
+import 'package:chatterg/data/models/user_model.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'dart:async';
@@ -59,7 +60,7 @@ class LocalDataSource {
 
   // Saves or updates the single user data row.
   // Assumes there's only one user profile to store.
-  Future<void> saveData(Map<String, dynamic> data) async {
+  Future<void> saveData(Map<String, User> data) async {
     final db = await database;
     // Check if required keys exist
     if (data.containsKey(_colName) &&

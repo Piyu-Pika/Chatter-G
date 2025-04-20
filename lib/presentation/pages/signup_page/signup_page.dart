@@ -139,12 +139,6 @@ class _SignupFormState extends ConsumerState<SignupForm> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>(); // For form validation
-  final _cockroachDBDataSource = CockroachDBDataSource();
-  var _dbData = {
-    "name": "",
-    "email": "",
-    "uuid": "",
-  };
 
   @override
   void dispose() {
@@ -200,17 +194,6 @@ class _SignupFormState extends ConsumerState<SignupForm> {
 
       // No navigation or success message here - AuthWrapper handles navigation
       // Error display is handled by the listener in SignupPage build method
-      _dbData["name"] = _nameController.text;
-      _dbData["email"] = email;
-      _dbData["uuid"] = ref.read(authServiceProvider).uid!;
-      print(_dbData); // Debug print to check data
-      _cockroachDBDataSource
-          .saveData(jsonEncode(_dbData) as Map<String, dynamic>)
-          .then((value) {
-        // Handle success if needed
-      }).catchError((error) {
-        // Handle error if needed
-      });
     }
 
     void handleGoogleSignIn() async {

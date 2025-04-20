@@ -1,12 +1,13 @@
 // api routes to send the data to go api to save in the database
 import 'package:chatterg/data/datasources/local/local_data_source.dart';
+import 'package:chatterg/data/models/user_model.dart';
 import 'package:dio/dio.dart' as dio;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class CockroachDBDataSource {
   final baseUrl = dotenv.env['BASE_URL'] ?? 'https://localhost:8080';
-  final Map<String, dynamic> data = Map<String, dynamic>.from({
+  final Map<String, User> data = Map<String, User>.from({
     'name': '',
     'email': '',
     'uuid': '',
@@ -35,17 +36,37 @@ class CockroachDBDataSource {
     }
   }
 
-  Future<String> getData() async {
+  Future<String> getData(uuid) async {
     try {
       final response = await _dio.get(
-        'https://localhost:8080/api/v1/godzilla',
+        '$baseUrl/users',
+        options: dio.Options(
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+        ),
+        queryParameters: <String, dynamic>{
+          'uuid': uuid,
+        },
       );
 
       if (response.statusCode == 200) {
         final data = response.data;
-        final name = data['name'];
-        final email = data['email'];
-        final uuid = data['uuid'];
+        final user = User(
+          name: data['name'],
+          email: data['email'],
+          uuid: data['uuid'],
+          createdAt: data['created_at'],
+          updatedAt: data['updated_at'],
+          deletedAt: data['deleted_at'],
+          username: data['username'],
+          bio: data['bio'],
+          dateOfBirth: data['date_of_birth'],
+          gender: data['gender'],
+          phoneNumber: data['phone_number'],
+        );
+        //print
+        print(user);
 
         return response.data.toString();
       } else {
@@ -64,12 +85,25 @@ class CockroachDBDataSource {
 
       if (response.statusCode == 200) {
         final data = response.data;
-        final name = data['name'];
-        final email = data['email'];
-        final uuid = data['uuid'];
+
+        final user = User(
+          name: data['name'],
+          email: data['email'],
+          uuid: data['uuid'],
+          createdAt: data['created_at'],
+          updatedAt: data['updated_at'],
+          deletedAt: data['deleted_at'],
+          username: data['username'],
+          bio: data['bio'],
+          dateOfBirth: data['date_of_birth'],
+          gender: data['gender'],
+          phoneNumber: data['phone_number'],
+        );
+        //print
+        print(user);
 
         // save the data in the database
-        await LocalDataSource().saveData(data);
+        await LocalDataSource().saveData(response.data);
         return response.data.toString();
       } else {
         throw Exception('Failed to load data');

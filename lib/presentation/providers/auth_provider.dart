@@ -1,9 +1,12 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:async';
 
+import '../../data/datasources/remote/cockroachdb_data_source.dart';
 import '../pages/home_screen/home_screen.dart'; // Required for StreamSubscription
 
 // Provider for FirebaseAuth instance
@@ -35,6 +38,13 @@ class AuthService extends ChangeNotifier {
   final GoogleSignIn _googleSignIn;
   final Ref _ref; // Store Ref to potentially read other providers if needed
   StreamSubscription? _authStateSubscription;
+  final Map<String, dynamic> data = Map<String, dynamic>.from({
+    'name': '',
+    'email': '',
+    'uuid': '',
+    'createdAt': '',
+    'updatedAt': '',
+  });
 
   User? _user;
   User? get currentUser => _user;
@@ -115,6 +125,24 @@ class AuthService extends ChangeNotifier {
         email: email,
         password: password,
       );
+
+      data["name"] = _firebaseAuth.currentUser!.displayName;
+      data["email"] = _firebaseAuth.currentUser!.email;
+      data["uuid"] = _firebaseAuth.currentUser!.uid;
+      data["createdAt"] =
+          _firebaseAuth.currentUser!.metadata.creationTime.toString();
+      data["updatedAt"] =
+          _firebaseAuth.currentUser!.metadata.lastSignInTime.toString();
+
+      CockroachDBDataSource().saveData(data).then((value) {
+        // Handle success if needed
+        log('Data saved successfully: $value');
+        _setLoading(false);
+      }).catchError((error) {
+        // Handle error if needed
+        _setError(error.toString());
+        _setLoading(false);
+      });
       // Sign-in success triggers the authStateChanges stream.
       // The _onAuthStateChanged listener will update the state.
 
@@ -123,10 +151,10 @@ class AuthService extends ChangeNotifier {
       // by listening to auth state changes (e.g., using authStateChangesProvider).
       // This keeps the service layer decoupled from the UI.
       if (_firebaseAuth.currentUser != null && context.mounted) {
-        Navigator.pushAndRemoveUntil(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomeScreen()),
-          (Route<dynamic> route) => false, // Remove all previous routes
+          // Remove all previous routes
         );
       } else {
         // If user is null after await or context is unmounted, handle error state
