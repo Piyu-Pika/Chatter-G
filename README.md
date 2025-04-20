@@ -1,6 +1,6 @@
 # Chatter G - Chat App with AI and Video Calls
 
-Welcome to Godzilla! This is a powerful Flutter application with a Golang backend, designed to deliver real-time chat functionality, AI-powered features, and audio/video calls using WebRTC. The app integrates MongoDB and CockroachDB for data storage, Firebase Auth for user authentication, and WebSockets for real-time communication..
+Welcome to Chatter G! This is a powerful Flutter application with a Golang backend, designed to deliver real-time chat functionality, AI-powered features, and audio/video calls using WebRTC. The app integrates MongoDB and CockroachDB for data storage, Firebase Auth for user authentication, and WebSockets for real-time communication.
 
 ## Table of Contents
 - [Project Overview](#project-overview)
@@ -133,9 +133,8 @@ backend/
 └── go.mod
 ```
 
-
 ## Requirements
-To run Godzilla, you will need the following:
+To run Chatter G, you will need the following:
 
 - **Flutter SDK** (version [insert version, e.g., 3.19.0])
 - **Dart** (included with Flutter)
@@ -143,62 +142,56 @@ To run Godzilla, you will need the following:
 - **Node.js** and **npm** (for WebRTC signaling, if needed)
 - **MongoDB** (installed and running)
 - **CockroachDB** (installed and running)
-- **Firebase Account** (for authentication setup))
+- **Firebase Account** (for authentication setup)
 - **Android/iOS Simulator or Device** (for testing)
 - **IDE** (e.g., Visual Studio Code or Android Studio)
 - **Dependencies**:
-  - Flutter packages: `flutter_riverpod`, `http`, `web_socket_channel`, `flutter_webrtc`, `firebase_auth`
-  - Go packages: [list Go dependencies, e.g., `github.com/gorilla/websocket`]
+   - Flutter packages: `flutter_riverpod`, `http`, `web_socket_channel`, `flutter_webrtc`, `firebase_auth`
+   - Go packages: [list Go dependencies, e.g., `github.com/gorilla/websocket`]
 
 Please install the above and configure them as per the official documentation. Detailed setup instructions will be added here.
 
 ## How to Clone the Repository
 1. Open your terminal or command prompt.
-2. Navigate to the directory where you want to store Godzilla.
-3. Run the following command to clone the repository:## How to Clone the Repository
-1. Open your terminal or command prompt.
-2. Navigate to the directory where you want to store the project.
+2. Navigate to the directory where you want to store Chatter G.
 3. Run the following command to clone the repository:
-   ```
-   git clone https://github.com/your-username/chat-app.git
-   ```
-   (Replace `https://github.com/your-username/chat-app.git` with your actual repository URL.)
+    ```bash
+    git clone https://github.com/your-username/chat-app.git
+    ```
+    (Replace `https://github.com/your-username/chat-app.git` with your actual repository URL.)
 4. Change into the project directory:
-   ```
-   cd chat-app
-   ```
+    ```bash
+    cd chat-app
+    ```
 
 ## How to Run
 ### Frontend (Flutter)
 1. Ensure all requirements are installed and configured.
-2. Navigate to the `lib` directory:
-   ```
-   cd lib
-   ```
+2. Navigate to the project root directory.
 3. Install Flutter dependencies:
-   ```
-   flutter pub get
-   ```
+    ```bash
+    flutter pub get
+    ```
 4. Configure Firebase and xAI API keys in `lib/core/constants.dart`.
 5. Run the app on a connected device or emulator:
-   ```
-   flutter run
-   ```
+    ```bash
+    flutter run
+    ```
 
 ### Backend (Go)
 1. Navigate to the `backend` directory:
-   ```
-   cd backend
-   ```
+    ```bash
+    cd backend
+    ```
 2. Install Go dependencies:
-   ```
-   go mod tidy
-   ```
+    ```bash
+    go mod tidy
+    ```
 3. Configure database connections and API keys in `backend/config/config.go`.
 4. Start the Go server:
-   ```
-   go run cmd/main.go
-   ```
+    ```bash
+    go run cmd/main.go
+    ```
 5. Ensure MongoDB, CockroachDB, and WebSocket servers are running.
 
 ### Notes

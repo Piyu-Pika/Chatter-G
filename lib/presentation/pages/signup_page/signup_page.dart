@@ -204,7 +204,9 @@ class _SignupFormState extends ConsumerState<SignupForm> {
       _dbData["email"] = email;
       _dbData["uuid"] = ref.read(authServiceProvider).uid!;
       print(_dbData); // Debug print to check data
-      _cockroachDBDataSource.saveData(jsonEncode(_dbData)).then((value) {
+      _cockroachDBDataSource
+          .saveData(jsonEncode(_dbData) as Map<String, dynamic>)
+          .then((value) {
         // Handle success if needed
       }).catchError((error) {
         // Handle error if needed

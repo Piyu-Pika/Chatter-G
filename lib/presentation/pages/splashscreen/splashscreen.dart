@@ -5,7 +5,6 @@ import '../../../core/theme/app_theme.dart';
 import '../login_page/login_page.dart';
 import '../../providers/auth_provider.dart'; // Import Auth Provider
 import '../home_screen/home_screen.dart'; // Import Home Screen
-// Assuming you have a home screen defined elsewhere, e.g., 'home_screen.dart'
 
 class AuthWrapper extends ConsumerWidget {
   const AuthWrapper({super.key});
