@@ -1,4 +1,4 @@
-# Godzilla - Chat App with AI and Video Calls
+# Chatter G - Chat App with AI and Video Calls
 
 Welcome to Godzilla! This is a powerful Flutter application with a Golang backend, designed to deliver real-time chat functionality, AI-powered features, and audio/video calls using WebRTC. The app integrates MongoDB and CockroachDB for data storage, Firebase Auth for user authentication, and WebSockets for real-time communication..
 
