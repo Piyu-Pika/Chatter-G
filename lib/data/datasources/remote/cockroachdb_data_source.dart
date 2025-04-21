@@ -80,7 +80,15 @@ class CockroachDBDataSource {
   Future<String> getUserData() async {
     try {
       final response = await _dio.get(
-        '$baseUrl/get-user-data',
+        '$baseUrl/user',
+        options: dio.Options(
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+        ),
+        queryParameters: <String, dynamic>{
+          'uuid': data['uuid'],
+        },
       );
 
       if (response.statusCode == 200) {

@@ -16,13 +16,43 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  final _currentUser = FirebaseAuth.instance.currentUser;
-  late Future<String> _userDataFuture;
+  User? _currentUser;
+  late Future<String> _userDataFuture = Future.value('');
+
+  // Hardcoded test data - you can remove this once the API is working correctly
+  final String testData = '''
+    {
+      "uuid": "162BgS74dhM1Rm9KQHQ4oXbdCoz1",
+      "name": "John Doe",
+      "email": "test1@gmail.com",
+      "created_at": "0001-01-01T00:00:00Z",
+      "updated_at": "0001-01-01T00:00:00Z",
+      "deleted_at": "0001-01-01T00:00:00Z",
+      "username": "user123",
+      "bio": "This is a test user account",
+      "date_of_birth": "1990-01-01T00:00:00Z",
+      "gender": "male",
+      "phone_number": "+1234567890"
+    }
+  ''';
 
   @override
   void initState() {
     super.initState();
-    _userDataFuture = CockroachDBDataSource().getData(_currentUser!.uid);
+    _initializeFirebase();
+  }
+
+  Future<void> _initializeFirebase() async {
+    await FirebaseAuth.instance.authStateChanges().first;
+    setState(() {
+      _currentUser = FirebaseAuth.instance.currentUser;
+      if (_currentUser != null) {
+        // For testing, use the hardcoded data
+        // Comment this line and uncomment the next one when API is working
+        _userDataFuture = Future.value(testData);
+        // _userDataFuture = CockroachDBDataSource().getData(_currentUser!.uid);
+      }
+    });
   }
 
   @override
@@ -65,43 +95,44 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             );
           } else if (snapshot.hasData) {
             final data = snapshot.data!;
-            final user = parseUserData(data);
+            print("Raw API data: $data"); // Debug print
 
-            return Center(
+            late AppUser.User user;
+            try {
+              user = parseUserData(data);
+            } catch (e) {
+              print("Parse error details: $e"); // Debug print
+              return Center(
+                child: Text(
+                  'Error parsing user data: $e',
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white : Colors.black,
+                  ),
+                ),
+              );
+            }
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   CircleAvatar(
                     radius: 50,
                     backgroundColor: Theme.of(context).colorScheme.primary,
-                    child:
-                        const Icon(Icons.person, size: 50, color: Colors.white),
+                    child: Text(
+                      user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                      style: const TextStyle(fontSize: 40, color: Colors.white),
+                    ),
                   ),
                   const SizedBox(height: 20),
-                  Text(
-                    'Name: ${user.name}',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: isDarkMode ? Colors.white : Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Email: ${user.email}',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: isDarkMode ? Colors.white70 : Colors.black54,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'UUID: ${user.uuid}',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: isDarkMode ? Colors.white70 : Colors.black54,
-                    ),
-                  ),
+                  _buildProfileItem('Name', user.name),
+                  _buildProfileItem('Email', user.email),
+                  _buildProfileItem('Username', user.username),
+                  _buildProfileItem('Bio', user.bio),
+                  _buildProfileItem(
+                      'Date of Birth', _formatDate(user.dateOfBirth)),
+                  _buildProfileItem('Gender', _capitalizeFirst(user.gender)),
+                  _buildProfileItem('Phone Number', user.phoneNumber),
                   const SizedBox(height: 30),
                   Consumer(
                     builder: (context, ref, child) {
@@ -149,20 +180,93 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  AppUser.User parseUserData(String data) {
-    final jsonData = jsonDecode(data);
-    return AppUser.User(
-      name: jsonData['name'],
-      email: jsonData['email'],
-      uuid: jsonData['uuid'],
-      createdAt: jsonData['created_at'],
-      updatedAt: jsonData['updated_at'],
-      deletedAt: jsonData['deleted_at'],
-      username: jsonData['username'],
-      bio: jsonData['bio'],
-      dateOfBirth: jsonData['date_of_birth'],
-      gender: jsonData['gender'],
-      phoneNumber: jsonData['phone_number'],
+  Widget _buildProfileItem(String label, String value) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              '$label:',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: isDarkMode ? Colors.white : Colors.black87,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value.isNotEmpty ? value : 'Not provided',
+              style: TextStyle(
+                fontSize: 16,
+                color: isDarkMode ? Colors.white70 : Colors.black54,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
+  }
+
+  String _formatDate(String dateString) {
+    if (dateString.isEmpty) return '';
+    try {
+      final date = DateTime.parse(dateString);
+      return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return dateString;
+    }
+  }
+
+  String _capitalizeFirst(String text) {
+    if (text.isEmpty) return '';
+    return text[0].toUpperCase() + text.substring(1);
+  }
+
+  AppUser.User parseUserData(String data) {
+    try {
+      // Trim whitespace and remove any special characters that might cause issues
+      String cleanData = data.trim();
+
+      // Check if the data is already in JSON format
+      Map<String, dynamic> jsonData;
+
+      try {
+        // Try to parse the data as JSON directly
+        jsonData = jsonDecode(cleanData);
+      } catch (e) {
+        // If that fails, check if the data needs additional cleaning
+        // Sometimes API responses can include equals signs or other prefixes
+        if (cleanData.contains("={")) {
+          cleanData = cleanData.substring(cleanData.indexOf("={") + 1);
+          jsonData = jsonDecode(cleanData);
+        } else {
+          // If all parsing attempts fail, throw an error
+          throw FormatException("Could not parse data as JSON");
+        }
+      }
+
+      // Create user from parsed JSON data
+      return AppUser.User(
+        uuid: jsonData['uuid'] ?? '',
+        name: jsonData['name'] ?? '',
+        email: jsonData['email'] ?? '',
+        createdAt: jsonData['created_at'] ?? '',
+        updatedAt: jsonData['updated_at'] ?? '',
+        deletedAt: jsonData['deleted_at'] ?? '',
+        username: jsonData['username'] ?? '',
+        bio: jsonData['bio'] ?? '',
+        dateOfBirth: jsonData['date_of_birth'] ?? '',
+        gender: jsonData['gender'] ?? '',
+        phoneNumber: jsonData['phone_number'] ?? '',
+      );
+    } catch (e) {
+      // If all else fails
+      throw FormatException("Failed to parse user data: $e\nRaw data: $data");
+    }
   }
 }
