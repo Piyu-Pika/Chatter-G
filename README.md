@@ -15,7 +15,7 @@ Welcome to Chatter G! This is a powerful Flutter application with a Golang backe
 This project is a college assignment aimed at learning and showcasing advanced mobile and backend development skills. Key features include:
 - Real-time text messaging using WebSockets.
 - Audio and video calls using WebRTC.
-- AI-powered chat assistance (integrated via xAI API).
+- AI-powered chat assistance (integrated via AI API).
 - User authentication with Firebase.
 - Data management with MongoDB and CockroachDB.
 
