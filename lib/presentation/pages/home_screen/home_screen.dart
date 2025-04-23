@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../providers/auth_provider.dart';
 import '../../widgets/message_box.dart';
 import '../chat_screen/chat_screen.dart';
 import '../profile_screen/ProfileScreen.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
 // import 'dart:convert';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _chatrooms = {};
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -43,8 +45,10 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
-            onPressed: () {
+            icon: Icon(isDarkMode ? Icons.light_mode : Icons.logout),
+            onPressed: () async {
+              await ref.read(authServiceProvider).signOut(context);
+
               setState(() {
                 isDarkMode = !isDarkMode;
               });

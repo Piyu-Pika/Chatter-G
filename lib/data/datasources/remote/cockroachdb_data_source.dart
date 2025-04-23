@@ -7,11 +7,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class CockroachDBDataSource {
   final baseUrl = dotenv.env['BASE_URL'] ?? 'https://localhost:8080';
-  final Map<String, User> data = Map<String, User>.from({
-    'name': '',
-    'email': '',
-    'uuid': '',
-  });
   final dio.Dio _dio = dio.Dio();
 
   Future<String> saveData(data) async {
@@ -36,7 +31,7 @@ class CockroachDBDataSource {
     }
   }
 
-  Future<String> getData(uuid) async {
+  Future<User> getData(uuid) async {
     try {
       final response = await _dio.get(
         '$baseUrl/users',
@@ -68,7 +63,7 @@ class CockroachDBDataSource {
         //print
         print(user);
 
-        return response.data.toString();
+        return user;
       } else {
         throw Exception('Failed to load data');
       }
@@ -77,7 +72,28 @@ class CockroachDBDataSource {
     }
   }
 
-  Future<String> getUserData() async {
+  Future<String> Forcefullystartingserver() async {
+    try {
+      final response = await _dio.get(
+        '$baseUrl/health',
+        options: dio.Options(
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        return response.data.toString();
+      } else {
+        throw Exception('Failed to save data');
+      }
+    } catch (e) {
+      throw Exception('Failed to check server health: $e');
+    }
+  }
+
+  Future<User> getUserData(uuid) async {
     try {
       final response = await _dio.get(
         '$baseUrl/user',
@@ -87,13 +103,13 @@ class CockroachDBDataSource {
           },
         ),
         queryParameters: <String, dynamic>{
-          'uuid': data['uuid'],
+          'uuid': uuid,
         },
       );
+      print('Response: ${response.data}'); // Debugging line
 
       if (response.statusCode == 200) {
         final data = response.data;
-
         final user = User(
           name: data['name'],
           email: data['email'],
@@ -107,12 +123,15 @@ class CockroachDBDataSource {
           gender: data['gender'],
           phoneNumber: data['phone_number'],
         );
-        //print
-        print(user);
 
-        // save the data in the database
-        await LocalDataSource().saveData(response.data);
-        return response.data.toString();
+        // Print the user for debugging
+        print('User: $user'); // Debugging line
+
+        // Save the data in the local database
+        await LocalDataSource().saveData(user);
+        return user;
+      } else if (response.statusCode == 404) {
+        throw Exception('User not found');
       } else {
         throw Exception('Failed to load data');
       }

@@ -96,6 +96,11 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
   }
 
+  //getting uid of the current user
+  Future<String> getUid() async {
+    return _firebaseAuth.currentUser!.uid;
+  }
+
   Future<void> registerWithEmailPassword(String email, String password) async {
     _clearError();
     _setLoading(true);

@@ -1,163 +1,110 @@
-import 'package:chatterg/data/models/user_model.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
-import 'dart:async';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+import '../../models/user_model.dart';
 
 class LocalDataSource {
   static final LocalDataSource _instance = LocalDataSource._internal();
   factory LocalDataSource() => _instance;
   LocalDataSource._internal();
 
-  static Database? _database;
-  static const String _dbName = 'user_data.db';
-  static const String _tableName = 'user';
-  static const int _dbVersion = 1;
+  // Step 1: Initialize the secure storage instance
+  static const _secureStorage = FlutterSecureStorage();
 
-  static const String _colId = 'id';
-  static const String _colName = 'name';
-  static const String _colEmail = 'email';
-  static const String _colUuid = 'uuid';
+  // Step 2: Define keys for secure storage
+  static const String _keyName = 'name';
+  static const String _keyEmail = 'email';
+  static const String _keyUuid = 'uuid';
+  static const String _keyCreatedAt = 'created_at';
+  static const String _keyUpdatedAt = 'updated_at';
+  static const String _keyDeletedAt = 'deleted_at';
+  static const String _keyUsername = 'username';
+  static const String _keyBio = 'bio';
+  static const String _keyDateOfBirth = 'date_of_birth';
+  static const String _keyGender = 'gender';
+  static const String _keyPhoneNumber = 'phone_number';
 
-  Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDb();
-    return _database!;
-  }
-
-  Future<Database> _initDb() async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, _dbName);
-
-    return await openDatabase(
-      path,
-      version: _dbVersion,
-      onCreate: _onCreate,
-    );
-  }
-
-  Future<void> _onCreate(Database db, int version) async {
-    await db.execute('''
-      CREATE TABLE $_tableName (
-        $_colId INTEGER PRIMARY KEY AUTOINCREMENT,
-        $_colName TEXT NOT NULL,
-        $_colEmail TEXT NOT NULL,
-        $_colUuid TEXT NOT NULL UNIQUE
-      )
-    ''');
-    // Insert initial empty data row if needed, or handle upsert logic
-    await db.insert(
-      _tableName,
-      {
-        _colName: '',
-        _colEmail: '',
-        _colUuid: '', // Ensure this is unique or handle conflicts
-      },
-      // Use replace to handle potential initial setup conflicts or updates
-      // Or manage a single row with a fixed ID like 1
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-  }
-
-  // Saves or updates the single user data row.
-  // Assumes there's only one user profile to store.
-  Future<void> saveData(Map<String, User> data) async {
-    final db = await database;
-    // Check if required keys exist
-    if (data.containsKey(_colName) &&
-        data.containsKey(_colEmail) &&
-        data.containsKey(_colUuid)) {
-      // Attempt to update the first row, or insert if it doesn't exist.
-      // Using a fixed ID (e.g., 1) is often simpler for single-row data.
-      // Let's try updating based on UUID or insert if not present.
-      // For simplicity, let's just replace the *first* record found or insert.
-      // A more robust way would be to use WHERE clause with a fixed ID or the UUID.
-
-      final List<Map<String, dynamic>> existing = await db.query(
-        _tableName,
-        limit: 1,
-      );
-
-      final Map<String, dynamic> dataToSave = {
-        _colName: data[_colName] ?? '',
-        _colEmail: data[_colEmail] ?? '',
-        _colUuid: data[_colUuid] ?? '',
+  // Step 3: Save data to secure storage
+  Future<void> saveData(User data) async {
+    try {
+      final Map<String, String> userMap = {
+        _keyName: data.name,
+        _keyEmail: data.email,
+        _keyUuid: data.uuid,
+        _keyCreatedAt: data.createdAt,
+        _keyUpdatedAt: data.updatedAt,
+        _keyDeletedAt: data.deletedAt ?? '',
+        _keyUsername: data.username,
+        _keyBio: data.bio,
+        _keyDateOfBirth: data.dateOfBirth,
+        _keyGender: data.gender,
+        _keyPhoneNumber: data.phoneNumber,
       };
 
-      if (existing.isNotEmpty) {
-        // Update the first row found
-        await db.update(
-          _tableName,
-          dataToSave,
-          where: '$_colId = ?', // Update the row with the specific ID
-          whereArgs: [existing.first[_colId]],
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
-      } else {
-        // Insert if table was somehow empty
-        await db.insert(
-          _tableName,
-          dataToSave,
-          conflictAlgorithm: ConflictAlgorithm.replace,
+      for (var entry in userMap.entries) {
+        await _secureStorage.write(key: entry.key, value: entry.value);
+      }
+      print("User data saved to secure storage successfully.");
+    } catch (e) {
+      print("Error saving data to secure storage: $e");
+    }
+  }
+
+  // Step 4: Retrieve data from secure storage
+  Future<User?> getUser() async {
+    try {
+      final String? name = await _secureStorage.read(key: _keyName);
+      final String? email = await _secureStorage.read(key: _keyEmail);
+      final String? uuid = await _secureStorage.read(key: _keyUuid);
+      final String? createdAt = await _secureStorage.read(key: _keyCreatedAt);
+      final String? updatedAt = await _secureStorage.read(key: _keyUpdatedAt);
+      final String? deletedAt = await _secureStorage.read(key: _keyDeletedAt);
+      final String? username = await _secureStorage.read(key: _keyUsername);
+      final String? bio = await _secureStorage.read(key: _keyBio);
+      final String? dateOfBirth =
+          await _secureStorage.read(key: _keyDateOfBirth);
+      final String? gender = await _secureStorage.read(key: _keyGender);
+      final String? phoneNumber =
+          await _secureStorage.read(key: _keyPhoneNumber);
+
+      if (name != null && email != null && uuid != null) {
+        return User(
+          name: name,
+          email: email,
+          uuid: uuid,
+          createdAt: createdAt ?? '',
+          updatedAt: updatedAt ?? '',
+          deletedAt: deletedAt,
+          username: username ?? '',
+          bio: bio ?? '',
+          dateOfBirth: dateOfBirth ?? '',
+          gender: gender ?? '',
+          phoneNumber: phoneNumber ?? '',
         );
       }
-    } else {
-      // Handle error: Required data fields are missing
-      // Optionally throw an exception or log an error
-      print("Error: Missing required fields in data map for saveData.");
+      return null;
+    } catch (e) {
+      print("Error retrieving user from secure storage: $e");
+      return null;
     }
   }
 
-  Future<Map<String, dynamic>> getData() async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      _tableName,
-      limit: 1, // Assuming only one user data row exists
-    );
-
-    if (maps.isNotEmpty) {
-      // Remove the internal 'id' column before returning
-      final result = Map<String, dynamic>.from(maps.first);
-      result.remove(_colId);
-      return result;
-    } else {
-      // Return default empty data if no record found
-      return {
-        _colName: '',
-        _colEmail: '',
-        _colUuid: '',
-      };
+  // Step 5: Update data in secure storage
+  Future<void> updateData(Map<String, String> data) async {
+    try {
+      for (var entry in data.entries) {
+        await _secureStorage.write(key: entry.key, value: entry.value);
+      }
+    } catch (e) {
+      print("Error updating data in secure storage: $e");
     }
   }
 
-  // Optional: Method to close the database
-  Future<void> close() async {
-    final db = await database;
-    await db.close();
-    _database = null;
-  }
-
-  // Optional: Clear data (useful for logout)
+  // Step 6: Delete data from secure storage
   Future<void> clearData() async {
-    final db = await database;
-    // Update the first row to empty strings
-    final List<Map<String, dynamic>> existing = await db.query(
-      _tableName,
-      limit: 1,
-    );
-    if (existing.isNotEmpty) {
-      await db.update(
-        _tableName,
-        {
-          _colName: '',
-          _colEmail: '',
-          _colUuid: '',
-        },
-        where: '$_colId = ?',
-        whereArgs: [existing.first[_colId]],
-      );
+    try {
+      await _secureStorage.deleteAll();
+    } catch (e) {
+      print("Error clearing data from secure storage: $e");
     }
-    // Or, alternatively delete all rows and re-insert the empty one:
-    // await db.delete(_tableName);
-    // await db.insert(_tableName, {_colName: '', _colEmail: '', _colUuid: ''});
   }
 }

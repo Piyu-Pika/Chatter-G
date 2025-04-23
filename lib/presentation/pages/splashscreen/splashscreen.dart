@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:chatterg/data/datasources/remote/cockroachdb_data_source.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
@@ -43,6 +44,7 @@ class _SplashscreenState extends ConsumerState<Splashscreen> {
   @override
   void initState() {
     super.initState();
+    CockroachDBDataSource().Forcefullystartingserver();
     _checkAuthAndNavigate();
   }
 
@@ -87,7 +89,7 @@ class _SplashscreenState extends ConsumerState<Splashscreen> {
               ),
               const SizedBox(height: 30),
               Text(
-                'GodZilla',
+                'Chatter G',
                 style: TextStyle(
                   fontSize: 32, // Slightly larger font size
                   fontWeight: FontWeight.bold,
