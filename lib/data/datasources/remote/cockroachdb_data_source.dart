@@ -31,7 +31,7 @@ class CockroachDBDataSource {
     }
   }
 
-  Future<User> getData(uuid) async {
+  Future<List<User>> getData(uuid) async {
     try {
       final response = await _dio.get(
         '$baseUrl/users',
@@ -46,24 +46,27 @@ class CockroachDBDataSource {
       );
 
       if (response.statusCode == 200) {
-        final data = response.data;
-        final user = User(
-          name: data['name'],
-          email: data['email'],
-          uuid: data['uuid'],
-          createdAt: data['created_at'],
-          updatedAt: data['updated_at'],
-          deletedAt: data['deleted_at'],
-          username: data['username'],
-          bio: data['bio'],
-          dateOfBirth: data['date_of_birth'],
-          gender: data['gender'],
-          phoneNumber: data['phone_number'],
-        );
-        //print
-        print(user);
+        final List<dynamic> data = response.data;
+        final List<User> users = data.map((userJson) {
+          return User(
+            name: userJson['name'],
+            email: userJson['email'],
+            uuid: userJson['uuid'],
+            createdAt: userJson['created_at'],
+            updatedAt: userJson['updated_at'],
+            deletedAt: userJson['deleted_at'],
+            username: userJson['username'],
+            bio: userJson['bio'],
+            dateOfBirth: userJson['date_of_birth'],
+            gender: userJson['gender'],
+            phoneNumber: userJson['phone_number'],
+          );
+        }).toList();
 
-        return user;
+        // Print the list of users for debugging
+        print('Users: $users'); // Debugging line
+
+        return users;
       } else {
         throw Exception('Failed to load data');
       }

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../data/datasources/remote/cockroachdb_data_source.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/message_box.dart';
 import '../chat_screen/chat_screen.dart';
 import '../profile_screen/ProfileScreen.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
-// import 'dart:convert';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -16,13 +15,53 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  final _chatrooms = {};
+  final Map<String, List<ChatMessage>> _chatrooms = {};
   final _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _isLoading = true;
+  String _currentUserUuid = '';
 
   @override
   void initState() {
     super.initState();
-    // _loadChatrooms();
+    _loadChatrooms();
+    _initializeUserData();
+  }
+
+  Future<void> _initializeUserData() async {
+    final authProvider =
+        ref.read(authServiceProvider); // Assuming authProvider is defined
+    final userId = await authProvider.getUid();
+    setState(() {
+      _currentUserUuid = userId;
+    });
+  }
+
+  Future<void> _loadChatrooms() async {
+    try {
+      // Simulate fetching users from CockroachDB
+      CockroachDBDataSource cockroachDBDataSource = CockroachDBDataSource();
+      final users = await cockroachDBDataSource.getData(_currentUserUuid);
+      setState(() {
+        for (var user in users) {
+          _chatrooms[user.name] = [];
+        }
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load users: $e')),
+      );
+    }
+  }
+
+  Future<void> _refreshChatrooms() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await _loadChatrooms();
   }
 
   @override
@@ -66,116 +105,127 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
       ),
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'Your Conversations',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: isDarkMode ? Colors.white : Colors.black,
-                ),
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(
-                'The chats will be stored locally on your device',
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
-            Expanded(
-              child: _chatrooms.isEmpty
-                  ? Center(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : RefreshIndicator(
+                onRefresh: _refreshChatrooms,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
                       child: Text(
-                        'No conversations yet.\nTap + to start a new chat!',
-                        textAlign: TextAlign.center,
+                        'Your Conversations',
                         style: TextStyle(
-                          color: isDarkMode ? Colors.white70 : Colors.black54,
-                          fontSize: 16,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: isDarkMode ? Colors.white : Colors.black,
                         ),
                       ),
-                    )
-                  : ListView.builder(
-                      itemCount: _chatrooms.length,
-                      itemBuilder: (context, index) {
-                        final roomName = _chatrooms.keys.elementAt(index);
-                        final lastMessage = _chatrooms[roomName]!.isNotEmpty
-                            ? _chatrooms[roomName]!.last.text
-                            : 'No messages yet';
-                        return Dismissible(
-                          key: Key(roomName),
-                          background: Container(
-                            color: Colors.red,
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.only(right: 20.0),
-                            child:
-                                const Icon(Icons.delete, color: Colors.white),
-                          ),
-                          direction: DismissDirection.endToStart,
-                          onDismissed: (direction) {
-                            setState(() {
-                              _chatrooms.remove(roomName);
-                            });
-
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('$roomName deleted')),
-                            );
-                          },
-                          child: ListTile(
-                            title: Text(
-                              roomName,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: isDarkMode ? Colors.white : Colors.black,
-                              ),
-                            ),
-                            subtitle: Text(
-                              lastMessage,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: isDarkMode
-                                    ? Colors.white70
-                                    : Colors.black54,
-                              ),
-                            ),
-                            leading: CircleAvatar(
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.primary,
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Text(
+                        'The chats will be stored locally on your device',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                    Expanded(
+                      child: _chatrooms.isEmpty
+                          ? Center(
                               child: Text(
-                                roomName[0].toUpperCase(),
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ),
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ChatScreen(
-                                  reciver: "user2",
-                                  messages: [
-                                    ChatMessage(
-                                      text: "hello",
-                                      isUser: false,
-                                    )
-                                  ],
-                                  onMessagesUpdated: (updatedMessages) {
-                                    // Handle updated messages here
-                                  },
+                                'No conversations yet.\nTap + to start a new chat!',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: isDarkMode
+                                      ? Colors.white70
+                                      : Colors.black54,
+                                  fontSize: 16,
                                 ),
                               ),
+                            )
+                          : ListView.builder(
+                              itemCount: _chatrooms.length,
+                              itemBuilder: (context, index) {
+                                final roomName =
+                                    _chatrooms.keys.elementAt(index);
+                                final lastMessage =
+                                    _chatrooms[roomName]!.isNotEmpty
+                                        ? _chatrooms[roomName]!.last.text
+                                        : 'No messages yet';
+                                return Dismissible(
+                                  key: Key(roomName),
+                                  background: Container(
+                                    color: Colors.red,
+                                    alignment: Alignment.centerRight,
+                                    padding: const EdgeInsets.only(right: 20.0),
+                                    child: const Icon(Icons.delete,
+                                        color: Colors.white),
+                                  ),
+                                  direction: DismissDirection.endToStart,
+                                  onDismissed: (direction) {
+                                    setState(() {
+                                      _chatrooms.remove(roomName);
+                                    });
+
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content: Text('$roomName deleted')),
+                                    );
+                                  },
+                                  child: ListTile(
+                                    title: Text(
+                                      roomName,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : Colors.black,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      lastMessage,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: isDarkMode
+                                            ? Colors.white70
+                                            : Colors.black54,
+                                      ),
+                                    ),
+                                    leading: CircleAvatar(
+                                      backgroundColor:
+                                          Theme.of(context).colorScheme.primary,
+                                      child: Text(
+                                        roomName[0].toUpperCase(),
+                                        style: const TextStyle(
+                                            color: Colors.white),
+                                      ),
+                                    ),
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ChatScreen(
+                                          reciver: roomName,
+                                          messages: _chatrooms[roomName]!,
+                                          onMessagesUpdated: (updatedMessages) {
+                                            setState(() {
+                                              _chatrooms[roomName] =
+                                                  updatedMessages;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                    onLongPress: () => {},
+                                  ),
+                                );
+                              },
                             ),
-                            onLongPress: () => {},
-                          ),
-                        );
-                      },
                     ),
-            ),
-          ],
-        ),
+                  ],
+                ),
+              ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {},

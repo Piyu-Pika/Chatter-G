@@ -1,7 +1,6 @@
 // import 'dart:convert';
 
 import 'package:chatterg/presentation/providers/auth_provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -17,7 +16,6 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  User? _currentUser;
   final _cockroachdbDataSource = CockroachDBDataSource();
   late Future<AppUser.User> _userDataFuture = Future.value(AppUser.User(
     uuid: '',
@@ -61,14 +59,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ref.read(authServiceProvider); // Assuming authProvider is defined
     final userId = await authProvider.getUid();
     setState(() {
-      if (userId != null) {
-        print("User ID: $userId"); // Debug print
-        _userDataFuture = _cockroachdbDataSource.getUserData(userId);
-        print("User data future: $_userDataFuture"); // Debug print
-      } else {
-        // Handle the case where userId is null
-        _userDataFuture = Future.error('User is not logged in');
-      }
+      print("User ID: $userId"); // Debug print
+      _userDataFuture = _cockroachdbDataSource.getUserData(userId);
+      print("User data future: $_userDataFuture"); // Debug print
     });
   }
 
