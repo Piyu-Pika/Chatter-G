@@ -44,8 +44,25 @@ class _SplashscreenState extends ConsumerState<Splashscreen> {
   @override
   void initState() {
     super.initState();
-    CockroachDBDataSource().Forcefullystartingserver();
+    _tryStartingServer();
     _checkAuthAndNavigate();
+  }
+
+  // Function to start the server if not already running
+  Future<void> _tryStartingServer() async {
+    while (true) {
+      try {
+        final response =
+            await CockroachDBDataSource().Forcefullystartingserver();
+        if (response == '200') {
+          break; // Exit the loop if the response is successful
+        }
+      } catch (e) {
+        // Optionally log the error or handle it
+        print('Retrying to start server: $e');
+      }
+      await Future.delayed(const Duration(seconds: 1)); // Wait before retrying
+    }
   }
 
   Future<void> _checkAuthAndNavigate() async {

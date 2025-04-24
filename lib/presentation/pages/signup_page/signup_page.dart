@@ -181,6 +181,7 @@ class _SignupFormState extends ConsumerState<SignupForm> {
       _nameController.text.trim(); // Get name
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
+      final name = _nameController.text.trim(); // Get name
       // Confirm password validation is handled by the TextFormField validator now
 
       // Call the register method from AuthService
@@ -190,7 +191,7 @@ class _SignupFormState extends ConsumerState<SignupForm> {
       // to save the user's name in your database.
       await ref
           .read(authServiceProvider)
-          .registerWithEmailPassword(email, password);
+          .registerWithEmailPassword(name, email, password);
 
       // No navigation or success message here - AuthWrapper handles navigation
       // Error display is handled by the listener in SignupPage build method

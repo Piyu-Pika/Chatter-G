@@ -34,6 +34,7 @@ final authServiceProvider = ChangeNotifierProvider<AuthService>((ref) {
 });
 
 class AuthService extends ChangeNotifier {
+  final cockroachDBDataSource = CockroachDBDataSource();
   final FirebaseAuth _firebaseAuth;
   final GoogleSignIn _googleSignIn;
   final Ref _ref; // Store Ref to potentially read other providers if needed
@@ -101,7 +102,8 @@ class AuthService extends ChangeNotifier {
     return _firebaseAuth.currentUser!.uid;
   }
 
-  Future<void> registerWithEmailPassword(String email, String password) async {
+  Future<void> registerWithEmailPassword(
+      String name, String email, String password) async {
     _clearError();
     _setLoading(true);
     try {
@@ -118,6 +120,26 @@ class AuthService extends ChangeNotifier {
       _setError('An unexpected error occurred: ${e.toString()}');
     }
     // No finally _setLoading(false) needed here if relying on _onAuthStateChanged or _setError
+    data["name"] = name;
+    data["email"] = email;
+    data["uuid"] = _firebaseAuth.currentUser!.uid;
+    data["createdAt"] = DateTime.now().toString();
+    data["updatedAt"] = DateTime.now().toString();
+    data["deletedAt"] = null;
+    data["username"] = null;
+    data["bio"] = null;
+    data["dateOfBirth"] = null;
+    data["gender"] = null;
+    data["phoneNumber"] = null;
+
+    cockroachDBDataSource.saveData(data).then((value) {
+      log('Data saved successfully: $value');
+      _setLoading(false);
+    }).catchError((error) {
+      // Handle error if needed
+      _setError(error.toString());
+      _setLoading(false);
+    });
   }
 
   // Modified to include BuildContext for navigation
