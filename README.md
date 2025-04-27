@@ -156,12 +156,12 @@ Please install the above and configure them as per the official documentation. D
 2. Navigate to the directory where you want to store Chatter G.
 3. Run the following command to clone the repository:
     ```bash
-    git clone https://github.com/your-username/chat-app.git
+    git clone https://github.com/Piyu-Pika/Chatter-G.git
     ```
-    (Replace `https://github.com/your-username/chat-app.git` with your actual repository URL.)
+    (Replace `https://github.com/Piyu-Pika/Chatter-G.git` with your actual repository URL.)
 4. Change into the project directory:
     ```bash
-    cd chat-app
+    cd Chatter-G
     ```
 
 ## How to Run
@@ -172,25 +172,25 @@ Please install the above and configure them as per the official documentation. D
     ```bash
     flutter pub get
     ```
-4. Configure Firebase and xAI API keys in `lib/core/constants.dart`.
+4. Configure Firebase .
 5. Run the app on a connected device or emulator:
     ```bash
     flutter run
     ```
 
 ### Backend (Go)
-1. Navigate to the `backend` directory:
+1. Navigate to the `ChatterG-go` directory:
     ```bash
-    cd backend
+    cd ChatterG-go
     ```
 2. Install Go dependencies:
     ```bash
     go mod tidy
     ```
-3. Configure database connections and API keys in `backend/config/config.go`.
+3. Configure database connections .
 4. Start the Go server:
     ```bash
-    go run cmd/main.go
+    go run main.go
     ```
 5. Ensure MongoDB, CockroachDB, and WebSocket servers are running.
 
