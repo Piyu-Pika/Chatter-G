@@ -39,6 +39,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final userId = await authProvider.getUid();
     setState(() {
       _userDataFuture = _cockroachdbDataSource.getUserData(userId);
+      print('User ID: $userId');
+      print('User Data: ${_userDataFuture}');
     });
   }
 
@@ -63,7 +65,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
 
     try {
-      await _cockroachdbDataSource.patchData(updatedUser);
+      await _cockroachdbDataSource.patchData(updatedUser.toJson());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

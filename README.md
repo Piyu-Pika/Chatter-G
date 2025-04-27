@@ -146,7 +146,10 @@ To run Chatter G, you will need the following:
 - **Android/iOS Simulator or Device** (for testing)
 - **IDE** (e.g., Visual Studio Code or Android Studio)
 - **Dependencies**:
-   - Flutter packages: `flutter_riverpod`, `http`, `web_socket_channel`, `flutter_webrtc`, `firebase_auth`
+   - Flutter packages: `flutter_riverpod`, `dio`, `shared_preferences`, `firebase_core`, `firebase_auth`, `google_sign_in`, `sqflite`, `flutter_dotenv`, `flutter_secure_storage`, `intl`,
+  `socket_io_client`, `web_socket_channel`, `flutter_webrtc`, `flutter_facebook_auth`
+  `shared_preferences`,`firebase_core`, `firebase_auth`, `google_sign_in`, `sqflite`, `flutter_dotenv`, `flutter_secure_storage`, `intl`,
+ 
    - Go packages: [list Go dependencies, e.g., `github.com/gorilla/websocket`]
 
 Please install the above and configure them as per the official documentation. Detailed setup instructions will be added here.
@@ -158,7 +161,6 @@ Please install the above and configure them as per the official documentation. D
     ```bash
     git clone https://github.com/Piyu-Pika/Chatter-G.git
     ```
-    (Replace `https://github.com/Piyu-Pika/Chatter-G.git` with your actual repository URL.)
 4. Change into the project directory:
     ```bash
     cd Chatter-G

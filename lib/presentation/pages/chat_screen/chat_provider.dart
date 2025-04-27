@@ -80,6 +80,7 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
 
   void _initializeChat() {
     try {
+      print('Initializing chat...');
       final authProvider = ref.read(authServiceProvider);
       final currentUserUuid = authProvider.currentUser?.uid ?? '';
       final receiver = ref.read(currentReceiverProvider);
@@ -89,6 +90,7 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
       final roomName = getRoomName(currentUserUuid, receiver.uuid);
       final webSocketService = ref.read(webSocketServiceProvider);
       if (!webSocketService.isConnected) {
+        print('WebSocket not connected. Attempting to connect...');
         webSocketService
             .connect('ws://chatterg.leapcell.app/ws?userID=$currentUserUuid');
       }
@@ -99,6 +101,8 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
         roomName: roomName,
       );
 
+      print('Chat initialized with roomName: $roomName');
+
       // Scroll to bottom after initialization
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollToBottom();
@@ -107,15 +111,18 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
       // Watch messages for the room
       ref.listen(chatMessagesProvider, (previous, next) {
         final messages = next[roomName] ?? [];
+        print('New messages received: ${messages.length}');
         state = state.copyWith(messages: messages);
       });
     } catch (e) {
+      print('Error initializing chat: $e');
       state = state.copyWith(errorMessage: 'Error initializing chat: $e');
     }
   }
 
   void _scrollToBottom() {
     if (state.scrollController.hasClients) {
+      print('Scrolling to bottom...');
       state.scrollController.animateTo(
         state.scrollController.position.maxScrollExtent,
         duration: const Duration(milliseconds: 300),
@@ -127,6 +134,7 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
   void sendMessage(String text) {
     if (state.isLoading) return;
 
+    print('Sending message: $text');
     state = state.copyWith(isLoading: true);
 
     try {
@@ -134,7 +142,7 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
         senderId: state.currentUserUuid,
         recipientId: state.receiver.uuid,
         content: text,
-        timestamp: DateTime.now(),
+        timestamp: DateTime.now().toString(),
       );
 
       final webSocketService = ref.read(webSocketServiceProvider);
@@ -143,6 +151,8 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
       }
 
       webSocketService.sendMessage(message.toJson());
+      print('Message sent successfully as JSON: ${message.toJson()}');
+      print('Message sent successfully');
       state.textController.clear();
 
       // Scroll to bottom after sending message
@@ -150,6 +160,7 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
         _scrollToBottom();
       });
     } catch (e) {
+      print('Failed to send message: $e');
       state = state.copyWith(errorMessage: 'Failed to send message: $e');
     } finally {
       state = state.copyWith(isLoading: false);
@@ -157,6 +168,7 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
   }
 
   Map<String, List<dynamic>> groupMessagesByDate(List<dynamic> messages) {
+    print('Grouping messages by date...');
     final groupedMessages = <String, List<dynamic>>{};
 
     for (final message in messages) {
@@ -167,6 +179,7 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
       groupedMessages[dateStr]!.add(message);
     }
 
+    print('Messages grouped by date: ${groupedMessages.keys}');
     return groupedMessages;
   }
 
@@ -188,6 +201,7 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
 
   @override
   void dispose() {
+    print('Disposing ChatScreenNotifier...');
     state.textController.dispose();
     state.scrollController.dispose();
     super.dispose();

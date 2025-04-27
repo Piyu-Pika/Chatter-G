@@ -5,7 +5,7 @@ class ChatMessage {
   final String recipientId;
   // final int recipientId;
   final String content;
-  final DateTime timestamp;
+  final String timestamp;
 
   bool isRead;
 
@@ -22,7 +22,7 @@ class ChatMessage {
       senderId: json['sender_id'],
       recipientId: json['recipient_id'],
       content: json['content'],
-      timestamp: DateTime.parse(json['timestamp']),
+      timestamp: DateTime.parse(json['timestamp']).toString(),
     );
   }
 
@@ -31,7 +31,7 @@ class ChatMessage {
       'sender_id': senderId,
       'recipient_id': recipientId,
       'content': content,
-      'timestamp': timestamp.toIso8601String(),
+      'timestamp': timestamp.toString(),
     };
   }
 
@@ -41,7 +41,7 @@ class ChatMessage {
       senderId: messagebox.senderId,
       recipientId: messagebox.recipientId,
       content: messagebox.text,
-      timestamp: messagebox.timestamp,
+      timestamp: messagebox.timestamp.toString(),
     );
   }
 }

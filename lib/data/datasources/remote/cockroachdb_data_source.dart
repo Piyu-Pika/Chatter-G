@@ -207,9 +207,14 @@ class CockroachDBDataSource {
       if (response.statusCode == 200) {
         return response.data;
       } else {
-        throw Exception('Failed to save data');
+        // Log the response for debugging
+        print('Error Response: ${response.statusCode} - ${response.data}');
+        throw Exception(
+            'Failed to save data: Server returned status code ${response.statusCode}');
       }
     } catch (e) {
+      // Log the exception for debugging
+      print('Exception occurred: $e');
       throw Exception('Failed to save data: $e');
     }
   }

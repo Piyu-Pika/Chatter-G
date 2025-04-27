@@ -64,21 +64,22 @@ class User {
       phoneNumber: json['phone_number'] ?? '',
     );
   }
-  // Map<String, dynamic> toJson() {
-  //   return {
-  //     'uuid': uuid,
-  //     'name': name,
-  //     'email': email,
-  //     'created_at': createdAt,
-  //     'updated_at': updatedAt,
-  //     'deleted_at': deletedAt,
-  //     'username': username,
-  //     'bio': bio,
-  //     'date_of_birth': dateOfBirth,
-  //     'gender': gender,
-  //     'phone_number': phoneNumber,
-  //   };
-  // }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'uuid': uuid,
+      'name': name,
+      'email': email,
+      'created_at': createdAt,
+      'updated_at': updatedAt,
+      'deleted_at': deletedAt,
+      'username': username,
+      'bio': bio,
+      'date_of_birth': dateOfBirth,
+      'gender': gender,
+      'phone_number': phoneNumber,
+    };
+  }
 
   static Map<String, dynamic> toJsonFromMap(Map<String, User> data) {
     return data.map((key, user) => MapEntry(key, {
