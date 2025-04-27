@@ -99,6 +99,7 @@ class AuthService extends ChangeNotifier {
 
   //getting uid of the current user
   Future<String> getUid() async {
+    print('Getting UID of the current user...${_firebaseAuth.currentUser}');
     return _firebaseAuth.currentUser!.uid;
   }
 
@@ -120,26 +121,6 @@ class AuthService extends ChangeNotifier {
       _setError('An unexpected error occurred: ${e.toString()}');
     }
     // No finally _setLoading(false) needed here if relying on _onAuthStateChanged or _setError
-    data["name"] = name;
-    data["email"] = email;
-    data["uuid"] = _firebaseAuth.currentUser!.uid;
-    data["createdAt"] = DateTime.now().toString();
-    data["updatedAt"] = DateTime.now().toString();
-    data["deletedAt"] = null;
-    data["username"] = null;
-    data["bio"] = null;
-    data["dateOfBirth"] = null;
-    data["gender"] = null;
-    data["phoneNumber"] = null;
-
-    cockroachDBDataSource.saveData(data).then((value) {
-      log('Data saved successfully: $value');
-      _setLoading(false);
-    }).catchError((error) {
-      // Handle error if needed
-      _setError(error.toString());
-      _setLoading(false);
-    });
   }
 
   // Modified to include BuildContext for navigation
@@ -148,24 +129,12 @@ class AuthService extends ChangeNotifier {
     _clearError();
     _setLoading(true);
     try {
-      await _firebaseAuth.signInWithEmailAndPassword(
+      await _firebaseAuth
+          .signInWithEmailAndPassword(
         email: email,
         password: password,
-      );
-
-      data["name"] = _firebaseAuth.currentUser!.displayName;
-      data["email"] = _firebaseAuth.currentUser!.email;
-      data["uuid"] = _firebaseAuth.currentUser!.uid;
-      data["createdAt"] =
-          _firebaseAuth.currentUser!.metadata.creationTime.toString();
-      data["updatedAt"] =
-          _firebaseAuth.currentUser!.metadata.lastSignInTime.toString();
-
-      CockroachDBDataSource().saveData(data).then((value) {
-        // Handle success if needed
-        log('Data saved successfully: $value');
-        _setLoading(false);
-      }).catchError((error) {
+      )
+          .catchError((error) {
         // Handle error if needed
         _setError(error.toString());
         _setLoading(false);

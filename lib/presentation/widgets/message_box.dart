@@ -1,30 +1,39 @@
 import 'package:flutter/material.dart';
 
-class ChatMessage extends StatelessWidget {
+class Messagebox extends StatelessWidget {
   final String text;
   final bool isUser;
+  final String senderId;
+  final String recipientId;
+  final DateTime timestamp;
 
-  const ChatMessage({super.key, required this.text, required this.isUser});
+  Messagebox({
+    required this.text,
+    required this.senderId,
+    required this.recipientId,
+    required this.timestamp,
+    required this.isUser,
+  });
+  // Existing fields and methods
 
-  factory ChatMessage.fromJson(Map<String, dynamic> json) {
-    return ChatMessage(
-      text: json['text'],
-      isUser: json['isUser'],
+  // Define the toMessagebox method
+  Messagebox toMessagebox() {
+    // Convert ChatMessage to Messagebox
+    return Messagebox(
+      isUser: this.isUser,
+      recipientId: this.recipientId,
+      // Map the fields from ChatMessage to Messagebox
+      text: this.text,
+      timestamp: this.timestamp,
+      senderId: this.senderId,
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'text': text,
-      'isUser': isUser,
-    };
   }
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final userBubbleColor = isDarkMode ? Colors.blue[700] : Colors.blue[100];
-    final aiBubbleColor = isDarkMode ? Colors.grey[700] : Colors.grey[300];
+    final reciverBubbleColor = isDarkMode ? Colors.grey[700] : Colors.grey[300];
     final textColor = isDarkMode ? Colors.white : Colors.black;
 
     return Padding(
@@ -45,7 +54,7 @@ class ChatMessage extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: isUser ? userBubbleColor : aiBubbleColor,
+                color: isUser ? userBubbleColor : reciverBubbleColor,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
                   topRight: const Radius.circular(16),

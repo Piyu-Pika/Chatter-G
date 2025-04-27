@@ -1,75 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/datasources/remote/cockroachdb_data_source.dart';
-import '../../providers/auth_provider.dart';
-import '../../widgets/message_box.dart';
+import '../../../data/models/user_model.dart';
 import '../chat_screen/chat_screen.dart';
 import '../profile_screen/ProfileScreen.dart';
+import 'home_provider.dart';
 
-class HomeScreen extends ConsumerStatefulWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends ConsumerState<HomeScreen> {
-  final Map<String, List<ChatMessage>> _chatrooms = {};
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
-  bool _isLoading = true;
-  String _currentUserUuid = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadChatrooms();
-    _initializeUserData();
-  }
-
-  Future<void> _initializeUserData() async {
-    final authProvider =
-        ref.read(authServiceProvider); // Assuming authProvider is defined
-    final userId = await authProvider.getUid();
-    setState(() {
-      _currentUserUuid = userId;
-    });
-  }
-
-  Future<void> _loadChatrooms() async {
-    try {
-      // Simulate fetching users from CockroachDB
-      CockroachDBDataSource cockroachDBDataSource = CockroachDBDataSource();
-      final users = await cockroachDBDataSource.getData(_currentUserUuid);
-      setState(() {
-        for (var user in users) {
-          _chatrooms[user.name] = [];
-        }
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load users: $e')),
-      );
-    }
-  }
-
-  Future<void> _refreshChatrooms() async {
-    setState(() {
-      _isLoading = true;
-    });
-    await _loadChatrooms();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    var isDarkMode = Theme.of(context).brightness == Brightness.dark;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final homeState = ref.watch(homeScreenProvider);
+    final homeNotifier = ref.read(homeScreenProvider.notifier);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      key: _scaffoldKey,
+      key: homeNotifier.scaffoldKey,
       backgroundColor: isDarkMode ? Colors.black : Colors.white,
       appBar: AppBar(
         backgroundColor: isDarkMode ? Colors.black : Colors.white,
@@ -86,29 +33,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           IconButton(
             icon: Icon(isDarkMode ? Icons.light_mode : Icons.logout),
             onPressed: () async {
-              await ref.read(authServiceProvider).signOut(context);
-
-              setState(() {
-                isDarkMode = !isDarkMode;
-              });
+              await homeNotifier.signOut(context);
             },
             color: isDarkMode ? Colors.white : Colors.black,
           ),
           IconButton(
             icon: const Icon(Icons.person),
             onPressed: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => ProfileScreen()));
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ProfileScreen()),
+              );
             },
             color: isDarkMode ? Colors.white : Colors.black,
           ),
         ],
       ),
       body: SafeArea(
-        child: _isLoading
+        child: homeState.isLoading
             ? const Center(child: CircularProgressIndicator())
             : RefreshIndicator(
-                onRefresh: _refreshChatrooms,
+                onRefresh: homeNotifier.refreshChatrooms,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -131,7 +76,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
                     Expanded(
-                      child: _chatrooms.isEmpty
+                      child: homeState.fetchedUsers.isEmpty
                           ? Center(
                               child: Text(
                                 'No conversations yet.\nTap + to start a new chat!',
@@ -145,80 +90,44 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               ),
                             )
                           : ListView.builder(
-                              itemCount: _chatrooms.length,
+                              itemCount: homeState.fetchedUsers.length,
                               itemBuilder: (context, index) {
-                                final roomName =
-                                    _chatrooms.keys.elementAt(index);
-                                final lastMessage =
-                                    _chatrooms[roomName]!.isNotEmpty
-                                        ? _chatrooms[roomName]!.last.text
-                                        : 'No messages yet';
-                                return Dismissible(
-                                  key: Key(roomName),
-                                  background: Container(
-                                    color: Colors.red,
-                                    alignment: Alignment.centerRight,
-                                    padding: const EdgeInsets.only(right: 20.0),
-                                    child: const Icon(Icons.delete,
-                                        color: Colors.white),
+                                final user = homeState.fetchedUsers[index];
+                                return ListTile(
+                                  title: Text(
+                                    user.name,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: isDarkMode
+                                          ? Colors.white
+                                          : Colors.black,
+                                    ),
                                   ),
-                                  direction: DismissDirection.endToStart,
-                                  onDismissed: (direction) {
-                                    setState(() {
-                                      _chatrooms.remove(roomName);
-                                    });
-
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text('$roomName deleted')),
-                                    );
-                                  },
-                                  child: ListTile(
-                                    title: Text(
-                                      roomName,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: isDarkMode
-                                            ? Colors.white
-                                            : Colors.black,
-                                      ),
+                                  subtitle: const Text(
+                                    'No messages yet',
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
+                                  leading: CircleAvatar(
+                                    backgroundColor:
+                                        Theme.of(context).colorScheme.primary,
+                                    child: Text(
+                                      user.name[0].toUpperCase(),
+                                      style:
+                                          const TextStyle(color: Colors.white),
                                     ),
-                                    subtitle: Text(
-                                      lastMessage,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: isDarkMode
-                                            ? Colors.white70
-                                            : Colors.black54,
-                                      ),
-                                    ),
-                                    leading: CircleAvatar(
-                                      backgroundColor:
-                                          Theme.of(context).colorScheme.primary,
-                                      child: Text(
-                                        roomName[0].toUpperCase(),
-                                        style: const TextStyle(
-                                            color: Colors.white),
-                                      ),
-                                    ),
-                                    onTap: () => Navigator.push(
+                                  ),
+                                  onTap: () {
+                                    ref
+                                        .read(currentReceiverProvider.notifier)
+                                        .state = user;
+                                    Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => ChatScreen(
-                                          reciver: roomName,
-                                          messages: _chatrooms[roomName]!,
-                                          onMessagesUpdated: (updatedMessages) {
-                                            setState(() {
-                                              _chatrooms[roomName] =
-                                                  updatedMessages;
-                                            });
-                                          },
-                                        ),
+                                        builder: (context) =>
+                                            const ChatScreen(),
                                       ),
-                                    ),
-                                    onLongPress: () => {},
-                                  ),
+                                    );
+                                  },
                                 );
                               },
                             ),

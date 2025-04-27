@@ -10,16 +10,26 @@ class CockroachDBDataSource {
   final dio.Dio _dio = dio.Dio();
 
   Future<String> saveData(data) async {
+    // Convert the data to JSON format
+    final String jsonData = jsonEncode(data);
+    // Print the JSON data for debugging
+    print('JSON Data: $jsonData');
+
     try {
-      final response = await _dio.post(
-        '$baseUrl/save-data',
-        options: dio.Options(
-          headers: <String, String>{
-            'Content-Type': 'application/json; charset=UTF-8',
-          },
-        ),
-        data: data,
-      );
+      final response = await _dio.post('$baseUrl/save-data',
+          options: dio.Options(
+            headers: <String, String>{
+              'Content-Type': 'application/json; charset=UTF-8',
+            },
+          ),
+          data: jsonData,
+          queryParameters: <String, dynamic>{
+            'uuid': data['uuid'],
+            'name': data['name'],
+            'email': data['email'],
+            'createdAt': data['created_at'],
+            'updatedAt': data['updated_at'],
+          });
 
       if (response.statusCode == 200) {
         return response.data.toString();
@@ -28,6 +38,34 @@ class CockroachDBDataSource {
       }
     } catch (e) {
       throw Exception('Failed to save data: $e');
+    }
+  }
+
+  Future<void> updateUserStatus(String uuid, bool isOnline) async {
+    try {
+      final response = await _dio.patch(
+        '$baseUrl/user',
+        options: dio.Options(
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+        ),
+        data: jsonEncode({
+          'uuid': uuid,
+          'is_online': isOnline,
+        }),
+        queryParameters: <String, dynamic>{
+          'uuid': uuid,
+          'is_online': isOnline,
+        },
+      );
+      if (response.statusCode == 200) {
+        return;
+      } else {
+        throw Exception('Failed to update user status');
+      }
+    } catch (e) {
+      throw Exception('Failed to update user status: $e');
     }
   }
 
@@ -75,7 +113,7 @@ class CockroachDBDataSource {
     }
   }
 
-  Future<String> Forcefullystartingserver() async {
+  Future<int?> Forcefullystartingserver() async {
     try {
       final response = await _dio.get(
         '$baseUrl/health',
@@ -87,7 +125,7 @@ class CockroachDBDataSource {
       );
 
       if (response.statusCode == 200) {
-        return response.data.toString();
+        return response.statusCode;
       } else {
         throw Exception('Failed to save data');
       }
@@ -140,6 +178,39 @@ class CockroachDBDataSource {
       }
     } catch (e) {
       throw Exception('Failed to load data: $e');
+    }
+  }
+
+  //patch the data
+  Future<int?> patchData(data) async {
+    // Convert the data to JSON format
+    final String jsonData = jsonEncode(data);
+    // Print the JSON data for debugging
+    print('JSON Data: $jsonData');
+
+    try {
+      final response = await _dio.patch('$baseUrl/user',
+          options: dio.Options(
+            headers: <String, String>{
+              'Content-Type': 'application/json; charset=UTF-8',
+            },
+          ),
+          data: jsonData,
+          queryParameters: <String, dynamic>{
+            'uuid': data['uuid'],
+            'name': data['name'],
+            'email': data['email'],
+            'createdAt': data['created_at'],
+            'updatedAt': data['updated_at'],
+          });
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        throw Exception('Failed to save data');
+      }
+    } catch (e) {
+      throw Exception('Failed to save data: $e');
     }
   }
 }

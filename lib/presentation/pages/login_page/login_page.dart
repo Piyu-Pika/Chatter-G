@@ -1,7 +1,7 @@
 import 'package:chatterg/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../data/datasources/remote/cockroachdb_data_source.dart';
+
 import '../../providers/auth_provider.dart';
 import '../signup_page/signup_page.dart';
 
@@ -329,7 +329,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                       .elevatedButtonTheme.style?.backgroundColor
                       ?.resolve({}),
                   foregroundColor: Colors.white,
-                  disabledBackgroundColor: Colors.green[200],
+                  disabledBackgroundColor: appTheme.disabledColor,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

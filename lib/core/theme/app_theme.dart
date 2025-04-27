@@ -57,6 +57,7 @@ final ThemeData appTheme = ThemeData(
   // Button theme
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
+      disabledBackgroundColor: const Color.fromRGBO(133, 255, 186, 0.5),
       backgroundColor: const Color.fromRGBO(37, 169, 153, 1.0),
       foregroundColor: Colors.white,
       elevation: 3,

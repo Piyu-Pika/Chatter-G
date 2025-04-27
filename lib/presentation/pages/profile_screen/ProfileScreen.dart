@@ -63,7 +63,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
 
     try {
-      await _cockroachdbDataSource.saveData(updatedUser);
+      await _cockroachdbDataSource.patchData(updatedUser);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

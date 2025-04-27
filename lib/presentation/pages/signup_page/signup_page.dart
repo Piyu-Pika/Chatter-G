@@ -7,15 +7,9 @@ import '../../../data/datasources/remote/cockroachdb_data_source.dart';
 import '../../providers/auth_provider.dart';
 import '../login_page/login_page.dart'; // Renamed from signup_page.dart
 
-// Providers for signup form
-// final signupNameProvider = StateProvider<String>((ref) => '');
-// final signupEmailProvider = StateProvider<String>((ref) => '');
-// final signupPasswordProvider = StateProvider<String>((ref) => '');
-// final signupConfirmPasswordProvider = StateProvider<String>((ref) => '');
 final signupIsPasswordVisibleProvider = StateProvider<bool>((ref) => false);
 final signupIsConfirmPasswordVisibleProvider =
     StateProvider<bool>((ref) => false);
-// final signupIsLoadingProvider = StateProvider<bool>((ref) => false);
 final termsAcceptedProvider = StateProvider<bool>((ref) => false);
 
 class SignupPage extends ConsumerWidget {
@@ -191,7 +185,16 @@ class _SignupFormState extends ConsumerState<SignupForm> {
       // to save the user's name in your database.
       await ref
           .read(authServiceProvider)
-          .registerWithEmailPassword(name, email, password);
+          .registerWithEmailPassword(name, email, password)
+          .then((value) {
+        CockroachDBDataSource().saveData({
+          'uuid': authService.currentUser?.uid,
+          'name': name,
+          'email': email,
+          'username': email.split('@')[0],
+          'bio': 'Hey there! I am using Chatter G.',
+        });
+      });
 
       // No navigation or success message here - AuthWrapper handles navigation
       // Error display is handled by the listener in SignupPage build method

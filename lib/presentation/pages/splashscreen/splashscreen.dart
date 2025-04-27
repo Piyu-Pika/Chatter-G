@@ -17,6 +17,8 @@ class AuthWrapper extends ConsumerWidget {
     return authState.when(
       data: (user) {
         if (user != null) {
+          //update the user is now online in the database
+          CockroachDBDataSource().updateUserStatus(user.uid, true);
           return const HomeScreen(); // User logged in
         } else {
           return LoginPage(); // User logged out
@@ -54,7 +56,7 @@ class _SplashscreenState extends ConsumerState<Splashscreen> {
       try {
         final response =
             await CockroachDBDataSource().Forcefullystartingserver();
-        if (response == '200') {
+        if (response == 200) {
           break; // Exit the loop if the response is successful
         }
       } catch (e) {

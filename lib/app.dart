@@ -1,3 +1,4 @@
+import 'package:chatterg/core/routers/router.dart';
 import 'package:flutter/material.dart';
 
 import 'core/theme/app_theme.dart';
@@ -13,6 +14,7 @@ class MyApp extends StatelessWidget {
       theme: appTheme,
       debugShowCheckedModeBanner: false,
       home: const Splashscreen(),
+      // routes: appRoutes,
     );
   }
 }
