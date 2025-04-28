@@ -13,29 +13,29 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final homeState = ref.watch(homeScreenProvider);
     final homeNotifier = ref.read(homeScreenProvider.notifier);
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    // final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       key: homeNotifier.scaffoldKey,
-      backgroundColor: isDarkMode ? Colors.black : Colors.white,
+      // backgroundColor: isDarkMode ? Colors.black : Colors.white,
       appBar: AppBar(
-        backgroundColor: isDarkMode ? Colors.black : Colors.white,
+        // backgroundColor: isDarkMode ? Colors.black : Colors.white,
         elevation: 0,
         title: Text(
           'Chatter G',
           style: TextStyle(
             fontSize: 24,
-            color: isDarkMode ? Colors.white : Colors.black,
+            // color: isDarkMode ? Colors.white : Colors.black,
             fontWeight: FontWeight.bold,
           ),
         ),
         actions: [
           IconButton(
-            icon: Icon(isDarkMode ? Icons.light_mode : Icons.logout),
+            icon: Icon(Icons.logout),
             onPressed: () async {
               await homeNotifier.signOut(context);
             },
-            color: isDarkMode ? Colors.white : Colors.black,
+            // color: isDarkMode ? Colors.white : Colors.black,
           ),
           IconButton(
             icon: const Icon(Icons.person),
@@ -45,7 +45,7 @@ class HomeScreen extends ConsumerWidget {
                 MaterialPageRoute(builder: (context) => ProfileScreen()),
               );
             },
-            color: isDarkMode ? Colors.white : Colors.black,
+            // color: isDarkMode ? Colors.white : Colors.black,
           ),
         ],
       ),
@@ -64,7 +64,7 @@ class HomeScreen extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: isDarkMode ? Colors.white : Colors.black,
+                          // color: isDarkMode ? Colors.white : Colors.black,
                         ),
                       ),
                     ),
@@ -82,9 +82,9 @@ class HomeScreen extends ConsumerWidget {
                                 'No conversations yet.\nTap + to start a new chat!',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: isDarkMode
-                                      ? Colors.white70
-                                      : Colors.black54,
+                                  // color: isDarkMode
+                                  //     ? Colors.white70
+                                  //     : Colors.black54,
                                   fontSize: 16,
                                 ),
                               ),
@@ -98,9 +98,9 @@ class HomeScreen extends ConsumerWidget {
                                     user.name,
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      color: isDarkMode
-                                          ? Colors.white
-                                          : Colors.black,
+                                      // color: isDarkMode
+                                      //     ? Colors.white
+                                      //     : Colors.black,
                                     ),
                                   ),
                                   subtitle: const Text(

@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../login_page/login_page.dart';
-import '../../providers/auth_provider.dart'; // Import Auth Provider
-import '../home_screen/home_screen.dart'; // Import Home Screen
+import '../../providers/auth_provider.dart';
+import '../home_screen/home_screen.dart';
 
 class AuthWrapper extends ConsumerWidget {
   const AuthWrapper({super.key});
@@ -43,38 +43,54 @@ class Splashscreen extends ConsumerStatefulWidget {
 }
 
 class _SplashscreenState extends ConsumerState<Splashscreen> {
+  bool _isServerReady = false;
+  bool _isTimerComplete = false;
+
   @override
   void initState() {
     super.initState();
-    _tryStartingServer();
-    _checkAuthAndNavigate();
+    _startServerAndTimer();
   }
 
-  // Function to start the server if not already running
+  Future<void> _startServerAndTimer() async {
+    // Start both processes simultaneously
+    _tryStartingServer();
+    _startMinimumTimer();
+  }
+
+  // Function to ensure minimum splash display time
+  Future<void> _startMinimumTimer() async {
+    await Future.delayed(const Duration(seconds: 3));
+    setState(() {
+      _isTimerComplete = true;
+    });
+    _navigateIfReady();
+  }
+
+  // Function to start the server
   Future<void> _tryStartingServer() async {
-    while (true) {
+    while (!_isServerReady) {
       try {
         final response =
             await CockroachDBDataSource().Forcefullystartingserver();
         if (response == 200) {
+          setState(() {
+            _isServerReady = true;
+          });
+          _navigateIfReady();
           break; // Exit the loop if the response is successful
         }
       } catch (e) {
-        // Optionally log the error or handle it
+        // Log the error or handle it
         print('Retrying to start server: $e');
       }
       await Future.delayed(const Duration(seconds: 1)); // Wait before retrying
     }
   }
 
-  Future<void> _checkAuthAndNavigate() async {
-    // Wait for splash screen duration AND for the initial auth state to resolve
-    await Future.delayed(const Duration(seconds: 3));
-
-    // Check the initial auth state after the delay
-    // The authStateChangesProvider might still be loading initially,
-    // but navigating to AuthWrapper handles all states (data, loading, error).
-    if (mounted) {
+  // Only navigate when both the server is ready and minimum time has passed
+  void _navigateIfReady() {
+    if (_isServerReady && _isTimerComplete && mounted) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const AuthWrapper()),
@@ -89,44 +105,44 @@ class _SplashscreenState extends ConsumerState<Splashscreen> {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      // Ensure appTheme and splashColor are correctly defined
       body: Container(
         decoration: BoxDecoration(
-          gradient: context
-              .backgroundGradient, // Use the gradient defined in app_theme.dart
+          gradient: context.backgroundGradient,
         ),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Consider making the image larger for a splash screen
               Image.asset(
-                'assets/images/chatter-g.jpg', // Ensure this path is correct in pubspec.yaml
-                height: screenHeight * 0.2, // Example: 20% of screen height
-                width: screenWidth * 0.4, // Example: 40% of screen width
-                fit: BoxFit.contain, // Adjust fit as needed
+                'assets/images/chatter-g.jpg',
+                height: screenHeight * 0.2,
+                width: screenWidth * 0.4,
+                fit: BoxFit.contain,
               ),
               const SizedBox(height: 30),
               Text(
                 'Chatter G',
                 style: TextStyle(
-                  fontSize: 32, // Slightly larger font size
+                  fontSize: 32,
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onPrimary, // Use theme color for better adaptability
+                  color: Theme.of(context).colorScheme.onPrimary,
                   letterSpacing: 1.5,
                 ),
               ),
-              const SizedBox(height: 40), // Space before the progress indicator
+              const SizedBox(height: 40),
               CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  Theme.of(context)
-                      .colorScheme
-                      .onPrimary
-                      .withOpacity(0.8), // Use theme color
+                  Theme.of(context).colorScheme.onPrimary.withOpacity(0.8),
                 ),
                 strokeWidth: 3.0,
+              ),
+              const SizedBox(height: 20),
+              Text(
+                _isServerReady ? "Server connected" : "Connecting to server...",
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  fontSize: 16,
+                ),
               ),
             ],
           ),
