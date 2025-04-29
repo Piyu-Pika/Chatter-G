@@ -1,4 +1,3 @@
-import 'package:chatterg/core/routers/router.dart';
 import 'package:flutter/material.dart';
 
 import 'core/theme/app_theme.dart';

@@ -13,9 +13,6 @@ final ThemeData appTheme = ThemeData(
     // Tertiary color - used for emphasis
     tertiary: const Color.fromRGBO(133, 255, 186, 1.0),
     onTertiary: Colors.black,
-    // Background colors
-    background: Colors.white,
-    onBackground: Colors.black87,
     // Surface colors - used for cards, sheets, menus
     surface: Colors.white,
     onSurface: const Color.fromRGBO(37, 169, 153, 0.9),
@@ -23,7 +20,7 @@ final ThemeData appTheme = ThemeData(
     error: Colors.redAccent,
     onError: Colors.white,
     // Container colors
-    surfaceVariant: const Color.fromRGBO(133, 255, 186, 0.15),
+    surfaceContainerHighest: const Color.fromRGBO(133, 255, 186, 0.15),
     onSurfaceVariant: const Color.fromRGBO(37, 169, 153, 1.0),
     outline: const Color.fromRGBO(94, 229, 186, 0.5),
     outlineVariant: const Color.fromRGBO(94, 229, 188, 0.3),

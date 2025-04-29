@@ -150,7 +150,7 @@ To run Chatter G, you will need the following:
   `socket_io_client`, `web_socket_channel`, `flutter_webrtc`, `flutter_facebook_auth`
   `shared_preferences`,`firebase_core`, `firebase_auth`, `google_sign_in`, `sqflite`, `flutter_dotenv`, `flutter_secure_storage`, `intl`,
  
-   - Go packages: [list Go dependencies, e.g., `github.com/gorilla/websocket`]
+   - Go packages: [list Go dependencies, e.g., `github.com/gorilla/websocket` ]
 
 Please install the above and configure them as per the official documentation. Detailed setup instructions will be added here.
 

@@ -71,14 +71,6 @@ class LoginPage extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  // const SizedBox(height: 8),
-                  // const Text(
-                  //   'Sign in to continue',
-                  //   style: TextStyle(
-                  //     color: Colors.white,
-                  //     fontSize: 16,
-                  //   ),
-                  // ),
                 ],
               ),
             ),
@@ -125,7 +117,6 @@ class _LoginFormState extends ConsumerState<LoginForm> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>(); // Optional: for form validation
-  // final _cockroachDBDataSource = CockroachDBDataSource();
 
   @override
   void dispose() {

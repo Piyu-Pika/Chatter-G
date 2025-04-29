@@ -91,8 +91,8 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
       final webSocketService = ref.read(webSocketServiceProvider);
       if (!webSocketService.isConnected) {
         print('WebSocket not connected. Attempting to connect...');
-        webSocketService
-            .connect('ws://chatterg.leapcell.app/ws?userID=$currentUserUuid');
+        webSocketService.connect(
+            'ws://chatterg-go-1.onrender.com/ws?userID=$currentUserUuid');
       }
 
       state = state.copyWith(
