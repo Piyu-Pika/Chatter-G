@@ -143,15 +143,15 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
         recipientId: state.receiver.uuid,
         content: text,
         timestamp: DateTime.now().toString(),
-      );
+      ).toJson();
 
       final webSocketService = ref.read(webSocketServiceProvider);
       if (!webSocketService.isConnected) {
         throw Exception('WebSocket not connected');
       }
 
-      webSocketService.sendMessage(message.toJson());
-      print('Message sent successfully as JSON: ${message.toJson()}');
+      webSocketService.sendMessage(message);
+      print('Message sent successfully as JSON: ${message}');
       print('Message sent successfully');
       state.textController.clear();
 

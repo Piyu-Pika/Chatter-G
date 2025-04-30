@@ -2,6 +2,8 @@ import 'package:web_socket_channel/io.dart';
 import 'dart:async';
 import 'dart:convert';
 
+import '../../models/message_model.dart';
+
 class WebSocketService {
   late IOWebSocketChannel channel;
   final StreamController<dynamic> _messagesController =
@@ -33,15 +35,18 @@ class WebSocketService {
   }
 
   // Listen for messages from the WebSocket server
-  Stream<Map<String, dynamic>> get messages =>
-      channel.stream.map((dynamic message) => message as Map<String, dynamic>);
+  Stream<Map<String, ChatMessage>> get messages =>
+      channel.stream.map((message) => jsonDecode(message)).map((message) {
+        final chatMessage = ChatMessage.fromJson(message);
+        return {chatMessage.recipientId: chatMessage};
+      });
 
   // Send message to the WebSocket server
   void sendMessage(Map<String, dynamic> message) {
     if (!_isConnected) {
       throw Exception('WebSocket not connected');
     }
-    channel.sink.add(jsonEncode(message));
+    channel.sink.add(message);
   }
 
   // Close the connection
