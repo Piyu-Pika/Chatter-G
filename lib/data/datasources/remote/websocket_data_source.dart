@@ -16,17 +16,22 @@ class WebSocketService {
       channel = IOWebSocketChannel.connect(url);
       _isConnected = true;
       print('WebSocket connected to $url');
-
-      // Forward messages from the channel to our controller
-      channel.stream.listen((message) {
-        _messagesController.add(jsonDecode(message));
-      }, onError: (error) {
-        _isConnected = false;
-        _messagesController.addError(error);
-      }, onDone: () {
-        _isConnected = false;
-        disconnect();
-      });
+      channel.stream.listen(
+        (message) {
+          print('Received message: $message');
+          _messagesController.add(jsonDecode(message));
+        },
+        onError: (error) {
+          _isConnected = false;
+          print('WebSocket error: $error');
+          _messagesController.addError(error);
+        },
+        onDone: () {
+          _isConnected = false;
+          print('WebSocket connection closed');
+          disconnect();
+        },
+      );
     } catch (e) {
       _isConnected = false;
       print('WebSocket connection error: $e');
@@ -36,8 +41,11 @@ class WebSocketService {
 
   // Listen for messages from the WebSocket server
   Stream<Map<String, ChatMessage>> get messages =>
-      channel.stream.map((message) => jsonDecode(message)).map((message) {
-        final chatMessage = ChatMessage.fromJson(message);
+      channel.stream.map((message) {
+        print('Raw message received: $message');
+        final decoded = jsonDecode(message);
+        print('Decoded message: $decoded');
+        final chatMessage = ChatMessage.fromJson(decoded);
         return {chatMessage.recipientId: chatMessage};
       });
 

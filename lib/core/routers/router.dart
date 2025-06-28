@@ -21,4 +21,7 @@ final Map<String, WidgetBuilder> appRoutes = {
   // '/about': (context) => const AboutScreen(),
   // '/terms': (context) => const TermsScreen(),
   // '/privacy': (context) => const PrivacyScreen(),
+  // '/camera': (context) => const CameraScreen(),
+  // 'call': (context) => const CallScreen(),
+  // '/chatterg-memes': (context) => const ChatterGMemesScreen(),
 };

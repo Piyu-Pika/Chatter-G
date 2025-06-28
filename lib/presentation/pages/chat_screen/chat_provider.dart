@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -91,8 +93,8 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
       final webSocketService = ref.read(webSocketServiceProvider);
       if (!webSocketService.isConnected) {
         print('WebSocket not connected. Attempting to connect...');
-        webSocketService.connect(
-            'ws://chatterg-go-1.onrender.com/ws?userID=$currentUserUuid');
+        webSocketService
+            .connect('ws://chatterg-.leapcell.app/ws?userID=$currentUserUuid');
       }
 
       state = state.copyWith(
@@ -120,6 +122,29 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
     }
   }
 
+  void markAsRead(ChatMessage message) {
+    final updatedMessages = state.messages.map((m) {
+      if (m == message) {
+        return ChatMessage(
+          senderId: m.senderId,
+          recipientId: m.recipientId,
+          content: m.content,
+          timestamp: m.timestamp,
+          isRead: true,
+        );
+      }
+      return m;
+    }).toList();
+    state = state.copyWith(messages: updatedMessages);
+    // Optionally notify the server to mark the message as read
+    final webSocketService = ref.read(webSocketServiceProvider);
+    webSocketService.sendMessage({
+      'type': 'read',
+      'message_id': message.timestamp, // Use a unique message ID
+      'recipient_id': message.senderId,
+    });
+  }
+
   void _scrollToBottom() {
     if (state.scrollController.hasClients) {
       print('Scrolling to bottom...');
@@ -133,10 +158,7 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
 
   void sendMessage(String text) {
     if (state.isLoading) return;
-
-    print('Sending message: $text');
     state = state.copyWith(isLoading: true);
-
     try {
       final message = ChatMessage(
         senderId: state.currentUserUuid,
@@ -144,18 +166,14 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
         content: text,
         timestamp: DateTime.now().toString(),
       ).toJson();
-
+      print('Sending message JSON: $message');
       final webSocketService = ref.read(webSocketServiceProvider);
       if (!webSocketService.isConnected) {
         throw Exception('WebSocket not connected');
       }
-
-      webSocketService.sendMessage(message);
-      print('Message sent successfully as JSON: ${message}');
+      webSocketService.sendMessage(message); // Encode to JSON string
       print('Message sent successfully');
       state.textController.clear();
-
-      // Scroll to bottom after sending message
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollToBottom();
       });

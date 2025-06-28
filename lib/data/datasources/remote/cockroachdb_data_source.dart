@@ -116,7 +116,7 @@ class CockroachDBDataSource {
   Future<int?> Forcefullystartingserver() async {
     try {
       final response = await _dio.get(
-        '$baseUrl/health',
+        'https://chatterg-.leapcell.app/health',
         options: dio.Options(
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',

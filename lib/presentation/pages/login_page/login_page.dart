@@ -50,12 +50,12 @@ class LoginPage extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(20),
                     child: Image.asset(
-                      "assets/images/chatter-g.jpg",
+                      "assets/images/chatterg3.png",
                       width: 100,
                       height: 100,
                     ),
                   ),
-                  const SizedBox(height: 9),
+                  const SizedBox(height: 5),
                   Text(
                     'Welcome Back',
                     style: TextStyle(

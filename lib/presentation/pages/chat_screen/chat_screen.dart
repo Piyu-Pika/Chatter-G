@@ -10,6 +10,12 @@ class ChatScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final chatState = ref.watch(chatScreenProvider);
     final chatNotifier = ref.read(chatScreenProvider.notifier);
+    final messages = chatState.messages;
+    print('Rendering ${messages.length} messages');
+    final sortedMessages = List.from(messages)
+      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    final groupedMessages = chatNotifier.groupMessagesByDate(sortedMessages);
+    print('Grouped messages: ${groupedMessages.keys}');
 
     if (chatState.errorMessage != null) {
       return Scaffold(
@@ -48,10 +54,6 @@ class ChatScreen extends ConsumerWidget {
       );
     }
 
-    final messages = chatState.messages;
-    final sortedMessages = List.from(messages)
-      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
-    final groupedMessages = chatNotifier.groupMessagesByDate(sortedMessages);
     final dateKeys = groupedMessages.keys.toList()..sort();
 
     return Scaffold(
@@ -177,6 +179,12 @@ class ChatScreen extends ConsumerWidget {
                             ...dateMessages.map((message) {
                               final isUser =
                                   message.senderId == chatState.currentUserUuid;
+                              if (!isUser && !message.isRead) {
+                                WidgetsBinding.instance
+                                    .addPostFrameCallback((_) {
+                                  chatNotifier.markAsRead(message);
+                                });
+                              }
 
                               return Padding(
                                 padding: const EdgeInsets.symmetric(

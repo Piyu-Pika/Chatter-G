@@ -19,7 +19,7 @@ final webSocketConnectionProvider = FutureProvider<void>((ref) async {
   if (userId == null) {
     throw Exception('User not authenticated');
   }
-  final url = 'ws://chatterg.leapcell.app/ws?userID=$userId';
+  final url = 'ws://chatterg-.leapcell.app/ws?userID=$userId';
   await ref.read(webSocketServiceProvider).connect(url);
 });
 

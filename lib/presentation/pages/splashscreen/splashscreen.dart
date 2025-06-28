@@ -83,6 +83,7 @@ class _SplashscreenState extends ConsumerState<Splashscreen> {
       } catch (e) {
         // Log the error or handle it
         print('Retrying to start server: $e');
+        _isServerReady = true; // Reset the server status
       }
       await Future.delayed(const Duration(seconds: 1)); // Wait before retrying
     }
@@ -114,7 +115,7 @@ class _SplashscreenState extends ConsumerState<Splashscreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset(
-                'assets/images/chatter-g.jpg',
+                'assets/images/chatterg3.png',
                 height: screenHeight * 0.2,
                 width: screenWidth * 0.4,
                 fit: BoxFit.contain,

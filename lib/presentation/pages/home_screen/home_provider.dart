@@ -55,7 +55,7 @@ class HomeScreenNotifier extends StateNotifier<HomeScreenState> {
     // Initialize WebSocket connection
     ref
         .read(webSocketServiceProvider)
-        .connect('ws://chatterg.leapcell.app/ws?userID=$userId');
+        .connect('ws://chatterg-.leapcell.app/ws?userID=$userId');
   }
 
   Future<void> _loadChatrooms() async {
