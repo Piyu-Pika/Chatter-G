@@ -72,10 +72,10 @@ class ChatScreen extends ConsumerWidget {
                   ),
                 ),
                 Text(
-                  chatState.receiver.isOnline ? 'Online' : 'Offline',
+                  chatState.receiver.isOnline == true ? 'Online' : 'Offline',
                   style: TextStyle(
                     fontSize: 12,
-                    color: chatState.receiver.isOnline
+                    color: chatState.receiver.isOnline == true
                         ? Colors.green
                         : Colors.grey,
                   ),

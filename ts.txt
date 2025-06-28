@@ -1,0 +1,15 @@
+Future<void> _initializeUserData() async {
+  final authProvider = ref.read(authServiceProvider);
+  final userId = await authProvider.getUid();
+  setState(() {
+    _userDataFuture = _apiClient
+        .getUserByUUID(uuid: userId)
+        .then((response) {
+          if (response.containsKey('data')) {
+            return AppUser.User.fromJson(response['data']);
+          } else {
+            throw Exception('Invalid response format: Missing "data" key');
+          }
+        });
+  });
+}

@@ -4,8 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../data/datasources/remote/api_value.dart';
 import '../../../data/models/user_model.dart' as AppUser;
-import '../../../data/datasources/remote/cockroachdb_data_source.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -15,7 +15,8 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  final _cockroachdbDataSource = CockroachDBDataSource();
+  final _apiClient = ApiClient();
+  // final _cockroachdbDataSource = MongoDBDataSource();
   late Future<AppUser.User> _userDataFuture;
   final Map<String, TextEditingController> _controllers = {};
   final _formKey = GlobalKey<FormState>();
@@ -38,9 +39,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final authProvider = ref.read(authServiceProvider);
     final userId = await authProvider.getUid();
     setState(() {
-      _userDataFuture = _cockroachdbDataSource.getUserData(userId);
-      print('User ID: $userId');
-      print('User Data: ${_userDataFuture}');
+      _userDataFuture = _apiClient.getUserByUUID(uuid: userId).then((response) {
+        if (response.containsKey('data')) {
+          return AppUser.User.fromJson(response['data']);
+        } else {
+          throw Exception('Invalid response format: Missing "data" key');
+        }
+      });
     });
   }
 
@@ -52,11 +57,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     final updatedUser = AppUser.User(
       uuid: _controllers['uuid']?.text ?? '',
+      surname: _controllers['surname']?.text ?? '',
+      profilePic: _controllers['profilePic']?.text ?? '',
+      lastSeen: DateTime.now(),
       name: _controllers['name']?.text ?? '',
       email: _controllers['email']?.text ?? '',
-      createdAt: _controllers['createdAt']?.text ?? '',
-      updatedAt: DateTime.now().toIso8601String(),
-      deletedAt: _controllers['deletedAt']?.text ?? '',
+      createdAt: _controllers['createdAt']?.text.isNotEmpty == true
+          ? DateTime.parse(_controllers['createdAt']!.text)
+          : DateTime.now(),
+      updatedAt: _controllers['updatedAt']?.text.isNotEmpty == true
+          ? DateTime.parse(_controllers['updatedAt']!.text)
+          : DateTime.now(),
+      // deletedAt: _controllers['deletedAt']?.text ?? '',
       username: _controllers['username']?.text ?? '',
       bio: _controllers['bio']?.text ?? '',
       dateOfBirth: _controllers['dateOfBirth']?.text ?? '',
@@ -65,7 +77,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
 
     try {
-      await _cockroachdbDataSource.patchData(updatedUser.toJson());
+      await _apiClient.updateUser(
+        uuid: updatedUser.uuid,
+        name: updatedUser.name,
+        username: updatedUser.username,
+        bio: updatedUser.bio,
+        dateOfBirth: updatedUser.dateOfBirth,
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -115,7 +133,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           } else if (snapshot.hasData) {
             final user = snapshot.data!;
             _initializeControllers(user);
-            _selectedGender = user.gender;
+            _selectedGender = user.gender!;
             return _buildProfileForm(isDarkMode, primaryColor);
           } else {
             return Center(
@@ -366,12 +384,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _controllers['name'] = TextEditingController(text: user.name);
     _controllers['email'] = TextEditingController(text: user.email);
     _controllers['createdAt'] = TextEditingController(
-      text: _formatDateTime(user.createdAt),
+      text: _formatDateTime(user.createdAt.toIso8601String()),
     );
-    _controllers['updatedAt'] = TextEditingController(
-      text: _formatDateTime(user.updatedAt),
-    );
-    _controllers['deletedAt'] = TextEditingController(text: user.deletedAt);
+    // _controllers['updatedAt'] = TextEditingController(
+    //   text: _formatDateTime(user.updatedAt.toIso8601String()),
+    // );
+    // _controllers['deletedAt'] = TextEditingController(text: user.deletedAt);
     _controllers['username'] = TextEditingController(text: user.username);
     _controllers['bio'] = TextEditingController(text: user.bio);
     _controllers['dateOfBirth'] = TextEditingController(
@@ -647,8 +665,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               : Colors.white,
                           onSurface: isDarkMode ? Colors.white : Colors.black87,
                         ),
-                        dialogBackgroundColor:
-                            isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+                        dialogTheme: DialogThemeData(
+                            backgroundColor: isDarkMode
+                                ? const Color(0xFF1E1E1E)
+                                : Colors.white),
                       ),
                       child: child!,
                     );

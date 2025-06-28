@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import '../../presentation/pages/home_screen/home_screen.dart';
 import '../../presentation/pages/login_page/login_page.dart';
+import '../../presentation/pages/onboarding_chat_screen/onboarding_chat_screen.dart';
 import '../../presentation/pages/profile_screen/ProfileScreen.dart';
 import '../../presentation/pages/signup_page/signup_page.dart';
 import '../../presentation/pages/splashscreen/splashscreen.dart';
@@ -16,6 +17,7 @@ final Map<String, WidgetBuilder> appRoutes = {
   '/home': (context) => const HomeScreen(),
   '/chat': (context) => const ChatScreen(),
   '/profile': (context) => const ProfileScreen(),
+  '/onboarding': (context) => const OnboardingChatScreen(),
   // Add more routes as needed
   // '/settings': (context) => const SettingsScreen(),
   // '/about': (context) => const AboutScreen(),

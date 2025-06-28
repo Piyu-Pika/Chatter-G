@@ -23,6 +23,9 @@ class LocalDataSource {
   static const String _keyDateOfBirth = 'date_of_birth';
   static const String _keyGender = 'gender';
   static const String _keyPhoneNumber = 'phone_number';
+  static const String _keyProfilePic = 'profile_pic';
+  static const String _keyLastSeen = 'last_seen';
+  static const String _keySurname = 'surname';
 
   // Step 3: Save data to secure storage
   Future<void> saveData(User data) async {
@@ -31,14 +34,14 @@ class LocalDataSource {
         _keyName: data.name,
         _keyEmail: data.email,
         _keyUuid: data.uuid,
-        _keyCreatedAt: data.createdAt,
-        _keyUpdatedAt: data.updatedAt,
-        _keyDeletedAt: data.deletedAt ?? '',
-        _keyUsername: data.username,
-        _keyBio: data.bio,
-        _keyDateOfBirth: data.dateOfBirth,
-        _keyGender: data.gender,
-        _keyPhoneNumber: data.phoneNumber,
+        _keySurname: data.surname ?? '',
+        _keyProfilePic: data.profilePic ?? '',
+        _keyLastSeen: data.lastSeen?.toIso8601String() ?? '',
+        _keyUsername: data.username ?? '',
+        _keyBio: data.bio ?? '',
+        _keyDateOfBirth: data.dateOfBirth ?? '',
+        _keyGender: data.gender ?? '',
+        _keyPhoneNumber: data.phoneNumber ?? '',
       };
 
       for (var entry in userMap.entries) {
@@ -59,6 +62,9 @@ class LocalDataSource {
       final String? createdAt = await _secureStorage.read(key: _keyCreatedAt);
       final String? updatedAt = await _secureStorage.read(key: _keyUpdatedAt);
       final String? deletedAt = await _secureStorage.read(key: _keyDeletedAt);
+      final String? surname = await _secureStorage.read(key: _keySurname);
+      final String? profilePic = await _secureStorage.read(key: _keyProfilePic);
+      final String? lastSeen = await _secureStorage.read(key: _keyLastSeen);
       final String? username = await _secureStorage.read(key: _keyUsername);
       final String? bio = await _secureStorage.read(key: _keyBio);
       final String? dateOfBirth =
@@ -72,9 +78,15 @@ class LocalDataSource {
           name: name,
           email: email,
           uuid: uuid,
-          createdAt: createdAt ?? '',
-          updatedAt: updatedAt ?? '',
-          deletedAt: deletedAt,
+          surname: surname ?? '',
+          profilePic: profilePic ?? '',
+          lastSeen: DateTime.parse(lastSeen ?? ''),
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+
+          // createdAt: createdAt ?? '',
+          // updatedAt: updatedAt ?? '',
+          // deletedAt: deletedAt,
           username: username ?? '',
           bio: bio ?? '',
           dateOfBirth: dateOfBirth ?? '',

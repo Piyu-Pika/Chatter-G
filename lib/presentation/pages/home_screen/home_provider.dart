@@ -1,3 +1,4 @@
+import 'package:chatterg/data/datasources/remote/api_value.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -60,9 +61,9 @@ class HomeScreenNotifier extends StateNotifier<HomeScreenState> {
 
   Future<void> _loadChatrooms() async {
     try {
-      CockroachDBDataSource cockroachDBDataSource = CockroachDBDataSource();
-      final fetchedUsers =
-          await cockroachDBDataSource.getData(state.currentUserUuid);
+      ApiClient apiClient = ApiClient();
+      // MongoDBDataSource mongoDBDataSource = MongoDBDataSource();
+      final fetchedUsers = await apiClient.getUsers();
       final chatrooms = <String, List<dynamic>>{};
       for (var user in fetchedUsers) {
         chatrooms[user.name] = [];

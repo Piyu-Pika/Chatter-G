@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:async';
 
+import '../../data/datasources/remote/api_value.dart';
 import '../../data/datasources/remote/cockroachdb_data_source.dart';
 import '../pages/home_screen/home_screen.dart'; // Required for StreamSubscription
 
@@ -32,7 +33,8 @@ final authServiceProvider = ChangeNotifierProvider<AuthService>((ref) {
 });
 
 class AuthService extends ChangeNotifier {
-  final cockroachDBDataSource = CockroachDBDataSource();
+  // final cockroachDBDataSource = MongoDBDataSource();
+  final ApiClient _apiClient = ApiClient();
   final FirebaseAuth _firebaseAuth;
   final GoogleSignIn _googleSignIn;
   final Ref _ref; // Store Ref to potentially read other providers if needed

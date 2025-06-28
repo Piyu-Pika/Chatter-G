@@ -63,14 +63,17 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
           receiver: User(
             uuid: '',
             name: '',
+            surname: '',
+            profilePic: '',
+            lastSeen: DateTime.now(),
             email: '',
             username: '',
             bio: '',
             dateOfBirth: '', // Replace with actual date
             gender: '',
             phoneNumber: '',
-            createdAt: '', // Replace with actual creation date
-            updatedAt: '', // Replace with actual update date
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(), // Replace with actual update date
           ), // Replace with actual User initialization
           textController: TextEditingController(),
           scrollController: ScrollController(),
