@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 // import '../providers/onboarding_chat_screen_provider.dart';
+import '../home_screen/home_screen.dart';
 import 'onboarding_chat_screen_provider.dart';
 
 class OnboardingChatScreen extends ConsumerWidget {
@@ -629,7 +630,8 @@ class OnboardingChatScreen extends ConsumerWidget {
           ElevatedButton(
             onPressed: () {
               // Navigate to main chat screen
-              Navigator.of(context).pushReplacementNamed('/main');
+              Navigator.pushReplacement(context,
+                  MaterialPageRoute(builder: (context) => const HomeScreen()));
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.primary,

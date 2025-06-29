@@ -84,45 +84,45 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
   }
 
   void _initializeChat() {
-    try {
-      print('Initializing chat...');
-      final authProvider = ref.read(authServiceProvider);
-      final currentUserUuid = authProvider.currentUser?.uid ?? '';
-      final receiver = ref.read(currentReceiverProvider);
-      if (receiver == null) {
-        throw Exception('Receiver not set');
-      }
-      final roomName = getRoomName(currentUserUuid, receiver.uuid);
-      final webSocketService = ref.read(webSocketServiceProvider);
-      if (!webSocketService.isConnected) {
-        print('WebSocket not connected. Attempting to connect...');
-        webSocketService
-            .connect('ws://chatterg-.leapcell.app/ws?userID=$currentUserUuid');
-      }
+    // try {
+    //   print('Initializing chat...');
+    //   final authProvider = ref.read(authServiceProvider);
+    //   final currentUserUuid = authProvider.currentUser?.uid ?? '';
+    //   final receiver = ref.read(currentReceiverProvider);
+    //   if (receiver == null) {
+    //     throw Exception('Receiver not set');
+    //   }
+    //   final roomName = getRoomName(currentUserUuid, receiver.uuid);
+    //   final webSocketService = ref.read(webSocketServiceProvider);
+    //   if (!webSocketService.isConnected) {
+    //     print('WebSocket not connected. Attempting to connect...');
+    //     webSocketService
+    //         .connect('ws://chatterg-.leapcell.app/ws?userID=$currentUserUuid');
+    //   }
 
-      state = state.copyWith(
-        currentUserUuid: currentUserUuid,
-        receiver: receiver,
-        roomName: roomName,
-      );
+    //   state = state.copyWith(
+    //     currentUserUuid: currentUserUuid,
+    //     receiver: receiver,
+    //     roomName: roomName,
+    //   );
 
-      print('Chat initialized with roomName: $roomName');
+    //   print('Chat initialized with roomName: $roomName');
 
-      // Scroll to bottom after initialization
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollToBottom();
-      });
+    //   // Scroll to bottom after initialization
+    //   WidgetsBinding.instance.addPostFrameCallback((_) {
+    //     _scrollToBottom();
+    //   });
 
-      // Watch messages for the room
-      ref.listen(chatMessagesProvider, (previous, next) {
-        final messages = next[roomName] ?? [];
-        print('New messages received: ${messages.length}');
-        state = state.copyWith(messages: messages);
-      });
-    } catch (e) {
-      print('Error initializing chat: $e');
-      state = state.copyWith(errorMessage: 'Error initializing chat: $e');
-    }
+    //   // Watch messages for the room
+    //   ref.listen(chatMessagesProvider, (previous, next) {
+    //     final messages = next[roomName] ?? [];
+    //     print('New messages received: ${messages.length}');
+    //     state = state.copyWith(messages: messages);
+    //   });
+    // } catch (e) {
+    //   print('Error initializing chat: $e');
+    //   state = state.copyWith(errorMessage: 'Error initializing chat: $e');
+    // }
   }
 
   void markAsRead(ChatMessage message) {
@@ -140,12 +140,12 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
     }).toList();
     state = state.copyWith(messages: updatedMessages);
     // Optionally notify the server to mark the message as read
-    final webSocketService = ref.read(webSocketServiceProvider);
-    webSocketService.sendMessage({
-      'type': 'read',
-      'message_id': message.timestamp, // Use a unique message ID
-      'recipient_id': message.senderId,
-    });
+    // final webSocketService = ref.read(webSocketServiceProvider);
+    // webSocketService.sendMessage({
+    //   'type': 'read',
+    //   'message_id': message.timestamp, // Use a unique message ID
+    //   'recipient_id': message.senderId,
+    // });
   }
 
   void _scrollToBottom() {
@@ -170,16 +170,16 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
         timestamp: DateTime.now().toString(),
       ).toJson();
       print('Sending message JSON: $message');
-      final webSocketService = ref.read(webSocketServiceProvider);
-      if (!webSocketService.isConnected) {
-        throw Exception('WebSocket not connected');
-      }
-      webSocketService.sendMessage(message); // Encode to JSON string
-      print('Message sent successfully');
-      state.textController.clear();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollToBottom();
-      });
+      // final webSocketService = ref.read(webSocketServiceProvider);
+      // if (!webSocketService.isConnected) {
+      //   throw Exception('WebSocket not connected');
+      // }
+      // webSocketService.sendMessage(message); // Encode to JSON string
+      // print('Message sent successfully');
+      // state.textController.clear();
+      // WidgetsBinding.instance.addPostFrameCallback((_) {
+      //   _scrollToBottom();
+      // });
     } catch (e) {
       print('Failed to send message: $e');
       state = state.copyWith(errorMessage: 'Failed to send message: $e');

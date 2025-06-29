@@ -2,17 +2,16 @@ import 'dart:developer';
 
 import 'package:chatterg/data/models/user_model.dart';
 import 'package:dio/dio.dart';
-import 'dart:convert';
 
 import 'package:dio/dio.dart' as dio;
 
 // API client class to interact with the Godzilla-Go backend API
 class ApiClient {
   final Dio _dio;
-  final String _baseUrl = 'https://chatterg-.leapcell.app/';
+  final String baseUrl = 'https://gochat.leapcell.app/';
 
   // Constructor initializes Dio with base URL and default configurations
-  ApiClient({String baseUrl = 'https://chatterg-.leapcell.app/'})
+  ApiClient({String baseUrl = 'https://gochat.leapcell.app/'})
       : _dio = Dio(BaseOptions(
           baseUrl: baseUrl,
           connectTimeout: Duration(seconds: 30), // Increased timeout
@@ -118,29 +117,12 @@ class ApiClient {
     required String uuid,
     required String name,
     required String email,
-    String? surname,
-    String? username,
-    String? bio,
-    String? dateOfBirth,
-    String? gender,
-    String? phoneNumber,
-    String? profilePic,
   }) async {
     try {
       final data = {
-        'uuid': uuid,
-        'name': name,
-        'email': email,
-        if (surname != null && surname.isNotEmpty) 'surname': surname,
-        if (username != null && username.isNotEmpty) 'username': username,
-        if (bio != null && bio.isNotEmpty) 'bio': bio,
-        if (dateOfBirth != null && dateOfBirth.isNotEmpty)
-          'date_of_birth': dateOfBirth,
-        if (gender != null && gender.isNotEmpty) 'gender': gender,
-        if (phoneNumber != null && phoneNumber.isNotEmpty)
-          'phone_number': phoneNumber,
-        if (profilePic != null && profilePic.isNotEmpty)
-          'profile_pic': profilePic,
+        'uuid': uuid, //required
+        'name': name, //required
+        'email': email, //required
       };
 
       print('Creating user with data: $data');

@@ -449,10 +449,9 @@ class OnboardingChatNotifier extends StateNotifier<OnboardingChatState> {
 
       print('Submitting user data: $userData');
 
-      final response = await _apiClient.createUser(
+      final response = await _apiClient.updateUser(
         uuid: userData['uuid'],
         name: userData['name'],
-        email: userData['email'],
         username: userData['username'],
         bio: userData['bio'],
         dateOfBirth: userData['date_of_birth'],

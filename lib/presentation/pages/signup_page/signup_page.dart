@@ -191,6 +191,12 @@ class _SignupFormState extends ConsumerState<SignupForm> {
             uuid: authService.currentUser?.uid ?? '', name: name, email: email);
       });
 
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OnboardingChatScreen(),
+        ),
+      );
       // No navigation or success message here - AuthWrapper handles navigation
       // Error display is handled by the listener in SignupPage build method
     }

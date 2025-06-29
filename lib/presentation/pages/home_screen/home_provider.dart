@@ -54,9 +54,9 @@ class HomeScreenNotifier extends StateNotifier<HomeScreenState> {
     final userId = await authProvider.getUid();
     state = state.copyWith(currentUserUuid: userId);
     // Initialize WebSocket connection
-    ref
-        .read(webSocketServiceProvider)
-        .connect('ws://chatterg-.leapcell.app/ws?userID=$userId');
+    // ref
+    //     .read(webSocketServiceProvider)
+    //     .connect('ws://chatterg-.leapcell.app/ws?userID=$userId');
   }
 
   Future<void> _loadChatrooms() async {
@@ -93,7 +93,7 @@ class HomeScreenNotifier extends StateNotifier<HomeScreenState> {
   }
 
   void dispose() {
-    ref.read(webSocketServiceProvider).dispose();
+    // ref.read(webSocketServiceProvider).dispose();
   }
 }
 
@@ -110,3 +110,7 @@ final homeScreenProvider =
     StateNotifierProvider<HomeScreenNotifier, HomeScreenState>((ref) {
   return HomeScreenNotifier(ref);
 });
+
+// Bottom Navigation Provider
+final bottomNavProvider =
+    StateProvider<int>((ref) => 1); // Start with ChatterG tab
