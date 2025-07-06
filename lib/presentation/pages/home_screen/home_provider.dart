@@ -2,7 +2,6 @@ import 'package:chatterg/data/datasources/remote/api_value.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/datasources/remote/cockroachdb_data_source.dart';
 import '../../../data/models/user_model.dart' as User;
 import '../../providers/auth_provider.dart';
 import '../../providers/websocket_provider.dart';
@@ -54,9 +53,8 @@ class HomeScreenNotifier extends StateNotifier<HomeScreenState> {
     final userId = await authProvider.getUid();
     state = state.copyWith(currentUserUuid: userId);
     // Initialize WebSocket connection
-    // ref
-    //     .read(webSocketServiceProvider)
-    //     .connect('ws://chatterg-.leapcell.app/ws?userID=$userId');
+    ref.read(webSocketServiceProvider).connect(
+        'wss://chatterg-go-production.up.railway.app/ws?userID=$userId');
   }
 
   Future<void> _loadChatrooms() async {

@@ -1,8 +1,7 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'dart:convert';
 
 import '../../../data/models/message_model.dart';
 import '../../../data/models/user_model.dart';
@@ -84,50 +83,56 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
   }
 
   void _initializeChat() {
-    // try {
-    //   print('Initializing chat...');
-    //   final authProvider = ref.read(authServiceProvider);
-    //   final currentUserUuid = authProvider.currentUser?.uid ?? '';
-    //   final receiver = ref.read(currentReceiverProvider);
-    //   if (receiver == null) {
-    //     throw Exception('Receiver not set');
-    //   }
-    //   final roomName = getRoomName(currentUserUuid, receiver.uuid);
-    //   final webSocketService = ref.read(webSocketServiceProvider);
-    //   if (!webSocketService.isConnected) {
-    //     print('WebSocket not connected. Attempting to connect...');
-    //     webSocketService
-    //         .connect('ws://chatterg-.leapcell.app/ws?userID=$currentUserUuid');
-    //   }
+    try {
+      print('Initializing chat...');
+      final authProvider = ref.read(authServiceProvider);
+      final currentUserUuid = authProvider.currentUser?.uid ?? '';
+      final receiver = ref.read(currentReceiverProvider);
+      if (receiver == null) {
+        throw Exception('Receiver not set');
+      }
+      final roomName = getRoomName(currentUserUuid, receiver.uuid);
+      final webSocketService = ref.read(webSocketServiceProvider);
 
-    //   state = state.copyWith(
-    //     currentUserUuid: currentUserUuid,
-    //     receiver: receiver,
-    //     roomName: roomName,
-    //   );
+      if (!webSocketService.isConnected) {
+        print('WebSocket not connected. Attempting to connect...');
+        webSocketService.connect(
+            'wss://chatterg-go-production.up.railway.app/ws?userID=$currentUserUuid');
+      }
 
-    //   print('Chat initialized with roomName: $roomName');
+      state = state.copyWith(
+        currentUserUuid: currentUserUuid,
+        receiver: receiver,
+        roomName: roomName,
+      );
 
-    //   // Scroll to bottom after initialization
-    //   WidgetsBinding.instance.addPostFrameCallback((_) {
-    //     _scrollToBottom();
-    //   });
+      print('Chat initialized with roomName: $roomName');
 
-    //   // Watch messages for the room
-    //   ref.listen(chatMessagesProvider, (previous, next) {
-    //     final messages = next[roomName] ?? [];
-    //     print('New messages received: ${messages.length}');
-    //     state = state.copyWith(messages: messages);
-    //   });
-    // } catch (e) {
-    //   print('Error initializing chat: $e');
-    //   state = state.copyWith(errorMessage: 'Error initializing chat: $e');
-    // }
+      // Scroll to bottom after initialization
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToBottom();
+      });
+
+      // Watch messages for the room
+      ref.listen(chatMessagesProvider, (previous, next) {
+        final messages = next[roomName] ?? [];
+        print('New messages received for room $roomName: ${messages.length}');
+        state = state.copyWith(messages: messages);
+
+        // Scroll to bottom when new messages arrive
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToBottom();
+        });
+      });
+    } catch (e) {
+      print('Error initializing chat: $e');
+      state = state.copyWith(errorMessage: 'Error initializing chat: $e');
+    }
   }
 
   void markAsRead(ChatMessage message) {
     final updatedMessages = state.messages.map((m) {
-      if (m == message) {
+      if (m.timestamp == message.timestamp && m.senderId == message.senderId) {
         return ChatMessage(
           senderId: m.senderId,
           recipientId: m.recipientId,
@@ -139,13 +144,10 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
       return m;
     }).toList();
     state = state.copyWith(messages: updatedMessages);
-    // Optionally notify the server to mark the message as read
-    // final webSocketService = ref.read(webSocketServiceProvider);
-    // webSocketService.sendMessage({
-    //   'type': 'read',
-    //   'message_id': message.timestamp, // Use a unique message ID
-    //   'recipient_id': message.senderId,
-    // });
+
+    // Notify the server to mark the message as read
+    final webSocketService = ref.read(webSocketServiceProvider);
+    webSocketService.markAsRead(message.timestamp, message.senderId);
   }
 
   void _scrollToBottom() {
@@ -159,27 +161,46 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
     }
   }
 
+  // FIXED: Simplified sendMessage method
   void sendMessage(String text) {
-    if (state.isLoading) return;
+    if (state.isLoading || text.trim().isEmpty) return;
+
     state = state.copyWith(isLoading: true);
+
     try {
+      final webSocketService = ref.read(webSocketServiceProvider);
+      if (!webSocketService.isConnected) {
+        throw Exception('WebSocket not connected');
+      }
+
+      print('Sending message with text: ${text.trim()}');
+      print('Current user UUID: ${state.currentUserUuid}');
+      print('Receiver UUID: ${state.receiver.uuid}');
+
+      // Use the reliable sendChatMessage method which handles proper formatting
+      webSocketService.sendChatMessage(state.receiver.uuid, text.trim());
+      
+
+      // Create the message for local state
       final message = ChatMessage(
         senderId: state.currentUserUuid,
         recipientId: state.receiver.uuid,
-        content: text,
-        timestamp: DateTime.now().toString(),
-      ).toJson();
-      print('Sending message JSON: $message');
-      // final webSocketService = ref.read(webSocketServiceProvider);
-      // if (!webSocketService.isConnected) {
-      //   throw Exception('WebSocket not connected');
-      // }
-      // webSocketService.sendMessage(message); // Encode to JSON string
-      // print('Message sent successfully');
-      // state.textController.clear();
-      // WidgetsBinding.instance.addPostFrameCallback((_) {
-      //   _scrollToBottom();
-      // });
+        content: text.trim(),
+        timestamp: DateTime.now().toIso8601String(),
+        isRead: false,
+      );
+
+      print('Created local message: ${message.toJson()}');
+
+      // Add message to local state immediately for better UX
+      ref.read(chatMessagesProvider.notifier).addMessage(message);
+
+      print('Message sent successfully');
+      state.textController.clear();
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToBottom();
+      });
     } catch (e) {
       print('Failed to send message: $e');
       state = state.copyWith(errorMessage: 'Failed to send message: $e');
@@ -188,12 +209,22 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
     }
   }
 
-  Map<String, List<dynamic>> groupMessagesByDate(List<dynamic> messages) {
+  Map<String, List<ChatMessage>> groupMessagesByDate(
+      List<ChatMessage> messages) {
     print('Grouping messages by date...');
-    final groupedMessages = <String, List<dynamic>>{};
+    final groupedMessages = <String, List<ChatMessage>>{};
 
     for (final message in messages) {
-      final dateStr = DateFormat('yyyy-MM-dd').format(message.timestamp);
+      // Parse timestamp properly
+      DateTime messageDate;
+      try {
+        messageDate = DateTime.parse(message.timestamp);
+      } catch (e) {
+        print('Error parsing timestamp: ${message.timestamp}');
+        messageDate = DateTime.now();
+      }
+
+      final dateStr = DateFormat('yyyy-MM-dd').format(messageDate);
       if (!groupedMessages.containsKey(dateStr)) {
         groupedMessages[dateStr] = [];
       }

@@ -5,8 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../../data/datasources/remote/api_value.dart';
-import '../../../data/datasources/remote/cockroachdb_data_source.dart';
-import '../../../data/models/user_model.dart';
 import '../../providers/auth_provider.dart';
 
 enum OnboardingStep {

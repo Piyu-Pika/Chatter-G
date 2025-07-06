@@ -3,7 +3,6 @@ import 'package:chatterg/data/models/user_model.dart';
 import 'package:chatterg/data/datasources/remote/api_value.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:riverpod/riverpod.dart';
 
 // ProfileScreenProvider using Riverpod
 final profileScreenProvider = ChangeNotifierProvider((ref) {

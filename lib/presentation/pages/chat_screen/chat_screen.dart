@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../data/models/message_model.dart';
 import 'chat_provider.dart';
 
 class ChatScreen extends ConsumerWidget {
@@ -11,9 +12,22 @@ class ChatScreen extends ConsumerWidget {
     final chatState = ref.watch(chatScreenProvider);
     final chatNotifier = ref.read(chatScreenProvider.notifier);
     final messages = chatState.messages;
+    
     print('Rendering ${messages.length} messages');
-    final sortedMessages = List.from(messages)
-      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    
+    // Sort messages by timestamp
+    final sortedMessages = List<ChatMessage>.from(messages);
+    sortedMessages.sort((a, b) {
+      try {
+        final aTime = DateTime.parse(a.timestamp);
+        final bTime = DateTime.parse(b.timestamp);
+        return aTime.compareTo(bTime);
+      } catch (e) {
+        print('Error parsing timestamp for sorting: $e');
+        return 0;
+      }
+    });
+    
     final groupedMessages = chatNotifier.groupMessagesByDate(sortedMessages);
     print('Grouped messages: ${groupedMessages.keys}');
 
@@ -257,7 +271,7 @@ class ChatScreen extends ConsumerWidget {
                                             const SizedBox(height: 4),
                                             Text(
                                               DateFormat('HH:mm')
-                                                  .format(message.timestamp),
+                                                  .format(DateTime.parse(message.timestamp)),
                                               style: TextStyle(
                                                 color: isUser
                                                     ? Theme.of(context)

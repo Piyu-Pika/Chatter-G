@@ -436,7 +436,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
                 Text(
-                  (_controllers[key]?.text?.length ?? 0) > 30
+                  (_controllers[key]?.text.length ?? 0) > 30
                       ? '${_controllers[key]?.text.substring(0, 30)}...'
                       : _controllers[key]?.text ?? '',
                   style: TextStyle(

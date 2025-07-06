@@ -3,7 +3,6 @@ import 'package:chatterg/presentation/pages/onboarding_chat_screen/onboarding_ch
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/datasources/remote/api_value.dart';
-import '../../../data/datasources/remote/cockroachdb_data_source.dart';
 import '../../providers/auth_provider.dart';
 import '../login_page/login_page.dart'; // Renamed from signup_page.dart
 

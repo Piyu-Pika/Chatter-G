@@ -4,16 +4,19 @@ import 'package:chatterg/data/models/user_model.dart';
 import 'package:dio/dio.dart';
 
 import 'package:dio/dio.dart' as dio;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // API client class to interact with the Godzilla-Go backend API
 class ApiClient {
   final Dio _dio;
-  final String baseUrl = 'https://gochat.leapcell.app/';
+  // final String baseUrl = 'https://gochat.leapcell.app/';
 
   // Constructor initializes Dio with base URL and default configurations
-  ApiClient({String baseUrl = 'https://gochat.leapcell.app/'})
+  ApiClient({String? baseUrl})
       : _dio = Dio(BaseOptions(
-          baseUrl: baseUrl,
+          baseUrl: baseUrl ??
+              (dotenv.env['BASE_URL'] ??
+                  'https://chatterg-go-production.up.railway.app'),
           connectTimeout: Duration(seconds: 30), // Increased timeout
           receiveTimeout: Duration(seconds: 30), // Increased timeout
           sendTimeout: Duration(seconds: 30), // Added send timeout

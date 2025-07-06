@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'core/routers/router.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/pages/splashscreen/splashscreen.dart';
 
