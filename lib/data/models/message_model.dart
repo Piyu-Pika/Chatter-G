@@ -40,14 +40,13 @@ class ChatMessage {
 
   // FIXED: Use server-compatible field names for sending
   Map<String, dynamic> toServerJson() {
-    return {
-      'type': 'message',
-      'sender_id': senderId,
-      'recipient_id': recipientId,
-      'content': content,
-      'timestamp': timestamp,
-    };
-  }
+  return {
+    'sender_id': senderId, // Changed from 'senderId'
+    'recipient_id': recipientId, // Changed from 'recipientId'
+    'content': content,
+    // 'timestamp': timestamp,
+  };
+}
 
   // Add the fromMessagebox factory method
   factory ChatMessage.fromMessagebox(Messagebox messagebox) {

@@ -518,66 +518,68 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         onTap: () {
           ref.read(currentReceiverProvider.notifier).state = user;
           Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ChatScreen()),
-          );
+    context,
+    MaterialPageRoute(
+      builder: (context) => ChatScreen(receiver: user),
+    ),
+  );
         },
       ),
     );
   }
 
-  Widget _buildConversationTile(dynamic user) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        title: Text(
-          user.name,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-        subtitle: const Text(
-          'No messages yet',
-          style: TextStyle(color: Colors.grey),
-        ),
-        leading: CircleAvatar(
-          radius: 25,
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          child: Text(
-            user.name[0].toUpperCase(),
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
-        ),
-        trailing: Icon(
-          Icons.arrow_forward_ios_rounded,
-          color: Theme.of(context).colorScheme.primary,
-          size: 16,
-        ),
-        onTap: () {
-          ref.read(currentReceiverProvider.notifier).state = user;
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ChatScreen()),
-          );
-        },
-      ),
-    );
-  }
+  // Widget _buildConversationTile(dynamic user) {
+  //   return Container(
+  //     margin: const EdgeInsets.only(bottom: 12),
+  //     decoration: BoxDecoration(
+  //       color: Colors.white,
+  //       borderRadius: BorderRadius.circular(16),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+  //           blurRadius: 8,
+  //           offset: const Offset(0, 2),
+  //         ),
+  //       ],
+  //     ),
+  //     child: ListTile(
+  //       contentPadding: const EdgeInsets.all(16),
+  //       title: Text(
+  //         user.name,
+  //         style: const TextStyle(
+  //           fontWeight: FontWeight.bold,
+  //           fontSize: 16,
+  //         ),
+  //       ),
+  //       subtitle: const Text(
+  //         'No messages yet',
+  //         style: TextStyle(color: Colors.grey),
+  //       ),
+  //       leading: CircleAvatar(
+  //         radius: 25,
+  //         backgroundColor: Theme.of(context).colorScheme.primary,
+  //         child: Text(
+  //           user.name[0].toUpperCase(),
+  //           style: const TextStyle(
+  //             color: Colors.white,
+  //             fontWeight: FontWeight.bold,
+  //             fontSize: 18,
+  //           ),
+  //         ),
+  //       ),
+  //       trailing: Icon(
+  //         Icons.arrow_forward_ios_rounded,
+  //         color: Theme.of(context).colorScheme.primary,
+  //         size: 16,
+  //       ),
+  //       onTap: () {
+  //         ref.read(currentReceiverProvider.notifier).state = user;
+  //         Navigator.push(
+  //           context,
+  //           MaterialPageRoute(builder: (context) => const ChatScreen()),
+  //         );
+  //       },
+  //     ),
+  //   );
+  // }
 }

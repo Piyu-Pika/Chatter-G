@@ -14,9 +14,9 @@ class LocalDataSource {
   static const String _keyName = 'name';
   static const String _keyEmail = 'email';
   static const String _keyUuid = 'uuid';
-  static const String _keyCreatedAt = 'created_at';
-  static const String _keyUpdatedAt = 'updated_at';
-  static const String _keyDeletedAt = 'deleted_at';
+  // static const String _keyCreatedAt = 'created_at';
+  // static const String _keyUpdatedAt = 'updated_at';
+  // static const String _keyDeletedAt = 'deleted_at';
   static const String _keyUsername = 'username';
   static const String _keyBio = 'bio';
   static const String _keyDateOfBirth = 'date_of_birth';
@@ -38,7 +38,7 @@ class LocalDataSource {
         _keyLastSeen: data.lastSeen?.toIso8601String() ?? '',
         _keyUsername: data.username ?? '',
         _keyBio: data.bio ?? '',
-        _keyDateOfBirth: data.dateOfBirth ?? '',
+        _keyDateOfBirth: data.dateOfBirth ,
         _keyGender: data.gender ?? '',
         _keyPhoneNumber: data.phoneNumber ?? '',
       };
@@ -58,9 +58,9 @@ class LocalDataSource {
       final String? name = await _secureStorage.read(key: _keyName);
       final String? email = await _secureStorage.read(key: _keyEmail);
       final String? uuid = await _secureStorage.read(key: _keyUuid);
-      final String? createdAt = await _secureStorage.read(key: _keyCreatedAt);
-      final String? updatedAt = await _secureStorage.read(key: _keyUpdatedAt);
-      final String? deletedAt = await _secureStorage.read(key: _keyDeletedAt);
+      // final String? createdAt = await _secureStorage.read(key: _keyCreatedAt);
+      // final String? updatedAt = await _secureStorage.read(key: _keyUpdatedAt);
+      // final String? deletedAt = await _secureStorage.read(key: _keyDeletedAt);
       final String? surname = await _secureStorage.read(key: _keySurname);
       final String? profilePic = await _secureStorage.read(key: _keyProfilePic);
       final String? lastSeen = await _secureStorage.read(key: _keyLastSeen);

@@ -91,7 +91,8 @@ class HomeScreenNotifier extends StateNotifier<HomeScreenState> {
   }
 
   void dispose() {
-    // ref.read(webSocketServiceProvider).dispose();
+    super.dispose();
+    ref.read(webSocketServiceProvider).dispose();
   }
 }
 

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'dart:convert';
+// import 'dart:convert';
 
 import '../../../data/models/message_model.dart';
 import '../../../data/models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/websocket_provider.dart';
+import '../home_screen/home_provider.dart';
 
 class ChatScreenState {
   final String roomName;
@@ -54,8 +55,9 @@ class ChatScreenState {
 
 class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
   final Ref ref;
+  final String receiverUuid;
 
-  ChatScreenNotifier(this.ref)
+  ChatScreenNotifier(this.ref, this.receiverUuid)
       : super(ChatScreenState(
           roomName: '',
           currentUserUuid: '',
@@ -68,12 +70,12 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
             email: '',
             username: '',
             bio: '',
-            dateOfBirth: '', // Replace with actual date
+            dateOfBirth: '',
             gender: '',
             phoneNumber: '',
             createdAt: DateTime.now(),
-            updatedAt: DateTime.now(), // Replace with actual update date
-          ), // Replace with actual User initialization
+            updatedAt: DateTime.now(),
+          ),
           textController: TextEditingController(),
           scrollController: ScrollController(),
           isLoading: false,
@@ -84,13 +86,17 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
 
   void _initializeChat() {
     try {
-      print('Initializing chat...');
+      print('Initializing chat for receiver: $receiverUuid');
       final authProvider = ref.read(authServiceProvider);
       final currentUserUuid = authProvider.currentUser?.uid ?? '';
-      final receiver = ref.read(currentReceiverProvider);
-      if (receiver == null) {
-        throw Exception('Receiver not set');
-      }
+      
+      // Find the receiver from the fetched users
+      final homeState = ref.read(homeScreenProvider);
+      final receiver = homeState.fetchedUsers.firstWhere(
+        (user) => user.uuid == receiverUuid,
+        orElse: () => throw Exception('Receiver not found'),
+      );
+      
       final roomName = getRoomName(currentUserUuid, receiver.uuid);
       final webSocketService = ref.read(webSocketServiceProvider);
 
@@ -106,7 +112,7 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
         roomName: roomName,
       );
 
-      print('Chat initialized with roomName: $roomName');
+      print('Chat initialized with roomName: $roomName for receiver: ${receiver.name}');
 
       // Scroll to bottom after initialization
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -161,7 +167,6 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
     }
   }
 
-  // FIXED: Simplified sendMessage method
   void sendMessage(String text) {
     if (state.isLoading || text.trim().isEmpty) return;
 
@@ -177,22 +182,18 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
       print('Current user UUID: ${state.currentUserUuid}');
       print('Receiver UUID: ${state.receiver.uuid}');
 
-      // Use the reliable sendChatMessage method which handles proper formatting
       webSocketService.sendChatMessage(state.receiver.uuid, text.trim());
-      
 
-      // Create the message for local state
       final message = ChatMessage(
         senderId: state.currentUserUuid,
         recipientId: state.receiver.uuid,
         content: text.trim(),
         timestamp: DateTime.now().toIso8601String(),
-        isRead: false,
+        // isRead: false,
       );
 
       print('Created local message: ${message.toJson()}');
 
-      // Add message to local state immediately for better UX
       ref.read(chatMessagesProvider.notifier).addMessage(message);
 
       print('Message sent successfully');
@@ -215,7 +216,6 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
     final groupedMessages = <String, List<ChatMessage>>{};
 
     for (final message in messages) {
-      // Parse timestamp properly
       DateTime messageDate;
       try {
         messageDate = DateTime.parse(message.timestamp);
@@ -253,19 +253,20 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
 
   @override
   void dispose() {
-    print('Disposing ChatScreenNotifier...');
+    print('Disposing ChatScreenNotifier for receiver: $receiverUuid');
     state.textController.dispose();
     state.scrollController.dispose();
     super.dispose();
   }
 }
 
+// Family provider that creates a separate instance for each receiver
 final chatScreenProvider =
-    StateNotifierProvider<ChatScreenNotifier, ChatScreenState>((ref) {
-  return ChatScreenNotifier(ref);
+    StateNotifierProvider.family<ChatScreenNotifier, ChatScreenState, String>((ref, receiverUuid) {
+  return ChatScreenNotifier(ref, receiverUuid);
 });
 
-// Placeholder for getRoomName function (should be implemented based on your logic)
+// Placeholder for getRoomName function
 String getRoomName(String userId1, String userId2) {
   final ids = [userId1, userId2]..sort();
   return '${ids[0]}_${ids[1]}';

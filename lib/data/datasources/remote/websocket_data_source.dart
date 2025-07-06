@@ -39,7 +39,7 @@ class WebSocketService {
     // Extract userId from URL
     final uri = Uri.parse(url);
     final userId = uri.queryParameters['userID'];
-    
+
     if (_isConnected && _currentUserId == userId) {
       print('Already connected for user: $userId');
       return;
@@ -158,9 +158,10 @@ class WebSocketService {
     try {
       // Use the correct field names that match the server model
       final messageData = {
-        'type': 'message',
+        // 'type': 'message',
         'sender_id': _currentUserId!, // Changed from 'senderId' to 'sender_id'
-        'recipient_id': receiverId,   // Changed from 'recipientId' to 'recipient_id'
+        'recipient_id':
+            receiverId, // Changed from 'recipientId' to 'recipient_id'
         'content': message,
         'timestamp': DateTime.now().toIso8601String(),
       };
@@ -182,7 +183,7 @@ class WebSocketService {
 
     try {
       final typingData = {
-        'type': 'typing',
+        // 'type': 'typing',
         'sender_id': _currentUserId,
         'receiver_id': receiverId,
         'is_typing': isTyping,
@@ -200,7 +201,7 @@ class WebSocketService {
 
     try {
       final readData = {
-        'type': 'read',
+        // 'type': 'read',
         'message_id': messageId,
         'sender_id': senderId,
         'reader_id': _currentUserId,
@@ -257,7 +258,8 @@ class WebSocketService {
       if (_currentUserId != null && !_isConnected) {
         _reconnectAttempts++;
         print('Reconnection attempt $_reconnectAttempts');
-        final url = 'wss://chatterg-go-production.up.railway.app/ws?userID=$_currentUserId';
+        final url =
+            'wss://chatterg-go-production.up.railway.app/ws?userID=$_currentUserId';
         connect(url).catchError((e) {
           print('Reconnection failed: $e');
         });

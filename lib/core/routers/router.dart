@@ -8,14 +8,15 @@ import '../../presentation/pages/onboarding_chat_screen/onboarding_chat_screen.d
 import '../../presentation/pages/profile_screen/ProfileScreen.dart';
 import '../../presentation/pages/signup_page/signup_page.dart';
 import '../../presentation/pages/splashscreen/splashscreen.dart';
-import '../../presentation/pages/chat_screen/chat_screen.dart';
+// import '../../presentation/pages/chat_screen/chat_screen.dart';
 
 final Map<String, WidgetBuilder> appRoutes = {
   '/': (context) => const Splashscreen(),
   '/login': (context) => LoginPage(),
   '/signup': (context) => const SignupPage(),
   '/home': (context) => const HomeScreen(),
-  '/chat': (context) => const ChatScreen(),
+  // '/chat': (context) => const ChatScreen(
+  // ),
   '/profile': (context) => const ProfileScreen(),
   '/onboarding': (context) => const OnboardingChatScreen(),
   // Add more routes as needed

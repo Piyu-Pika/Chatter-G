@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Test</title>
+</head>
+<body>
+    <h1>WebSocket Test Page</h1>
+    <input type="text" id="messageInput" placeholder="Type a message">
+    <button onclick="sendMessage()">Send</button>
+    <div id="messages"></div>
+
+    <script>
+        // Replace with your WebSocket server URL
+        const ws = new WebSocket('ws://chatterg-go-production.up.railway.app/ws/userID=tetejd');
+
+        ws.onopen = function() {
+            document.getElementById('messages').innerHTML += '<p><em>Connected to WebSocket server.</em></p>';
+        };
+
+        ws.onmessage = function(event) {
+            document.getElementById('messages').innerHTML += '<p>Received: ' + event.data + '</p>';
+        };
+
+        ws.onclose = function() {
+            document.getElementById('messages').innerHTML += '<p><em>WebSocket connection closed.</em></p>';
+        };
+
+        ws.onerror = function(error) {
+            document.getElementById('messages').innerHTML += '<p><em>Error: ' + error.message + '</em></p>';
+        };
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            ws.send(input.value);
+            document.getElementById('messages').innerHTML += '<p>Sent: ' + input.value + '</p>';
+            input.value = '';
+        }
+    </script>
+</body>
+</html>

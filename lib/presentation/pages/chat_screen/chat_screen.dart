@@ -2,18 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../data/models/message_model.dart';
+import '../../../data/models/user_model.dart';
 import 'chat_provider.dart';
 
 class ChatScreen extends ConsumerWidget {
-  const ChatScreen({super.key});
+  final User receiver;
+  
+  const ChatScreen({super.key, required this.receiver});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final chatState = ref.watch(chatScreenProvider);
-    final chatNotifier = ref.read(chatScreenProvider.notifier);
+    final chatState = ref.watch(chatScreenProvider(receiver.uuid));
+    final chatNotifier = ref.read(chatScreenProvider(receiver.uuid).notifier);
     final messages = chatState.messages;
     
-    print('Rendering ${messages.length} messages');
+    print('Rendering ${messages.length} messages for ${receiver.name}');
     
     // Sort messages by timestamp
     final sortedMessages = List<ChatMessage>.from(messages);
@@ -79,17 +82,17 @@ class ChatScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  chatState.receiver.name,
+                  receiver.name,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
-                  chatState.receiver.isOnline == true ? 'Online' : 'Offline',
+                  receiver.isOnline == true ? 'Online' : 'Offline',
                   style: TextStyle(
                     fontSize: 12,
-                    color: chatState.receiver.isOnline == true
+                    color: receiver.isOnline == true
                         ? Colors.green
                         : Colors.grey,
                   ),
@@ -148,7 +151,7 @@ class ChatScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Say hello to ${chatState.receiver.name}!',
+                            'Say hello to ${receiver.name}!',
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey.withOpacity(0.6),
@@ -216,7 +219,7 @@ class ChatScreen extends ConsumerWidget {
                                         padding:
                                             const EdgeInsets.only(right: 8.0),
                                         child: CircleAvatar(
-                                          child: Text(chatState.receiver.name[0]
+                                          child: Text(receiver.name[0]
                                               .toUpperCase()),
                                         ),
                                       ),

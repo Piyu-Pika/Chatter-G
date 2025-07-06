@@ -18,8 +18,8 @@ class AuthWrapper extends ConsumerWidget {
       data: (user) {
         if (user != null) {
           //update the user is now online in the database
-          final userId = user.uid;
-          final apiClient = ApiClient();
+          // final userId = user.uid;
+          // final apiClient = ApiClient();
           return const HomeScreen(); // User logged in
         } else {
           return LoginPage(); // User logged out
