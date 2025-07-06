@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:chatterg/data/datasources/remote/cockroachdb_data_source.dart';
+import 'package:chatterg/data/datasources/remote/api_value.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
@@ -18,7 +18,8 @@ class AuthWrapper extends ConsumerWidget {
       data: (user) {
         if (user != null) {
           //update the user is now online in the database
-          CockroachDBDataSource().updateUserStatus(user.uid, true);
+          // final userId = user.uid;
+          // final apiClient = ApiClient();
           return const HomeScreen(); // User logged in
         } else {
           return LoginPage(); // User logged out
@@ -71,8 +72,7 @@ class _SplashscreenState extends ConsumerState<Splashscreen> {
   Future<void> _tryStartingServer() async {
     while (!_isServerReady) {
       try {
-        final response =
-            await CockroachDBDataSource().Forcefullystartingserver();
+        final response = await ApiClient().Forcefullystartingserver();
         if (response == 200) {
           setState(() {
             _isServerReady = true;

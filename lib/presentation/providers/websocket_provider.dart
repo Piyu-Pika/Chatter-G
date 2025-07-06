@@ -19,31 +19,136 @@ final webSocketConnectionProvider = FutureProvider<void>((ref) async {
   if (userId == null) {
     throw Exception('User not authenticated');
   }
-  final url = 'ws://chatterg-.leapcell.app/ws?userID=$userId';
+  final url = 'wss://chatterg-go-production.up.railway.app/ws?userID=$userId';
   await ref.read(webSocketServiceProvider).connect(url);
 });
 
 // Chat Messages Notifier
-class ChatMessagesNotifier
-    extends StateNotifier<Map<String, List<ChatMessage>>> {
+class ChatMessagesNotifier extends StateNotifier<Map<String, List<ChatMessage>>> {
+  final Ref ref;
+
   ChatMessagesNotifier(this.ref) : super({}) {
-    final webSocketService = ref.watch(webSocketServiceProvider);
+    _initializeWebSocketListener();
+  }
+
+  void _initializeWebSocketListener() {
+    final webSocketService = ref.read(webSocketServiceProvider);
+    
+    // Listen to incoming messages
     webSocketService.messages.listen((data) {
-      final message = ChatMessage.fromJson(data);
-      addMessage(message);
+      try {
+        print('Received message data: $data');
+        
+        // Handle different message types
+        if (data['type'] == 'message') {
+          final message = ChatMessage.fromJson(data);
+          addMessage(message);
+        } else if (data['type'] == 'typing') {
+          // Handle typing indicator
+          print('User typing: ${data['sender_id']}');
+        } else if (data['type'] == 'read') {
+          // Handle read receipt
+          print('Message read: ${data['message_id']}');
+          _markMessageAsRead(data['message_id'], data['sender_id']);
+        }
+      } catch (e) {
+        print('Error processing incoming message: $e');
+      }
     }, onError: (error) {
       print('WebSocket error: $error');
     });
   }
 
-  final Ref ref;
-
   void addMessage(ChatMessage message) {
     final roomName = getRoomName(message.senderId, message.recipientId);
+    print('Adding message to room: $roomName');
+    
+    // Get current messages for the room
+    final currentMessages = state[roomName] ?? [];
+    
+    // Check if message already exists to avoid duplicates
+    final messageExists = currentMessages.any((m) => 
+      m.timestamp == message.timestamp && 
+      m.senderId == message.senderId && 
+      m.content == message.content
+    );
+    
+    if (!messageExists) {
+      final updatedMessages = [...currentMessages, message];
+      
+      // Sort messages by timestamp
+      updatedMessages.sort((a, b) {
+        try {
+          final aTime = DateTime.parse(a.timestamp);
+          final bTime = DateTime.parse(b.timestamp);
+          return aTime.compareTo(bTime);
+        } catch (e) {
+          print('Error parsing timestamp for sorting: $e');
+          return 0;
+        }
+      });
+      
+      state = {
+        ...state,
+        roomName: updatedMessages,
+      };
+      
+      print('Message added to room $roomName. Total messages: ${updatedMessages.length}');
+    } else {
+      print('Message already exists, skipping duplicate');
+    }
+  }
+
+  void _markMessageAsRead(String messageId, String senderId) {
+    // Find the room containing this message
+    for (final roomName in state.keys) {
+      final messages = state[roomName] ?? [];
+      final updatedMessages = messages.map((message) {
+        if (message.timestamp == messageId && message.senderId == senderId) {
+          return ChatMessage(
+            senderId: message.senderId,
+            recipientId: message.recipientId,
+            content: message.content,
+            timestamp: message.timestamp,
+            isRead: true,
+          );
+        }
+        return message;
+      }).toList();
+      
+      if (updatedMessages != messages) {
+        state = {
+          ...state,
+          roomName: updatedMessages,
+        };
+        break;
+      }
+    }
+  }
+
+  // Method to get messages for a specific room
+  List<ChatMessage> getMessagesForRoom(String roomName) {
+    return state[roomName] ?? [];
+  }
+
+  // Method to clear messages for a room
+  void clearMessagesForRoom(String roomName) {
     state = {
       ...state,
-      roomName: [...state[roomName] ?? [], message],
+      roomName: [],
     };
+  }
+
+  // Method to load historical messages (if you have an API for this)
+  Future<void> loadHistoricalMessages(String roomName, String userId1, String userId2) async {
+    // Implement API call to load historical messages
+    // This would typically be called when entering a chat room
+    print('Loading historical messages for room: $roomName');
+    // Example:
+    // final historicalMessages = await chatRepository.getMessages(userId1, userId2);
+    // for (final message in historicalMessages) {
+    //   addMessage(message);
+    // }
   }
 }
 

@@ -1,7 +1,7 @@
+import 'package:chatterg/data/datasources/remote/api_value.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/datasources/remote/cockroachdb_data_source.dart';
 import '../../../data/models/user_model.dart' as User;
 import '../../providers/auth_provider.dart';
 import '../../providers/websocket_provider.dart';
@@ -53,16 +53,15 @@ class HomeScreenNotifier extends StateNotifier<HomeScreenState> {
     final userId = await authProvider.getUid();
     state = state.copyWith(currentUserUuid: userId);
     // Initialize WebSocket connection
-    ref
-        .read(webSocketServiceProvider)
-        .connect('ws://chatterg-.leapcell.app/ws?userID=$userId');
+    ref.read(webSocketServiceProvider).connect(
+        'wss://chatterg-go-production.up.railway.app/ws?userID=$userId');
   }
 
   Future<void> _loadChatrooms() async {
     try {
-      CockroachDBDataSource cockroachDBDataSource = CockroachDBDataSource();
-      final fetchedUsers =
-          await cockroachDBDataSource.getData(state.currentUserUuid);
+      ApiClient apiClient = ApiClient();
+      // MongoDBDataSource mongoDBDataSource = MongoDBDataSource();
+      final fetchedUsers = await apiClient.getUsers();
       final chatrooms = <String, List<dynamic>>{};
       for (var user in fetchedUsers) {
         chatrooms[user.name] = [];
@@ -92,6 +91,7 @@ class HomeScreenNotifier extends StateNotifier<HomeScreenState> {
   }
 
   void dispose() {
+    super.dispose();
     ref.read(webSocketServiceProvider).dispose();
   }
 }
@@ -109,3 +109,7 @@ final homeScreenProvider =
     StateNotifierProvider<HomeScreenNotifier, HomeScreenState>((ref) {
   return HomeScreenNotifier(ref);
 });
+
+// Bottom Navigation Provider
+final bottomNavProvider =
+    StateProvider<int>((ref) => 1); // Start with ChatterG tab

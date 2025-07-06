@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:async';
 
-import '../../data/datasources/remote/cockroachdb_data_source.dart';
+// import '../../data/datasources/remote/api_value.dart';
 import '../pages/home_screen/home_screen.dart'; // Required for StreamSubscription
 
 // Provider for FirebaseAuth instance
@@ -28,14 +28,15 @@ final authStateChangesProvider = StreamProvider<User?>((ref) {
 // Main Auth Provider
 final authServiceProvider = ChangeNotifierProvider<AuthService>((ref) {
   return AuthService(
-      ref.watch(firebaseAuthProvider), ref.watch(googleSignInProvider), ref);
+      ref.watch(firebaseAuthProvider), ref.watch(googleSignInProvider));
 });
 
 class AuthService extends ChangeNotifier {
-  final cockroachDBDataSource = CockroachDBDataSource();
+  // final cockroachDBDataSource = MongoDBDataSource();
+  // final ApiClient _apiClient = ApiClient();
   final FirebaseAuth _firebaseAuth;
   final GoogleSignIn _googleSignIn;
-  final Ref _ref; // Store Ref to potentially read other providers if needed
+  // final Ref _ref; // Store Ref to potentially read other providers if needed
   StreamSubscription? _authStateSubscription;
   final Map<String, dynamic> data = Map<String, dynamic>.from({
     'name': '',
@@ -56,7 +57,7 @@ class AuthService extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  AuthService(this._firebaseAuth, this._googleSignIn, this._ref) {
+  AuthService(this._firebaseAuth, this._googleSignIn) {
     // Listen to auth state changes immediately
     _authStateSubscription =
         _firebaseAuth.authStateChanges().listen(_onAuthStateChanged);

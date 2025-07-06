@@ -4,8 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../data/datasources/remote/api_value.dart';
 import '../../../data/models/user_model.dart' as AppUser;
-import '../../../data/datasources/remote/cockroachdb_data_source.dart';
+import 'profileScreenProvider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -15,7 +16,8 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  final _cockroachdbDataSource = CockroachDBDataSource();
+  final _apiClient = ApiClient();
+  // final _cockroachdbDataSource = MongoDBDataSource();
   late Future<AppUser.User> _userDataFuture;
   final Map<String, TextEditingController> _controllers = {};
   final _formKey = GlobalKey<FormState>();
@@ -38,9 +40,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final authProvider = ref.read(authServiceProvider);
     final userId = await authProvider.getUid();
     setState(() {
-      _userDataFuture = _cockroachdbDataSource.getUserData(userId);
-      print('User ID: $userId');
-      print('User Data: ${_userDataFuture}');
+      _userDataFuture = _apiClient.getUserByUUID(uuid: userId).then((userData) {
+        print('User Data: $userData');
+        return AppUser.User(
+          uuid: userData['uuid'] ?? '',
+          name: userData['name'] ?? '',
+          surname: userData['surname'] ?? '',
+          email: userData['email'] ?? '',
+          createdAt: DateTime.parse(
+              userData['created_at'] ?? DateTime.now().toIso8601String()),
+          updatedAt: DateTime.parse(
+              userData['updated_at'] ?? DateTime.now().toIso8601String()),
+          username: userData['username'] ?? '',
+          bio: userData['bio'] ?? '',
+          dateOfBirth: userData['date_of_birth'] ?? '',
+          gender: userData['gender'] ?? '',
+          phoneNumber: userData['phone_number'] ?? '',
+          profilePic: userData['profile_pic'] ?? '',
+          lastSeen: DateTime.parse(
+              userData['last_seen'] ?? DateTime.now().toIso8601String()),
+        );
+      });
     });
   }
 
@@ -50,22 +70,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       return;
     }
 
-    final updatedUser = AppUser.User(
-      uuid: _controllers['uuid']?.text ?? '',
-      name: _controllers['name']?.text ?? '',
-      email: _controllers['email']?.text ?? '',
-      createdAt: _controllers['createdAt']?.text ?? '',
-      updatedAt: DateTime.now().toIso8601String(),
-      deletedAt: _controllers['deletedAt']?.text ?? '',
-      username: _controllers['username']?.text ?? '',
-      bio: _controllers['bio']?.text ?? '',
-      dateOfBirth: _controllers['dateOfBirth']?.text ?? '',
-      gender: _selectedGender,
-      phoneNumber: _controllers['phoneNumber']?.text ?? '',
-    );
+    final profileState = ref.read(profileScreenProvider);
 
     try {
-      await _cockroachdbDataSource.patchData(updatedUser.toJson());
+      await profileState.updateUserProfile(
+        uuid: _controllers['uuid']?.text ?? '',
+        name: _controllers['name']?.text ?? '',
+        username: _controllers['username']?.text ?? '',
+        bio: _controllers['bio']?.text ?? '',
+        dateOfBirth: _controllers['dateOfBirth']?.text ?? '',
+        gender: _selectedGender,
+        phoneNumber: _controllers['phoneNumber']?.text ?? '',
+      );
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -115,7 +132,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           } else if (snapshot.hasData) {
             final user = snapshot.data!;
             _initializeControllers(user);
-            _selectedGender = user.gender;
+            _selectedGender = user.gender!;
             return _buildProfileForm(isDarkMode, primaryColor);
           } else {
             return Center(
@@ -366,12 +383,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _controllers['name'] = TextEditingController(text: user.name);
     _controllers['email'] = TextEditingController(text: user.email);
     _controllers['createdAt'] = TextEditingController(
-      text: _formatDateTime(user.createdAt),
+      text: _formatDateTime(user.createdAt.toIso8601String()),
     );
-    _controllers['updatedAt'] = TextEditingController(
-      text: _formatDateTime(user.updatedAt),
-    );
-    _controllers['deletedAt'] = TextEditingController(text: user.deletedAt);
+    // _controllers['updatedAt'] = TextEditingController(
+    //   text: _formatDateTime(user.updatedAt.toIso8601String()),
+    // );
+    // _controllers['deletedAt'] = TextEditingController(text: user.deletedAt);
     _controllers['username'] = TextEditingController(text: user.username);
     _controllers['bio'] = TextEditingController(text: user.bio);
     _controllers['dateOfBirth'] = TextEditingController(
@@ -407,24 +424,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             color: isDarkMode ? Colors.white70 : Colors.black54,
           ),
           const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDarkMode ? Colors.white60 : Colors.black45,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDarkMode ? Colors.white60 : Colors.black45,
+                  ),
                 ),
-              ),
-              Text(
-                _controllers[key]?.text ?? '',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: isDarkMode ? Colors.white : Colors.black87,
+                Text(
+                  (_controllers[key]?.text.length ?? 0) > 30
+                      ? '${_controllers[key]?.text.substring(0, 30)}...'
+                      : _controllers[key]?.text ?? '',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -647,8 +669,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               : Colors.white,
                           onSurface: isDarkMode ? Colors.white : Colors.black87,
                         ),
-                        dialogBackgroundColor:
-                            isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+                        dialogTheme: DialogThemeData(
+                            backgroundColor: isDarkMode
+                                ? const Color(0xFF1E1E1E)
+                                : Colors.white),
                       ),
                       child: child!,
                     );

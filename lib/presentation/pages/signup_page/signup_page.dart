@@ -1,7 +1,8 @@
 import 'package:chatterg/core/theme/app_theme.dart';
+import 'package:chatterg/presentation/pages/onboarding_chat_screen/onboarding_chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../data/datasources/remote/cockroachdb_data_source.dart';
+import '../../../data/datasources/remote/api_value.dart';
 import '../../providers/auth_provider.dart';
 import '../login_page/login_page.dart'; // Renamed from signup_page.dart
 
@@ -52,7 +53,7 @@ class SignupPage extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(20),
                     child: Image.asset(
-                      "assets/images/chatter-g.jpg",
+                      "assets/images/chatterg3.png",
                       width: 100,
                       height: 100,
                     ),
@@ -185,15 +186,16 @@ class _SignupFormState extends ConsumerState<SignupForm> {
           .read(authServiceProvider)
           .registerWithEmailPassword(name, email, password)
           .then((value) {
-        CockroachDBDataSource().saveData({
-          'uuid': authService.currentUser?.uid,
-          'name': name,
-          'email': email,
-          'username': email.split('@')[0],
-          'bio': 'Hey there! I am using Chatter G.',
-        });
+        ApiClient().createUser(
+            uuid: authService.currentUser?.uid ?? '', name: name, email: email);
       });
 
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OnboardingChatScreen(),
+        ),
+      );
       // No navigation or success message here - AuthWrapper handles navigation
       // Error display is handled by the listener in SignupPage build method
     }
@@ -251,8 +253,8 @@ class _SignupFormState extends ConsumerState<SignupForm> {
                 decoration: InputDecoration(
                   labelText: 'Full Name',
                   hintText: 'Enter your full name',
-                  prefixIcon:
-                      Icon(Icons.person_outline, color: Colors.green[700]),
+                  prefixIcon: Icon(Icons.person_outline,
+                      color: appTheme.iconTheme.color),
                   // ... border styles ...
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -291,8 +293,8 @@ class _SignupFormState extends ConsumerState<SignupForm> {
                 decoration: InputDecoration(
                   labelText: 'Email',
                   hintText: 'Enter your email address',
-                  prefixIcon:
-                      Icon(Icons.email_outlined, color: Colors.green[700]),
+                  prefixIcon: Icon(Icons.email_outlined,
+                      color: appTheme.iconTheme.color),
                   // ... border styles ...
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -329,7 +331,7 @@ class _SignupFormState extends ConsumerState<SignupForm> {
                   labelText: 'Password',
                   hintText: 'Create a password (min. 6 characters)',
                   prefixIcon:
-                      Icon(Icons.lock_outline, color: Colors.green[700]),
+                      Icon(Icons.lock_outline, color: appTheme.iconTheme.color),
                   suffixIcon: IconButton(
                     icon: Icon(
                       isPasswordVisible
@@ -376,7 +378,7 @@ class _SignupFormState extends ConsumerState<SignupForm> {
                   labelText: 'Confirm Password',
                   hintText: 'Confirm your password',
                   prefixIcon:
-                      Icon(Icons.lock_outline, color: Colors.green[700]),
+                      Icon(Icons.lock_outline, color: appTheme.iconTheme.color),
                   suffixIcon: IconButton(
                     icon: Icon(
                       isConfirmPasswordVisible
@@ -415,7 +417,7 @@ class _SignupFormState extends ConsumerState<SignupForm> {
                     height: 24,
                     child: Checkbox(
                       value: termsAccepted,
-                      activeColor: Colors.green[700],
+                      activeColor: appTheme.iconTheme.color,
                       onChanged: (value) {
                         // Update the state provider for the checkbox
                         ref.read(termsAcceptedProvider.notifier).state =
@@ -443,7 +445,7 @@ class _SignupFormState extends ConsumerState<SignupForm> {
                             TextSpan(
                               text: 'Terms of Service',
                               style: TextStyle(
-                                  color: Colors.green[700],
+                                  color: appTheme.iconTheme.color,
                                   decoration: TextDecoration.underline),
                               // recognizer: TapGestureRecognizer()..onTap = () { /* TODO: Open Terms URL */ }
                             ),
@@ -451,7 +453,7 @@ class _SignupFormState extends ConsumerState<SignupForm> {
                             TextSpan(
                               text: 'Privacy Policy',
                               style: TextStyle(
-                                  color: Colors.green[700],
+                                  color: appTheme.iconTheme.color,
                                   decoration: TextDecoration.underline),
                               // recognizer: TapGestureRecognizer()..onTap = () { /* TODO: Open Privacy URL */ }
                             ),
@@ -475,7 +477,7 @@ class _SignupFormState extends ConsumerState<SignupForm> {
                       .elevatedButtonTheme.style!.backgroundColor
                       ?.resolve({}), // Resolve MaterialStateProperty to Color
                   foregroundColor: Colors.white,
-                  disabledBackgroundColor: Colors.green[200],
+                  disabledBackgroundColor: appTheme.iconTheme.color,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -547,8 +549,14 @@ class _SignupFormState extends ConsumerState<SignupForm> {
                       _socialSignupButton(Icons.g_mobiledata, 'Google',
                           handleGoogleSignIn, isLoading),
                       const SizedBox(width: 16),
-                      _socialSignupButton(Icons.facebook, 'Facebook', () {},
-                          isLoading), // Pass isLoading
+                      _socialSignupButton(Icons.facebook, 'Facebook', () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => OnboardingChatScreen(),
+                          ),
+                        );
+                      }, isLoading), // Pass isLoading
                     ],
                   ),
                 ],

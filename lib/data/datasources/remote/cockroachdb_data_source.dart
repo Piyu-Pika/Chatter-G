@@ -5,7 +5,7 @@ import 'package:dio/dio.dart' as dio;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-class CockroachDBDataSource {
+class MongoDBDataSource {
   final baseUrl = dotenv.env['BASE_URL'] ?? 'https://localhost:8080';
   final dio.Dio _dio = dio.Dio();
 
@@ -16,7 +16,7 @@ class CockroachDBDataSource {
     print('JSON Data: $jsonData');
 
     try {
-      final response = await _dio.post('$baseUrl/save-data',
+      final response = await _dio.post('$baseUrl/api/v1/users/ ',
           options: dio.Options(
             headers: <String, String>{
               'Content-Type': 'application/json; charset=UTF-8',
@@ -29,6 +29,12 @@ class CockroachDBDataSource {
             'email': data['email'],
             'createdAt': data['created_at'],
             'updatedAt': data['updated_at'],
+            'username': data['username'],
+            'bio': data['bio'],
+            'date_of_birth': data['date_of_birth'],
+            'gender': data['gender'],
+            'phone_number': data['phone_number'],
+            'profile_pic': data['profile_pic'],
           });
 
       if (response.statusCode == 200) {
@@ -72,7 +78,7 @@ class CockroachDBDataSource {
   Future<List<User>> getData(uuid) async {
     try {
       final response = await _dio.get(
-        '$baseUrl/users',
+        '$baseUrl/api/v1/users/',
         options: dio.Options(
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
