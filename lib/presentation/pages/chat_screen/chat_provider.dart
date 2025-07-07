@@ -135,6 +135,16 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
       state = state.copyWith(errorMessage: 'Error initializing chat: $e');
     }
   }
+  final Map<String, void Function(ChatMessage)> _roomListeners = {};
+
+void registerRoomListener(String roomName, void Function(ChatMessage) callback) {
+  _roomListeners[roomName] = callback;
+}
+
+void unregisterRoomListener(String roomName) {
+  _roomListeners.remove(roomName);
+}
+
 
   void markAsRead(ChatMessage message) {
     final updatedMessages = state.messages.map((m) {

@@ -273,8 +273,7 @@ class ChatScreen extends ConsumerWidget {
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
-                                              DateFormat('HH:mm')
-                                                  .format(DateTime.parse(message.timestamp)),
+                                             DateFormat('HH:mm').format(DateTime.parse(message.timestamp).toUtc().toLocal()),
                                               style: TextStyle(
                                                 color: isUser
                                                     ? Theme.of(context)

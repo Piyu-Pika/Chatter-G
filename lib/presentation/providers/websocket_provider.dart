@@ -32,32 +32,24 @@ class ChatMessagesNotifier extends StateNotifier<Map<String, List<ChatMessage>>>
   }
 
   void _initializeWebSocketListener() {
-    final webSocketService = ref.read(webSocketServiceProvider);
-    
-    // Listen to incoming messages
-    webSocketService.messages.listen((data) {
-      try {
-        print('Received message data: $data');
-        
-        // Handle different message types
-        if (data['type'] == 'message') {
-          final message = ChatMessage.fromJson(data);
-          addMessage(message);
-        } else if (data['type'] == 'typing') {
-          // Handle typing indicator
-          print('User typing: ${data['sender_id']}');
-        } else if (data['type'] == 'read') {
-          // Handle read receipt
-          print('Message read: ${data['message_id']}');
-          _markMessageAsRead(data['message_id'], data['sender_id']);
-        }
-      } catch (e) {
-        print('Error processing incoming message: $e');
-      }
-    }, onError: (error) {
-      print('WebSocket error: $error');
-    });
-  }
+  final webSocketService = ref.read(webSocketServiceProvider);
+
+  webSocketService.messages.listen((data) {
+    try {
+      print('Received message data: $data');
+
+      // Try to parse as ChatMessage without relying on 'type'
+      final message = ChatMessage.fromJson(data);
+      addMessage(message);
+
+    } catch (e) {
+      print('Non-chat or invalid message format: $e');
+    }
+  }, onError: (error) {
+    print('WebSocket error: $error');
+  });
+}
+
 
   void addMessage(ChatMessage message) {
     final roomName = getRoomName(message.senderId, message.recipientId);

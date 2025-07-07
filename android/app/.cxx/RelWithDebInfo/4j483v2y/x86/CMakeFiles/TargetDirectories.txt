@@ -1,0 +1,2 @@
+D:/Piyush/Chatter-G/android/app/.cxx/RelWithDebInfo/4j483v2y/x86/CMakeFiles/edit_cache.dir
+D:/Piyush/Chatter-G/android/app/.cxx/RelWithDebInfo/4j483v2y/x86/CMakeFiles/rebuild_cache.dir
