@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../data/models/message_model.dart';
 import '../../../data/models/user_model.dart';
+import '../../../main.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/websocket_provider.dart';
 import '../home_screen/home_provider.dart';
@@ -106,7 +107,14 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
             'wss://chatterg-go-production.up.railway.app/ws?userID=$currentUserUuid');
       }
 
+      // Load local messages from ObjectBox
+      final localMessages = objectBox.getMessagesFor(currentUserUuid, receiver.uuid);
+      ref.read(chatMessagesProvider.notifier).state = {
+  roomName: localMessages,
+};
+  
       state = state.copyWith(
+         messages: localMessages,
         currentUserUuid: currentUserUuid,
         receiver: receiver,
         roomName: roomName,

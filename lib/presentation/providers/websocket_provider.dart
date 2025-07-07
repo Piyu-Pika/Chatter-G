@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/datasources/remote/websocket_data_source.dart';
 import '../../data/models/message_model.dart';
+import '../../main.dart';
 import 'auth_provider.dart';
 
 // WebSocket Service Provider
@@ -54,20 +55,23 @@ class ChatMessagesNotifier extends StateNotifier<Map<String, List<ChatMessage>>>
   void addMessage(ChatMessage message) {
     final roomName = getRoomName(message.senderId, message.recipientId);
     print('Adding message to room: $roomName');
-    
+
+    // Save message to ObjectBox (local database)
+    objectBox.saveMessage(message);
+
     // Get current messages for the room
     final currentMessages = state[roomName] ?? [];
-    
+
     // Check if message already exists to avoid duplicates
-    final messageExists = currentMessages.any((m) => 
-      m.timestamp == message.timestamp && 
-      m.senderId == message.senderId && 
+    final messageExists = currentMessages.any((m) =>
+      m.timestamp == message.timestamp &&
+      m.senderId == message.senderId &&
       m.content == message.content
     );
-    
+
     if (!messageExists) {
       final updatedMessages = [...currentMessages, message];
-      
+
       // Sort messages by timestamp
       updatedMessages.sort((a, b) {
         try {
@@ -79,12 +83,12 @@ class ChatMessagesNotifier extends StateNotifier<Map<String, List<ChatMessage>>>
           return 0;
         }
       });
-      
+
       state = {
         ...state,
         roomName: updatedMessages,
       };
-      
+
       print('Message added to room $roomName. Total messages: ${updatedMessages.length}');
     } else {
       print('Message already exists, skipping duplicate');

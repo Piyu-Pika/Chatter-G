@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/io.dart';
 
+import '../../../main.dart';
 import '../../models/message_model.dart';
 
 class WebSocketService {
@@ -213,6 +214,7 @@ class WebSocketService {
       final correctedJson = jsonEncode(messageData);
       print('Sending validated message: $correctedJson');
       _channel!.sink.add(correctedJson);
+      objectBox.saveMessage(messageData);
       print('Message sent successfully');
     } catch (e) {
       print('Error sending message: $e');
