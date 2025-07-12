@@ -1,6 +1,9 @@
 import '../../presentation/widgets/message_box.dart';
+import 'package:objectbox/objectbox.dart';
 
+@Entity()
 class ChatMessage {
+   int id = 0; // ObjectBox requires a primary key
   final String senderId;
   final String recipientId;
   final String content;
@@ -9,6 +12,7 @@ class ChatMessage {
   bool isRead;
 
   ChatMessage({
+    this.id = 0,
     required this.senderId,
     required this.recipientId,
     required this.content,

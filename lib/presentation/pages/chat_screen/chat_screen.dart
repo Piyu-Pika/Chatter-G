@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../data/models/message_model.dart';
 import '../../../data/models/user_model.dart';
+import '../../widgets/message_box.dart';
 import 'chat_provider.dart';
+// import 'messagebox.dart'; // Import your Messagebox widget
 
 class ChatScreen extends ConsumerWidget {
   final User receiver;
@@ -203,112 +205,77 @@ class ChatScreen extends ConsumerWidget {
                                 });
                               }
 
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8.0,
-                                  vertical: 4.0,
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: isUser
-                                      ? MainAxisAlignment.end
-                                      : MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    if (!isUser)
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(right: 8.0),
-                                        child: CircleAvatar(
-                                          child: Text(receiver.name[0]
-                                              .toUpperCase()),
-                                        ),
+                              // Convert ChatMessage to Messagebox
+                              return Column(
+                                children: [
+                                  Messagebox(
+                                    text: message.content,
+                                    isUser: isUser,
+                                    senderId: message.senderId,
+                                    recipientId: message.recipientId,
+                                    timestamp: DateTime.parse(message.timestamp),
+                                  ),
+                                  // Add read receipt for user messages
+                                  if (isUser)
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                        right: 16.0,
+                                        top: 4.0,
+                                        bottom: 8.0,
                                       ),
-                                    Flexible(
-                                      child: Container(
-                                        constraints: BoxConstraints(
-                                          maxWidth: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.7,
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16.0,
-                                          vertical: 10.0,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: isUser
-                                              ? Theme.of(context)
-                                                  .colorScheme
-                                                  .primary
-                                              : Theme.of(context)
-                                                  .colorScheme
-                                                  .surface,
-                                          borderRadius:
-                                              BorderRadius.circular(18),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black
-                                                  .withOpacity(0.05),
-                                              blurRadius: 3,
-                                              offset: const Offset(0, 1),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            DateFormat('HH:mm').format(
+                                              DateTime.parse(message.timestamp)
+                                                  .toUtc()
+                                                  .toLocal(),
                                             ),
-                                          ],
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              message.content,
-                                              style: TextStyle(
-                                                color: isUser
-                                                    ? Theme.of(context)
-                                                        .colorScheme
-                                                        .onPrimary
-                                                    : Theme.of(context)
-                                                        .colorScheme
-                                                        .onSurface,
-                                                fontSize: 15,
-                                              ),
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.grey.withOpacity(0.7),
                                             ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              DateFormat('HH:mm')
-                                                  .format(DateTime.parse(message.timestamp)),
-                                              style: TextStyle(
-                                                color: isUser
-                                                    ? Theme.of(context)
-                                                        .colorScheme
-                                                        .onPrimary
-                                                        .withOpacity(0.7)
-                                                    : Theme.of(context)
-                                                        .colorScheme
-                                                        .onSurface
-                                                        .withOpacity(0.6),
-                                                fontSize: 10,
-                                              ),
-                                              textAlign: TextAlign.right,
-                                            ),
-                                          ],
-                                        ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Icon(
+                                            message.isRead
+                                                ? Icons.done_all
+                                                : Icons.done,
+                                            size: 16,
+                                            color: message.isRead
+                                                ? Colors.blue
+                                                : Colors.grey,
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    if (isUser)
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 8.0),
-                                        child: Icon(
-                                          message.isRead
-                                              ? Icons.done_all
-                                              : Icons.done,
-                                          size: 16,
-                                          color: message.isRead
-                                              ? Colors.blue
-                                              : Colors.grey,
-                                        ),
+                                  // Add timestamp for receiver messages
+                                  if (!isUser)
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                        left: 16.0,
+                                        top: 4.0,
+                                        bottom: 8.0,
                                       ),
-                                  ],
-                                ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            DateFormat('HH:mm').format(
+                                              DateTime.parse(message.timestamp)
+                                                  .toUtc()
+                                                  .toLocal(),
+                                            ),
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.grey.withOpacity(0.7),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
                               );
                             }).toList(),
                           ],

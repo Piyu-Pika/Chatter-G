@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 
 import '../../../data/models/user_model.dart';
+import '../camera_screen/camera_screen.dart';
 import '../chat_screen/chat_screen.dart';
 import '../profile_screen/ProfileScreen.dart';
 import 'home_provider.dart';
@@ -76,7 +77,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         controller: pageController,
         onPageChanged: _onPageChanged,
         children: [
-          _buildCameraScreen(),
+          ChatCameraScreen(),
           _buildChatScreen(homeState, homeNotifier),
           _buildChatterGScreen(homeState, homeNotifier),
           _buildCallLogsScreen(),
@@ -256,56 +257,56 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  Widget _buildCameraScreen() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Theme.of(context).colorScheme.surface,
-            Theme.of(context).colorScheme.surface.withOpacity(0.8),
-          ],
-        ),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Icon(
-                Icons.camera_alt_rounded,
-                size: 80,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Camera Feature',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Camera functionality coming soon!',
-              style: TextStyle(
-                fontSize: 16,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // Widget _buildCameraScreen() {
+  //   return Container(
+  //     decoration: BoxDecoration(
+  //       gradient: LinearGradient(
+  //         begin: Alignment.topCenter,
+  //         end: Alignment.bottomCenter,
+  //         colors: [
+  //           Theme.of(context).colorScheme.surface,
+  //           Theme.of(context).colorScheme.surface.withOpacity(0.8),
+  //         ],
+  //       ),
+  //     ),
+  //     child: Center(
+  //       child: Column(
+  //         mainAxisAlignment: MainAxisAlignment.center,
+  //         children: [
+  //           Container(
+  //             padding: const EdgeInsets.all(32),
+  //             decoration: BoxDecoration(
+  //               color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+  //               borderRadius: BorderRadius.circular(24),
+  //             ),
+  //             child: Icon(
+  //               Icons.camera_alt_rounded,
+  //               size: 80,
+  //               color: Theme.of(context).colorScheme.primary,
+  //             ),
+  //           ),
+  //           const SizedBox(height: 24),
+  //           Text(
+  //             'Camera Feature',
+  //             style: TextStyle(
+  //               fontSize: 28,
+  //               fontWeight: FontWeight.bold,
+  //               color: Theme.of(context).colorScheme.onSurface,
+  //             ),
+  //           ),
+  //           const SizedBox(height: 12),
+  //           Text(
+  //             'Camera functionality coming soon!',
+  //             style: TextStyle(
+  //               fontSize: 16,
+  //               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildChatScreen(dynamic homeState, dynamic homeNotifier) {
     return Container(
