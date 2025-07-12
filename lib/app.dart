@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/theme/app_theme.dart';
+import 'data/datasources/remote/app_lifecycle_manager.dart';
 import 'presentation/pages/splashscreen/splashscreen.dart';
 
 class MyApp extends StatelessWidget {
@@ -8,12 +9,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: "Chatter G",
-      theme: appTheme,
-      debugShowCheckedModeBanner: false,
-      home: const Splashscreen(),
-      // routes: appRoutes,
+    return AppLifecycleManager(
+      child: MaterialApp(
+        title: "Chatter G",
+        theme: appTheme,
+        debugShowCheckedModeBanner: false,
+        home: const Splashscreen(),
+        // routes: appRoutes,
+      ),
     );
   }
 }

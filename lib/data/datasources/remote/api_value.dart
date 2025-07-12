@@ -140,6 +140,34 @@ class ApiClient {
       throw Exception(await _handleError(e));
     }
   }
+  
+  Future<void> updateFCMToken({
+    required String uuid,
+    required String fcmToken,
+  }) async {
+    try {
+      if (uuid.isEmpty) {
+        throw Exception('UUID cannot be empty');
+      }
+      
+      if (fcmToken.isEmpty) {
+        throw Exception('FCM token cannot be empty');
+      }
+
+      final response = await _dio.put(
+        '/api/v1/users/$uuid/fcm-token',
+        data: {'fcm_token': fcmToken},
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to update FCM token: ${response.statusCode}');
+      }
+      
+      print('FCM token updated successfully');
+    } on DioException catch (e) {
+      throw Exception(await _handleError(e));
+    }
+  }
 
   // Get all users - Fixed return type casting
   Future<List<User>> getUsers() async {

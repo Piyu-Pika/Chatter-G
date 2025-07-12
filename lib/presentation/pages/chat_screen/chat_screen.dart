@@ -11,6 +11,7 @@ class ChatScreen extends ConsumerWidget {
   final User receiver;
   
   const ChatScreen({super.key, required this.receiver});
+  
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -5,6 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:async';
 
 // import '../../data/datasources/remote/api_value.dart';
+import '../../data/datasources/remote/notification_service.dart';
 import '../pages/home_screen/home_screen.dart'; // Required for StreamSubscription
 
 // Provider for FirebaseAuth instance
@@ -69,6 +70,17 @@ class AuthService extends ChangeNotifier {
     if (_isLoading != value) {
       _isLoading = value;
       notifyListeners();
+    }
+  }
+  
+  Future<void> initializeUserSession(String userUUID, {String? authToken}) async {
+    try {
+      // Initialize notification service
+      await NotificationService.initialize(userUUID, authToken: authToken);
+      
+      print('User session initialized successfully');
+    } catch (e) {
+      print('Error initializing user session: $e');
     }
   }
 
@@ -146,11 +158,13 @@ class AuthService extends ChangeNotifier {
       // by listening to auth state changes (e.g., using authStateChangesProvider).
       // This keeps the service layer decoupled from the UI.
       if (_firebaseAuth.currentUser != null && context.mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-          // Remove all previous routes
-        );
+        await initializeUserSession(_firebaseAuth.currentUser!.uid);
+       if (context.mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        }
       } else {
         // If user is null after await or context is unmounted, handle error state
         _setLoading(
@@ -193,12 +207,16 @@ class AuthService extends ChangeNotifier {
       // Direct navigation after successful sign-in:
       // Note: It's generally preferred to handle navigation in the UI layer
       // by listening to auth state changes (e.g., using authStateChangesProvider).
-      if (_firebaseAuth.currentUser != null && context.mounted) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-          (Route<dynamic> route) => false, // Remove all previous routes
-        );
+      if (_firebaseAuth.currentUser != null) {
+        await initializeUserSession(_firebaseAuth.currentUser!.uid);
+        
+        if (context.mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            (Route<dynamic> route) => false,
+          );
+        }
       } else {
         // If user is null after await or context is unmounted, handle error state
         _setLoading(
