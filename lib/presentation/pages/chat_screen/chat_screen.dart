@@ -5,38 +5,33 @@ import '../../../data/models/message_model.dart';
 import '../../../data/models/user_model.dart';
 import '../../widgets/message_box.dart';
 import 'chat_provider.dart';
-// import 'messagebox.dart'; // Import your Messagebox widget
 
 class ChatScreen extends ConsumerWidget {
   final User receiver;
-  
+
   const ChatScreen({super.key, required this.receiver});
-  
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final chatState = ref.watch(chatScreenProvider(receiver.uuid));
     final chatNotifier = ref.read(chatScreenProvider(receiver.uuid).notifier);
     final messages = chatState.messages;
-    
-    print('Rendering ${messages.length} messages for ${receiver.name}');
-    
-    // Sort messages by timestamp
-    final sortedMessages = List<ChatMessage>.from(messages);
-    sortedMessages.sort((a, b) {
-      try {
-        final aTime = DateTime.parse(a.timestamp);
-        final bTime = DateTime.parse(b.timestamp);
-        return aTime.compareTo(bTime);
-      } catch (e) {
-        print('Error parsing timestamp for sorting: $e');
-        return 0;
-      }
-    });
-    
-    final groupedMessages = chatNotifier.groupMessagesByDate(sortedMessages);
-    print('Grouped messages: ${groupedMessages.keys}');
 
+    print('Rendering ${messages.length} messages for ${receiver.name}');
+
+    // Show loading indicator if not initialized
+    if (!chatState.isInitialized) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(receiver.name),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    // Show error state if there's an error
     if (chatState.errorMessage != null) {
       return Scaffold(
         appBar: AppBar(
@@ -73,6 +68,22 @@ class ChatScreen extends ConsumerWidget {
         ),
       );
     }
+
+    // Sort messages by timestamp
+    final sortedMessages = List<ChatMessage>.from(messages);
+    sortedMessages.sort((a, b) {
+      try {
+        final aTime = DateTime.parse(a.timestamp);
+        final bTime = DateTime.parse(b.timestamp);
+        return aTime.compareTo(bTime);
+      } catch (e) {
+        print('Error parsing timestamp for sorting: $e');
+        return 0;
+      }
+    });
+
+    final groupedMessages = chatNotifier.groupMessagesByDate(sortedMessages);
+    print('Grouped messages: ${groupedMessages.keys}');
 
     final dateKeys = groupedMessages.keys.toList()..sort();
 
