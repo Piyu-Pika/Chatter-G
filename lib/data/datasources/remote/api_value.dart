@@ -140,44 +140,32 @@ class ApiClient {
       throw Exception(await _handleError(e));
     }
   }
-  
-  Future<void> updateFCMToken({
-    required String uuid,
-    required String fcmToken,
-  }) async {
-    try {
-      if (uuid.isEmpty) {
-        throw Exception('UUID cannot be empty');
-      }
-      
-      if (fcmToken.isEmpty) {
-        throw Exception('FCM token cannot be empty');
-      }
 
-      final response = await _dio.put(
-        '/api/v1/users/$uuid/fcm-token',
-        data: {'fcm_token': fcmToken},
-      );
-
-      if (response.statusCode != 200) {
-        throw Exception('Failed to update FCM token: ${response.statusCode}');
-      }
-      
-      print('FCM token updated successfully');
-    } on DioException catch (e) {
-      throw Exception(await _handleError(e));
-    }
+  Future<void> updateFcmToken(String uuid, String fcmToken) async {
+  try {
+    await _dio.put(
+      '/api/v1/users/$uuid/fcm-token',
+      data: {'fcm_token': fcmToken},
+      options: Options(headers: {
+        // 'Authorization': 'Bearer $_authToken',  // Ensure you manage the token here
+      }),
+    );
+  } catch (e) {
+    print('Failed to update FCM token: $e');
+    throw e;
   }
+}
+
 
   // Get all users - Fixed return type casting
-  Future<List<User>> getUsers() async {
+  Future<List<AppUser>> getUsers() async {
     try {
       final response = await _dio.get('/api/v1/users');
 
       if (response.data['data'] is List) {
         final List<dynamic> usersJson = response.data['data'] as List<dynamic>;
         return usersJson
-            .map((json) => User.fromJson(json as Map<String, dynamic>))
+            .map((json) => AppUser.fromJson(json as Map<String, dynamic>))
             .toList();
       } else {
         throw Exception('Unexpected response format: data is not a list');

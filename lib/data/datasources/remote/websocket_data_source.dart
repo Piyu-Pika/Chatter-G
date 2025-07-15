@@ -64,6 +64,14 @@ class WebSocketService {
     return false;
   }
 
+  void reconnect() {
+  if (_currentUserId != null) {
+    final url = 'wss://chatterg-go-production.up.railway.app/ws?userID=$_currentUserId';
+    connect(url);
+  }
+}
+
+
   // Connect to WebSocket server
   Future<void> connect(String url) async {
     // Extract userId from URL

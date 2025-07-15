@@ -1,187 +1,143 @@
-// lib/services/notification_service.dart
 import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:chatterg/data/models/user_model.dart';
+
+import 'api_value.dart';
 
 class NotificationService {
-  static final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  static final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
-  static String? _currentUserUUID;
+  static final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+  static final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
+
+  static AppUser? _currentUser;
   static String? _authToken;
-  
-  static Future<void> initialize(String userUUID, {String? authToken}) async {
-    _currentUserUUID = userUUID;
+
+  // Initialize with just Firebase user - for splash screen
+  static Future<void> initializeBasic() async {
+    await _requestPermission();
+    await _initLocalNotifications();
+    await _sendFcmTokenToServer(); // Send token even without AppUser
+    _listenToForegroundMessages();
+    _listenToTokenRefresh();
+  }
+
+  // Full initialization with AppUser - for login
+  static Future<void> initialize(AppUser user, {required String authToken}) async {
+    _currentUser = user;
     _authToken = authToken;
-    
-    // Initialize local notifications
-    await _initializeLocalNotifications();
-    
-    // Request permission
-    NotificationSettings settings = await _firebaseMessaging.requestPermission(
+
+    await _requestPermission();
+    await _initLocalNotifications();
+    await _sendFcmTokenToServer();
+    _listenToForegroundMessages();
+    _listenToTokenRefresh();
+  }
+
+  static Future<void> _requestPermission() async {
+    NotificationSettings settings = await _fcm.requestPermission(
       alert: true,
-      announcement: false,
       badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
       sound: true,
     );
-    
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('User granted notification permissions');
-      
-      // Get FCM token
-      String? token = await _firebaseMessaging.getToken();
-      if (token != null) {
-        await _sendTokenToServer(token);
-      }
-      
-      // Listen for token refresh
-      _firebaseMessaging.onTokenRefresh.listen(_sendTokenToServer);
-      
-      // Setup message handlers
-      _setupMessageHandlers();
-    } else {
-      print('User denied notification permissions');
+
+    if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+      debugPrint('User declined or has not accepted permission');
     }
   }
-  
-  static Future<void> _initializeLocalNotifications() async {
-    const AndroidInitializationSettings androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const DarwinInitializationSettings iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
-    
+
+  static Future<void> _initLocalNotifications() async {
+    const AndroidInitializationSettings androidInitSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
     const InitializationSettings initSettings = InitializationSettings(
-      android: androidSettings,
-      iOS: iosSettings,
+      android: androidInitSettings,
     );
-    
-    await _localNotifications.initialize(
-      initSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {
-        // Handle notification tap
-        if (response.payload != null) {
-          _handleNotificationTap(response.payload!);
-        }
-      },
-    );
-    
-    // Create notification channel for Android
-    const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'chat_channel',
-      'Chat Messages',
-      description: 'Notifications for chat messages',
-      importance: Importance.high,
-      // priority: Priority.high,
-    );
-    
-    await _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(channel);
+
+    await _localNotifications.initialize(initSettings,
+        onDidReceiveNotificationResponse: _onNotificationTap);
   }
-  
-  static void _setupMessageHandlers() {
-    // Handle foreground messages
+
+  static Future<void> _sendFcmTokenToServer() async {
+    try {
+      String? token = await _fcm.getToken();
+      if (token == null) {
+        debugPrint('FCM token is null');
+        return;
+      }
+
+      // Get Firebase user
+      final firebaseUser = FirebaseAuth.instance.currentUser;
+      if (firebaseUser == null) {
+        debugPrint('No Firebase user found, cannot send FCM token');
+        return;
+      }
+
+      final apiClient = ApiClient();
+      await apiClient.updateFcmToken(firebaseUser.uid, token);
+      debugPrint('FCM token updated successfully on server');
+    } catch (e) {
+      debugPrint('Failed to update FCM token: $e');
+    }
+  }
+
+  static void _listenToTokenRefresh() {
+    _fcm.onTokenRefresh.listen((newToken) async {
+      debugPrint('FCM token refreshed: $newToken');
+      await _sendFcmTokenToServer();
+    });
+  }
+
+  static void _listenToForegroundMessages() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('Received foreground message: ${message.messageId}');
+      debugPrint('Foreground message received: ${message.messageId}');
       _showLocalNotification(message);
     });
-    
-    // Handle notification tap when app is in background
+
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('Notification tapped: ${message.messageId}');
-      _handleNotificationTap(jsonEncode(message.data));
+      _onNotificationTapFromMessage(message);
     });
   }
-  
-  static Future<void> _sendTokenToServer(String token) async {
-    if (_currentUserUUID == null) {
-      print('Cannot send FCM token: User UUID not set');
-      return;
-    }
-    
-    try {
-      final baseUrl = dotenv.env['BASE_URL'] ?? 'https://chatterg-go-production.up.railway.app';
-      final response = await http.put(
-        Uri.parse('$baseUrl/api/v1/users/$_currentUserUUID/fcm-token'),
-        headers: {
-          'Content-Type': 'application/json',
-          if (_authToken != null) 'Authorization': 'Bearer $_authToken',
-        },
-        body: jsonEncode({'fcm_token': token}),
-      );
-      
-      if (response.statusCode == 200) {
-        print('FCM token updated successfully');
-      } else {
-        print('Failed to update FCM token: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error sending FCM token: $e');
-    }
-  }
-  
-  static Future<void> _showLocalNotification(RemoteMessage message) async {
-    String title = message.notification?.title ?? 'New Message';
-    String body = message.notification?.body ?? 'You have a new message';
-    
-    // Create payload for notification tap handling
-    String payload = jsonEncode(message.data);
-    
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'chat_channel',
-      'Chat Messages',
-      channelDescription: 'Notifications for chat messages',
-      importance: Importance.high,
-      priority: Priority.high,
-      showWhen: true,
-    );
-    
-    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
-    
-    const NotificationDetails notificationDetails = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-    
-    await _localNotifications.show(
-      message.hashCode,
-      title,
-      body,
-      notificationDetails,
-      payload: payload,
+
+  static void _showLocalNotification(RemoteMessage message) {
+    final notification = message.notification;
+    if (notification == null) return;
+
+    _localNotifications.show(
+      notification.hashCode,
+      notification.title,
+      notification.body,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'chatterg_channel',
+          'ChatterG Messages',
+          channelDescription: 'Notification channel for chat messages',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+      ),
+      payload: jsonEncode(message.data),
     );
   }
-  
-  static void _handleNotificationTap(String payload) {
-    try {
-      final data = jsonDecode(payload);
-      String? senderId = data['sender_id'];
-      
-      if (senderId != null) {
-        // TODO: Navigate to chat screen with senderId
-        print('Navigate to chat with sender: $senderId');
-        // You can use your navigation service here
-        // NavigationService.navigateToChatScreen(senderId);
-      }
-    } catch (e) {
-      print('Error handling notification tap: $e');
+
+  static void _onNotificationTap(NotificationResponse response) {
+    if (response.payload != null) {
+      final data = jsonDecode(response.payload!);
+      _handleNotificationNavigation(data);
     }
   }
-  
-  static Future<void> clearAllNotifications() async {
-    await _localNotifications.cancelAll();
+
+  static void _onNotificationTapFromMessage(RemoteMessage message) {
+    _handleNotificationNavigation(message.data);
   }
-  
-  static Future<void> clearNotification(int notificationId) async {
-    await _localNotifications.cancel(notificationId);
+
+  static void _handleNotificationNavigation(Map<String, dynamic> data) {
+    final senderId = data['sender_id'];
+    if (senderId != null) {
+      debugPrint('Navigate to chat screen for sender: $senderId');
+      // TODO: Integrate NavigationService or Riverpod to open ChatScreen
+    }
   }
 }

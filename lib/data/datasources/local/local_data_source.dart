@@ -27,7 +27,7 @@ class LocalDataSource {
   static const String _keySurname = 'surname';
 
   // Step 3: Save data to secure storage
-  Future<void> saveData(User data) async {
+  Future<void> saveData(AppUser data) async {
     try {
       final Map<String, String> userMap = {
         _keyName: data.name,
@@ -53,7 +53,7 @@ class LocalDataSource {
   }
 
   // Step 4: Retrieve data from secure storage
-  Future<User?> getUser() async {
+  Future<AppUser?> getUser() async {
     try {
       final String? name = await _secureStorage.read(key: _keyName);
       final String? email = await _secureStorage.read(key: _keyEmail);
@@ -73,7 +73,7 @@ class LocalDataSource {
           await _secureStorage.read(key: _keyPhoneNumber);
 
       if (name != null && email != null && uuid != null) {
-        return User(
+        return AppUser(
           name: name,
           email: email,
           uuid: uuid,

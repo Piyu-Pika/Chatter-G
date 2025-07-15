@@ -9,7 +9,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppLifecycleManager(
+    return  AppLifecycleManager(
       child: MaterialApp(
         title: "Chatter G",
         theme: appTheme,

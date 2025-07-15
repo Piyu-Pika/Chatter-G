@@ -13,12 +13,13 @@ import '../home_screen/home_provider.dart';
 class ChatScreenState {
   final String roomName;
   final String currentUserUuid;
-  final User receiver;
+  final AppUser receiver;
   final TextEditingController textController;
   final ScrollController scrollController;
   final String? errorMessage;
   final bool isLoading;
   final List<ChatMessage> messages;
+  final bool isInitialized;
 
   ChatScreenState({
     required this.roomName,
@@ -29,17 +30,19 @@ class ChatScreenState {
     this.errorMessage,
     required this.isLoading,
     required this.messages,
+    this.isInitialized = false,
   });
 
   ChatScreenState copyWith({
     String? roomName,
     String? currentUserUuid,
-    User? receiver,
+    AppUser? receiver,
     TextEditingController? textController,
     ScrollController? scrollController,
     String? errorMessage,
     bool? isLoading,
     List<ChatMessage>? messages,
+    bool? isInitialized,
   }) {
     return ChatScreenState(
       roomName: roomName ?? this.roomName,
@@ -50,6 +53,7 @@ class ChatScreenState {
       errorMessage: errorMessage,
       isLoading: isLoading ?? this.isLoading,
       messages: messages ?? this.messages,
+      isInitialized: isInitialized ?? this.isInitialized,
     );
   }
 }
@@ -62,7 +66,7 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
       : super(ChatScreenState(
           roomName: '',
           currentUserUuid: '',
-          receiver: User(
+          receiver: AppUser(
             uuid: '',
             name: '',
             surname: '',
@@ -81,23 +85,27 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
           scrollController: ScrollController(),
           isLoading: false,
           messages: [],
+          isInitialized: false,
         )) {
-    _initializeChat();
+    // Defer initialization to avoid provider modification during initialization
+    Future.microtask(() => _initializeChat());
   }
 
-  void _initializeChat() {
+  void _initializeChat() async {
+    if (state.isInitialized) return;
+    
     try {
       print('Initializing chat for receiver: $receiverUuid');
       final authProvider = ref.read(authServiceProvider);
       final currentUserUuid = authProvider.currentUser?.uid ?? '';
-      
+
       // Find the receiver from the fetched users
       final homeState = ref.read(homeScreenProvider);
       final receiver = homeState.fetchedUsers.firstWhere(
         (user) => user.uuid == receiverUuid,
         orElse: () => throw Exception('Receiver not found'),
       );
-      
+
       final roomName = getRoomName(currentUserUuid, receiver.uuid);
       final webSocketService = ref.read(webSocketServiceProvider);
 
@@ -109,16 +117,22 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
 
       // Load local messages from ObjectBox
       final localMessages = objectBox.getMessagesFor(currentUserUuid, receiver.uuid);
-      ref.read(chatMessagesProvider.notifier).state = {
-  roomName: localMessages,
-};
-  
+      
+      // Update state first
       state = state.copyWith(
-         messages: localMessages,
+        messages: localMessages,
         currentUserUuid: currentUserUuid,
         receiver: receiver,
         roomName: roomName,
+        isInitialized: true,
       );
+
+      // Then update the chat messages provider using Future.microtask
+      Future.microtask(() {
+        ref.read(chatMessagesProvider.notifier).state = {
+          roomName: localMessages,
+        };
+      });
 
       print('Chat initialized with roomName: $roomName for receiver: ${receiver.name}');
 
@@ -129,32 +143,44 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
 
       // Watch messages for the room
       ref.listen(chatMessagesProvider, (previous, next) {
+        if (!mounted) return;
+        
         final messages = next[roomName] ?? [];
         print('New messages received for room $roomName: ${messages.length}');
-        state = state.copyWith(messages: messages);
+        
+        if (mounted) {
+          state = state.copyWith(messages: messages);
 
-        // Scroll to bottom when new messages arrive
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _scrollToBottom();
-        });
+          // Scroll to bottom when new messages arrive
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _scrollToBottom();
+          });
+        }
       });
     } catch (e) {
       print('Error initializing chat: $e');
-      state = state.copyWith(errorMessage: 'Error initializing chat: $e');
+      if (mounted) {
+        state = state.copyWith(
+          errorMessage: 'Error initializing chat: $e',
+          isInitialized: true,
+        );
+      }
     }
   }
+
   final Map<String, void Function(ChatMessage)> _roomListeners = {};
 
-void registerRoomListener(String roomName, void Function(ChatMessage) callback) {
-  _roomListeners[roomName] = callback;
-}
+  void registerRoomListener(String roomName, void Function(ChatMessage) callback) {
+    _roomListeners[roomName] = callback;
+  }
 
-void unregisterRoomListener(String roomName) {
-  _roomListeners.remove(roomName);
-}
-
+  void unregisterRoomListener(String roomName) {
+    _roomListeners.remove(roomName);
+  }
 
   void markAsRead(ChatMessage message) {
+    if (!mounted) return;
+    
     final updatedMessages = state.messages.map((m) {
       if (m.timestamp == message.timestamp && m.senderId == message.senderId) {
         return ChatMessage(
@@ -167,6 +193,7 @@ void unregisterRoomListener(String roomName) {
       }
       return m;
     }).toList();
+    
     state = state.copyWith(messages: updatedMessages);
 
     // Notify the server to mark the message as read
@@ -186,7 +213,7 @@ void unregisterRoomListener(String roomName) {
   }
 
   void sendMessage(String text) {
-    if (state.isLoading || text.trim().isEmpty) return;
+    if (state.isLoading || text.trim().isEmpty || !mounted) return;
 
     state = state.copyWith(isLoading: true);
 
@@ -222,9 +249,13 @@ void unregisterRoomListener(String roomName) {
       });
     } catch (e) {
       print('Failed to send message: $e');
-      state = state.copyWith(errorMessage: 'Failed to send message: $e');
+      if (mounted) {
+        state = state.copyWith(errorMessage: 'Failed to send message: $e');
+      }
     } finally {
-      state = state.copyWith(isLoading: false);
+      if (mounted) {
+        state = state.copyWith(isLoading: false);
+      }
     }
   }
 

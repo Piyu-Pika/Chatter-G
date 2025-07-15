@@ -5,7 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../data/datasources/remote/api_value.dart';
-import '../../../data/models/user_model.dart' as AppUser;
+// import '../../../data/models/user_model.dart' as AppUser;
+import '../../../data/models/user_model.dart';
 import 'profileScreenProvider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -18,7 +19,7 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _apiClient = ApiClient();
   // final _cockroachdbDataSource = MongoDBDataSource();
-  late Future<AppUser.User> _userDataFuture;
+  late Future<AppUser> _userDataFuture;
   final Map<String, TextEditingController> _controllers = {};
   final _formKey = GlobalKey<FormState>();
   String _selectedGender = '';
@@ -42,7 +43,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     setState(() {
       _userDataFuture = _apiClient.getUserByUUID(uuid: userId).then((userData) {
         print('User Data: $userData');
-        return AppUser.User(
+        return AppUser(
           uuid: userData['uuid'] ?? '',
           name: userData['name'] ?? '',
           surname: userData['surname'] ?? '',
@@ -120,7 +121,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Scaffold(
       backgroundColor: isDarkMode ? const Color(0xFF121212) : Colors.grey[50],
       appBar: _buildAppBar(isDarkMode, primaryColor),
-      body: FutureBuilder<AppUser.User>(
+      body: FutureBuilder<AppUser>(
         future: _userDataFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -378,7 +379,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   // Initialize text controllers with user data
-  void _initializeControllers(AppUser.User user) {
+  void _initializeControllers(AppUser user) {
     _controllers['uuid'] = TextEditingController(text: user.uuid);
     _controllers['name'] = TextEditingController(text: user.name);
     _controllers['email'] = TextEditingController(text: user.email);

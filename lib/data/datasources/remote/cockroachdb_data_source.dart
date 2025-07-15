@@ -75,7 +75,7 @@ class MongoDBDataSource {
     }
   }
 
-  Future<List<User>> getData(uuid) async {
+  Future<List<AppUser>> getData(uuid) async {
     try {
       final response = await _dio.get(
         '$baseUrl/api/v1/users/',
@@ -91,8 +91,8 @@ class MongoDBDataSource {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
-        final List<User> users = data.map((userJson) {
-          return User(
+        final List<AppUser> users = data.map((userJson) {
+          return AppUser(
             name: userJson['name'],
             email: userJson['email'],
             uuid: userJson['uuid'],
@@ -140,7 +140,7 @@ class MongoDBDataSource {
     }
   }
 
-  Future<User> getUserData(uuid) async {
+  Future<AppUser> getUserData(uuid) async {
     try {
       final response = await _dio.get(
         '$baseUrl/user',
@@ -157,7 +157,7 @@ class MongoDBDataSource {
 
       if (response.statusCode == 200) {
         final data = response.data;
-        final user = User(
+        final user = AppUser(
           name: data['name'],
           email: data['email'],
           uuid: data['uuid'],

@@ -16,7 +16,7 @@ final apiClientProvider = Provider((ref) => ApiClient());
 // ProfileScreenState class
 class ProfileScreenState extends ChangeNotifier {
   final ApiClient apiClient;
-  User? user;
+  AppUser? user;
 
   ProfileScreenState({required this.apiClient, this.user});
 
@@ -24,7 +24,7 @@ class ProfileScreenState extends ChangeNotifier {
   Future<void> fetchUserProfile(String uuid) async {
     try {
       final userData = await apiClient.getUserByUUID(uuid: uuid);
-      user = User.fromJson(userData);
+      user = AppUser.fromJson(userData);
       notifyListeners();
     } catch (e) {
       print('Error fetching user profile: $e');
@@ -55,7 +55,7 @@ class ProfileScreenState extends ChangeNotifier {
         phoneNumber: phoneNumber,
         profilePic: profilePic,
       );
-      user = User.fromJson(updatedData);
+      user = AppUser.fromJson(updatedData);
       notifyListeners();
     } catch (e) {
       print('Error updating user profile: $e');

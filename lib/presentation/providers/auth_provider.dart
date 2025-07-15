@@ -1,11 +1,15 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:async';
+// import 'package:chatterg/data/models/user_model.dart' as AppUser; 
 
 // import '../../data/datasources/remote/api_value.dart';
+import '../../data/datasources/remote/api_value.dart';
 import '../../data/datasources/remote/notification_service.dart';
+import '../../data/models/user_model.dart';
 import '../pages/home_screen/home_screen.dart'; // Required for StreamSubscription
 
 // Provider for FirebaseAuth instance
@@ -72,17 +76,6 @@ class AuthService extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
-  Future<void> initializeUserSession(String userUUID, {String? authToken}) async {
-    try {
-      // Initialize notification service
-      await NotificationService.initialize(userUUID, authToken: authToken);
-      
-      print('User session initialized successfully');
-    } catch (e) {
-      print('Error initializing user session: $e');
-    }
-  }
 
   void _clearError() {
     if (_errorMessage != null) {
@@ -97,6 +90,24 @@ class AuthService extends ChangeNotifier {
     _setLoading(false); // Ensure loading is stopped on error
     notifyListeners();
   }
+
+  Future<void> _initializeNotifications(User firebaseUser) async {
+    try {
+      final uuid = firebaseUser.uid;
+      final userModel = await ApiClient().getUserByUUID(uuid: uuid);
+      final user = AppUser.fromJson(userModel);
+      final token = await firebaseUser.getIdToken();
+
+      // Use full initialization with AppUser for complete setup
+      await NotificationService.initialize(user, authToken: token ?? '');
+      debugPrint('Notifications initialized and FCM token sent to server');
+    } catch (e) {
+      debugPrint('Failed to initialize notifications: $e');
+      // Fallback to basic initialization to at least send FCM token
+      await NotificationService.initializeBasic();
+    }
+  }
+
 
   // This listener updates the internal state and notifies listeners.
   // UI reacting to authServiceProvider or authStateChangesProvider
@@ -158,13 +169,12 @@ class AuthService extends ChangeNotifier {
       // by listening to auth state changes (e.g., using authStateChangesProvider).
       // This keeps the service layer decoupled from the UI.
       if (_firebaseAuth.currentUser != null && context.mounted) {
-        await initializeUserSession(_firebaseAuth.currentUser!.uid);
-       if (context.mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-          );
-        }
+        await _initializeNotifications(_firebaseAuth.currentUser!);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          // Remove all previous routes
+        );
       } else {
         // If user is null after await or context is unmounted, handle error state
         _setLoading(
@@ -207,16 +217,12 @@ class AuthService extends ChangeNotifier {
       // Direct navigation after successful sign-in:
       // Note: It's generally preferred to handle navigation in the UI layer
       // by listening to auth state changes (e.g., using authStateChangesProvider).
-      if (_firebaseAuth.currentUser != null) {
-        await initializeUserSession(_firebaseAuth.currentUser!.uid);
-        
-        if (context.mounted) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-            (Route<dynamic> route) => false,
-          );
-        }
+      if (_firebaseAuth.currentUser != null && context.mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (Route<dynamic> route) => false, // Remove all previous routes
+        );
       } else {
         // If user is null after await or context is unmounted, handle error state
         _setLoading(

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class User {
+class AppUser {
   final String uuid; // Firebase UID
   final String name; // Full name
   final String? surname; // Surname/Last name
@@ -17,7 +17,7 @@ class User {
   final bool? isOnline; // Online status
   final DateTime? lastSeen; // Last seen timestamp
 
-  User({
+  AppUser({
     required this.uuid,
     required this.name,
     required this.email,
@@ -59,8 +59,8 @@ class User {
   }
 
   // Improved fromJson with better null handling
-  factory User.fromJson(Map<String, dynamic> json) {
-    return User(
+  factory AppUser.fromJson(Map<String, dynamic> json) {
+    return AppUser(
       uuid: json['uuid']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
@@ -118,7 +118,7 @@ class User {
   }
 
   // Helper method to create a copy with updated fields
-  User copyWith({
+  AppUser copyWith({
     String? uuid,
     String? name,
     String? surname,
@@ -135,7 +135,7 @@ class User {
     bool? isOnline,
     DateTime? lastSeen,
   }) {
-    return User(
+    return AppUser(
       uuid: uuid ?? this.uuid,
       name: name ?? this.name,
       surname: surname ?? this.surname,
@@ -154,9 +154,9 @@ class User {
     );
   }
 
-  static Map<String, dynamic> toJsonFromMap(Map<String, User> data) {
+  static Map<String, dynamic> toJsonFromMap(Map<String, AppUser> data) {
     return data.map((key, user) => MapEntry(key, user.toJson()));
   }
 }
 
-final currentReceiverProvider = StateProvider<User?>((ref) => null);
+final currentReceiverProvider = StateProvider<AppUser?>((ref) => null);

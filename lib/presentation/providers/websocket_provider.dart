@@ -1,11 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/datasources/remote/app_lifecycle_manager.dart';
 import '../../data/datasources/remote/websocket_data_source.dart';
 import '../../data/models/message_model.dart';
 import '../../main.dart';
 import 'auth_provider.dart';
-// import 'package:app_lifecycle_manager.dart';
 
 // WebSocket Service Provider
 final webSocketServiceProvider = Provider<WebSocketService>((ref) {
@@ -15,8 +13,6 @@ final webSocketServiceProvider = Provider<WebSocketService>((ref) {
   });
   return service;
 });
-
-
 
 final webSocketConnectionProvider = FutureProvider<void>((ref) async {
   final authService = ref.read(authServiceProvider);
@@ -34,7 +30,6 @@ class ChatMessagesNotifier extends StateNotifier<Map<String, List<ChatMessage>>>
 
   ChatMessagesNotifier(this.ref) : super({}) {
     _initializeWebSocketListener();
-    _initializeLifecycleManager();
   }
 
   void _initializeWebSocketListener() {
@@ -55,19 +50,6 @@ class ChatMessagesNotifier extends StateNotifier<Map<String, List<ChatMessage>>>
     print('WebSocket error: $error');
   });
 }
-
-void _initializeLifecycleManager() {
-    // Set WebSocket service and user UUID in lifecycle manager if available
-    final authService = ref.read(authServiceProvider);
-    final webSocketService = ref.read(webSocketServiceProvider);
-    final lifecycleManagerState = ref.read(lifecycleManagerStateProvider);
-    
-    if (lifecycleManagerState != null && authService.currentUser != null) {
-      lifecycleManagerState.setWebSocketService(webSocketService);
-      lifecycleManagerState.setUserUUID(authService.currentUser!.uid);
-      print('Lifecycle manager configured with WebSocket service');
-    }
-  }
 
 
   void addMessage(ChatMessage message) {

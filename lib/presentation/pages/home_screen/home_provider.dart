@@ -2,7 +2,8 @@ import 'package:chatterg/data/datasources/remote/api_value.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/models/user_model.dart' as User;
+// import '../../../data/models/user_model.dart' as User;
+import '../../../data/models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/websocket_provider.dart';
 
@@ -10,7 +11,7 @@ class HomeScreenState {
   final Map<String, List<dynamic>> chatrooms;
   final bool isLoading;
   final String currentUserUuid;
-  final List<User.User> fetchedUsers;
+  final List<AppUser> fetchedUsers;
 
   HomeScreenState({
     required this.chatrooms,
@@ -23,7 +24,7 @@ class HomeScreenState {
     Map<String, List<dynamic>>? chatrooms,
     bool? isLoading,
     String? currentUserUuid,
-    List<User.User>? fetchedUsers,
+    List<AppUser>? fetchedUsers,
   }) {
     return HomeScreenState(
       chatrooms: chatrooms ?? this.chatrooms,
