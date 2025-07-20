@@ -2,7 +2,11 @@ import 'package:chatterg/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../../data/datasources/remote/api_value.dart';
+import '../../../data/datasources/remote/chat_screen_wrapper.dart';
+import '../../../data/datasources/remote/notification_service.dart';
 import '../../../data/models/user_model.dart';
 import '../camera_screen/camera_screen.dart';
 import '../chat_screen/chat_screen.dart';
@@ -29,6 +33,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void initState() {
     super.initState();
+    Future.microtask(() => _initializeNotifications(
+      FirebaseAuth.instance.currentUser!, // Ensure you pass a valid user
+    ));
     _fabAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -57,6 +64,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           curve: Curves.easeInOut,
         );
   }
+
+  Future<void> _initializeNotifications(User firebaseUser) async {
+  try {
+    final uuid = firebaseUser.uid;
+    final userModel = await ApiClient().getUserByUUID(uuid: uuid);
+
+    // Assuming your userModel includes uuid, etc.
+    final user = AppUser.fromJson(userModel);
+    final token = await firebaseUser.getIdToken();
+
+    await NotificationService.initialize(user, authToken: token??'');
+    debugPrint('Notifications initialized and FCM token sent to server');
+  } catch (e) {
+    debugPrint('Failed to initialize notifications: $e');
+  }
+}
 
   void _onPageChanged(int index) {
     ref.read(bottomNavProvider.notifier).state = index;
@@ -521,7 +544,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (context) => ChatScreen(receiver: user),
+      builder: (context) => ChatScreenWrapper(receiver: user),
     ),
   );
         },

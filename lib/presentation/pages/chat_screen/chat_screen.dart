@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../data/datasources/remote/navigation_service.dart';
+import '../../../data/datasources/remote/notification_service.dart';
 import '../../../data/models/message_model.dart';
 import '../../../data/models/user_model.dart';
 import '../../widgets/message_box.dart';
 import 'chat_provider.dart';
+
 
 class ChatScreen extends ConsumerWidget {
   final AppUser receiver;
@@ -17,6 +20,12 @@ class ChatScreen extends ConsumerWidget {
     final chatNotifier = ref.read(chatScreenProvider(receiver.uuid).notifier);
     final messages = chatState.messages;
 
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+    NavigationService.setCurrentChatUser(receiver.uuid);
+    // Clear notifications for this user
+    NotificationService.clearNotificationsForUser(receiver.uuid);
+  });
+  
     print('Rendering ${messages.length} messages for ${receiver.name}');
 
     // Show loading indicator if not initialized

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'navigation_service.dart';
+import 'notification_service.dart';
 import 'websocket_data_source.dart';
 
 class AppLifecycleManager extends StatefulWidget {
@@ -29,7 +31,11 @@ class _AppLifecycleManagerState extends State<AppLifecycleManager> with WidgetsB
       case AppLifecycleState.resumed:
         debugPrint('App in foreground - reconnecting WebSocket');
         WebSocketService().reconnect();  // You can create this method if not yet
-        break;
+        final currentChatUser = NavigationService.getCurrentChatUser();
+  if (currentChatUser != null) {
+    NotificationService.clearNotificationsForUser(currentChatUser);
+  }
+  break;
       case AppLifecycleState.inactive:
       case AppLifecycleState.paused:
         debugPrint('App moved to background - can manage tasks here');

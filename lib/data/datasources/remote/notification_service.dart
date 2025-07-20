@@ -4,11 +4,13 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:chatterg/data/models/user_model.dart';
+import 'navigation_service.dart';
 
 import 'api_value.dart';
 
 class NotificationService {
   static final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+  
   static final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 
@@ -91,15 +93,23 @@ class NotificationService {
   }
 
   static void _listenToForegroundMessages() {
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint('Foreground message received: ${message.messageId}');
-      _showLocalNotification(message);
-    });
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    debugPrint('Foreground message received: ${message.messageId}');
+    
+    // Check if user is currently in chat with the sender
+    final senderId = message.data['sender_id'];
+    if (senderId != null && NavigationService.isInChatWith(senderId)) {
+      debugPrint('User is in chat with sender $senderId, not showing notification');
+      return;
+    }
+    
+    _showLocalNotification(message);
+  });
 
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      _onNotificationTapFromMessage(message);
-    });
-  }
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    _onNotificationTapFromMessage(message);
+  });
+}
 
   static void _showLocalNotification(RemoteMessage message) {
     final notification = message.notification;
@@ -134,10 +144,21 @@ class NotificationService {
   }
 
   static void _handleNotificationNavigation(Map<String, dynamic> data) {
-    final senderId = data['sender_id'];
-    if (senderId != null) {
-      debugPrint('Navigate to chat screen for sender: $senderId');
-      // TODO: Integrate NavigationService or Riverpod to open ChatScreen
-    }
+  final senderId = data['sender_id'];
+  if (senderId != null) {
+    debugPrint('Navigate to chat screen for sender: $senderId');
+    
+    // Clear notifications for this sender
+    clearNotificationsForUser(senderId);
+    
+    // Navigate to chat
+    NavigationService.navigateToChat(senderId);
   }
+
+  }
+  static Future<void> clearNotificationsForUser(String userId) async {
+  // Cancel all notifications (you might want to implement more specific logic)
+  await _localNotifications.cancelAll();
+  debugPrint('Cleared notifications for user: $userId');
+}
 }
