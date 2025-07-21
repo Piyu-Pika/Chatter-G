@@ -80,29 +80,58 @@ final receiverBubbleGradient = isDarkMode
             ),
             const SizedBox(width: 8),
           ],
-          Flexible(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-             decoration: BoxDecoration(
-  gradient: isUser ? userBubbleGradient : receiverBubbleGradient,
-  borderRadius: BorderRadius.only(
-    topLeft: const Radius.circular(16),
-    topRight: const Radius.circular(16),
-    bottomLeft: Radius.circular(isUser ? 16 : 0),
-    bottomRight: Radius.circular(isUser ? 0 : 16),
-  ),
-),
-              child: isUser
-                  ? Text(
-                      text,
-                      style: TextStyle(color: textColor),
-                    )
-                  : Text(
-                      text,
-                      style: TextStyle(color: textColor),
-                    ),
+//           Flexible(
+//             child: Container(
+//               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+//              decoration: BoxDecoration(
+//   gradient: isUser ? userBubbleGradient : receiverBubbleGradient,
+//   borderRadius: BorderRadius.only(
+//     topLeft: const Radius.circular(16),
+//     topRight: const Radius.circular(16),
+//     bottomLeft: Radius.circular(isUser ? 16 : 0),
+//     bottomRight: Radius.circular(isUser ? 0 : 16),
+//   ),
+// ),
+//               child: isUser
+//                   ? Text(
+//                       text,
+//                       style: TextStyle(color: textColor),
+//                     )
+//                   : Text(
+//                       text,
+//                       style: TextStyle(color: textColor),
+//                     ),
+//             ),
+//           ),
+Flexible(
+  child: LayoutBuilder(
+    builder: (context, constraints) {
+      final maxWidth = constraints.maxWidth * 0.6; // 👈 use 0.7 for 70%
+      return ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: maxWidth,
+        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            gradient: isUser ? userBubbleGradient : receiverBubbleGradient,
+            borderRadius: BorderRadius.only(
+              topLeft: const Radius.circular(16),
+              topRight: const Radius.circular(16),
+              bottomLeft: Radius.circular(isUser ? 16 : 0),
+              bottomRight: Radius.circular(isUser ? 0 : 16),
             ),
           ),
+          child: Text(
+            text,
+            style: TextStyle(color: textColor),
+          ),
+        ),
+      );
+    },
+  ),
+),
+
           if (isUser) ...[
             const SizedBox(width: 8),
             CircleAvatar(
