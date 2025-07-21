@@ -259,30 +259,26 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
     }
   }
 
-  Map<String, List<ChatMessage>> groupMessagesByDate(
-      List<ChatMessage> messages) {
-    print('Grouping messages by date...');
-    final groupedMessages = <String, List<ChatMessage>>{};
-
-    for (final message in messages) {
-      DateTime messageDate;
-      try {
-        messageDate = DateTime.parse(message.timestamp);
-      } catch (e) {
-        print('Error parsing timestamp: ${message.timestamp}');
-        messageDate = DateTime.now();
-      }
-
-      final dateStr = DateFormat('yyyy-MM-dd').format(messageDate);
-      if (!groupedMessages.containsKey(dateStr)) {
-        groupedMessages[dateStr] = [];
-      }
-      groupedMessages[dateStr]!.add(message);
+  Map<String, List<ChatMessage>> groupMessagesByDate(List<ChatMessage> messages) {
+  final groupedMessages = <String, List<ChatMessage>>{};
+  for (final message in messages) {
+    DateTime messageDate;
+    try {
+      // Always parse as UTC then convert to local
+      messageDate = DateTime.parse(message.timestamp).toUtc().toLocal();
+    } catch (e) {
+      messageDate = DateTime.now();
     }
-
-    print('Messages grouped by date: ${groupedMessages.keys}');
-    return groupedMessages;
+    // Format date from local DateTime
+    final dateStr = DateFormat('yyyy-MM-dd').format(messageDate);
+    if (!groupedMessages.containsKey(dateStr)) {
+      groupedMessages[dateStr] = [];
+    }
+    groupedMessages[dateStr]!.add(message);
   }
+  return groupedMessages;
+}
+
 
   String getReadableDate(String dateStr) {
     final now = DateTime.now();
