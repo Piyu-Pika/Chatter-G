@@ -106,7 +106,7 @@ final receiverBubbleGradient = isDarkMode
 Flexible(
   child: LayoutBuilder(
     builder: (context, constraints) {
-      final maxWidth = constraints.maxWidth * 0.6; // 👈 use 0.7 for 70%
+      final maxWidth = constraints.maxWidth * 0.75; // 👈 use 0.7 for 70%
       return ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: maxWidth,

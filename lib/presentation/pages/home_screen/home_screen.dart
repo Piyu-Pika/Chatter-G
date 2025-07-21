@@ -13,11 +13,6 @@ import '../chat_screen/chat_screen.dart';
 import '../profile_screen/ProfileScreen.dart';
 import 'home_provider.dart';
 
-// Page Controller Provider
-final pageControllerProvider = Provider<PageController>((ref) {
-  return PageController(initialPage: 1);
-});
-
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -29,6 +24,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     with TickerProviderStateMixin {
   late AnimationController _fabAnimationController;
   late Animation<double> _fabAnimation;
+  late AnimationController _pageTransitionController;
+  late Animation<double> _pageTransition;
 
   @override
   void initState() {
@@ -36,6 +33,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     Future.microtask(() => _initializeNotifications(
       FirebaseAuth.instance.currentUser!, // Ensure you pass a valid user
     ));
+    
     _fabAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -47,64 +45,91 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       parent: _fabAnimationController,
       curve: Curves.easeInOut,
     ));
+    
+    _pageTransitionController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _pageTransition = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _pageTransitionController,
+      curve: Curves.easeInOutCubic,
+    ));
+    
     _fabAnimationController.forward();
+    _pageTransitionController.forward();
   }
 
   @override
   void dispose() {
     _fabAnimationController.dispose();
+    _pageTransitionController.dispose();
     super.dispose();
   }
 
   void _onBottomNavTap(int index) {
-    ref.read(bottomNavProvider.notifier).state = index;
-    ref.read(pageControllerProvider).animateToPage(
-          index,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
+    final currentIndex = ref.read(bottomNavProvider);
+    if (currentIndex != index) {
+      // Animate page transition
+      _pageTransitionController.reset();
+      ref.read(bottomNavProvider.notifier).state = index;
+      _pageTransitionController.forward();
+    }
   }
 
   Future<void> _initializeNotifications(User firebaseUser) async {
-  try {
-    final uuid = firebaseUser.uid;
-    final userModel = await ApiClient().getUserByUUID(uuid: uuid);
+    try {
+      final uuid = firebaseUser.uid;
+      final userModel = await ApiClient().getUserByUUID(uuid: uuid);
 
-    // Assuming your userModel includes uuid, etc.
-    final user = AppUser.fromJson(userModel);
-    final token = await firebaseUser.getIdToken();
+      // Assuming your userModel includes uuid, etc.
+      final user = AppUser.fromJson(userModel);
+      final token = await firebaseUser.getIdToken();
 
-    await NotificationService.initialize(user, authToken: token??'');
-    debugPrint('Notifications initialized and FCM token sent to server');
-  } catch (e) {
-    debugPrint('Failed to initialize notifications: $e');
-  }
-}
-
-  void _onPageChanged(int index) {
-    ref.read(bottomNavProvider.notifier).state = index;
+      await NotificationService.initialize(user, authToken: token??'');
+      debugPrint('Notifications initialized and FCM token sent to server');
+    } catch (e) {
+      debugPrint('Failed to initialize notifications: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final selectedIndex = ref.watch(bottomNavProvider);
-    final pageController = ref.watch(pageControllerProvider);
     final homeState = ref.watch(homeScreenProvider);
     final homeNotifier = ref.read(homeScreenProvider.notifier);
+
+    // List of pages
+    final pages = [
+      ChatCameraScreen(),
+      _buildChatScreen(homeState, homeNotifier),
+      _buildChatterGScreen(homeState, homeNotifier),
+      _buildCallLogsScreen(),
+    ];
 
     return Scaffold(
       key: homeNotifier.scaffoldKey,
       extendBody: true,
       appBar: _buildAnimatedAppBar(context, selectedIndex),
-      body: PageView(
-        controller: pageController,
-        onPageChanged: _onPageChanged,
-        children: [
-          ChatCameraScreen(),
-          _buildChatScreen(homeState, homeNotifier),
-          _buildChatterGScreen(homeState, homeNotifier),
-          _buildCallLogsScreen(),
-        ],
+      body: AnimatedBuilder(
+        animation: _pageTransition,
+        builder: (context, child) {
+          return FadeTransition(
+            opacity: _pageTransition,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0.1, 0),
+                end: Offset.zero,
+              ).animate(_pageTransition),
+              child: IndexedStack(
+                index: selectedIndex,
+                children: pages,
+              ),
+            ),
+          );
+        },
       ),
       bottomNavigationBar: _buildBottomNavigationBar(selectedIndex),
       floatingActionButton: selectedIndex == 1
@@ -144,6 +169,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ),
       title: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0.1, 0),
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+          );
+        },
         child: Row(
           key: ValueKey(selectedIndex),
           mainAxisSize: MainAxisSize.min,
@@ -218,7 +255,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           BoxShadow(
             color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
             blurRadius: 20,
-            offset: const Offset(0, 8),
+            offset: const Offset(8, 8),
           ),
         ],
       ),
@@ -279,57 +316,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ),
     );
   }
-
-  // Widget _buildCameraScreen() {
-  //   return Container(
-  //     decoration: BoxDecoration(
-  //       gradient: LinearGradient(
-  //         begin: Alignment.topCenter,
-  //         end: Alignment.bottomCenter,
-  //         colors: [
-  //           Theme.of(context).colorScheme.surface,
-  //           Theme.of(context).colorScheme.surface.withOpacity(0.8),
-  //         ],
-  //       ),
-  //     ),
-  //     child: Center(
-  //       child: Column(
-  //         mainAxisAlignment: MainAxisAlignment.center,
-  //         children: [
-  //           Container(
-  //             padding: const EdgeInsets.all(32),
-  //             decoration: BoxDecoration(
-  //               color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-  //               borderRadius: BorderRadius.circular(24),
-  //             ),
-  //             child: Icon(
-  //               Icons.camera_alt_rounded,
-  //               size: 80,
-  //               color: Theme.of(context).colorScheme.primary,
-  //             ),
-  //           ),
-  //           const SizedBox(height: 24),
-  //           Text(
-  //             'Camera Feature',
-  //             style: TextStyle(
-  //               fontSize: 28,
-  //               fontWeight: FontWeight.bold,
-  //               color: Theme.of(context).colorScheme.onSurface,
-  //             ),
-  //           ),
-  //           const SizedBox(height: 12),
-  //           Text(
-  //             'Camera functionality coming soon!',
-  //             style: TextStyle(
-  //               fontSize: 16,
-  //               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
 
   Widget _buildChatScreen(dynamic homeState, dynamic homeNotifier) {
     return Container(
@@ -542,16 +528,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         onTap: () {
           ref.read(currentReceiverProvider.notifier).state = user;
           Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => ChatScreenWrapper(receiver: user),
-    ),
-  );
+            context,
+            MaterialPageRoute(
+              builder: (context) => ChatScreenWrapper(receiver: user),
+            ),
+          );
         },
       ),
     );
   }
-
+}
   // Widget _buildConversationTile(dynamic user) {
   //   return Container(
   //     margin: const EdgeInsets.only(bottom: 12),
@@ -606,4 +592,3 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   //     ),
   //   );
   // }
-}

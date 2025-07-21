@@ -5,6 +5,7 @@ import '../../../data/datasources/remote/navigation_service.dart';
 import '../../../data/datasources/remote/notification_service.dart';
 import '../../../data/models/message_model.dart';
 import '../../../data/models/user_model.dart';
+import '../../reciver_profile/reciver_profile.dart';
 import '../../widgets/message_box.dart';
 import 'chat_provider.dart';
 
@@ -101,26 +102,31 @@ class ChatScreen extends ConsumerWidget {
         title: Row(
           children: [
             const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  receiver.name,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+            GestureDetector(
+              onTap: (){
+                Navigator.push(context, MaterialPageRoute(builder: (context)=>ReciverProfileScreen(uuid: receiver.uuid,)));
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    receiver.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                Text(
-                  receiver.isOnline == true ? 'Online' : 'Offline',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: receiver.isOnline == true
-                        ? Colors.green
-                        : Colors.grey,
+                  Text(
+                    receiver.isOnline == true ? 'Online' : 'Offline',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: receiver.isOnline == true
+                          ? Colors.green
+                          : Colors.grey,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),

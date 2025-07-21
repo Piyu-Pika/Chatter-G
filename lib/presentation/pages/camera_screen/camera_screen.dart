@@ -275,19 +275,52 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
       child: SafeArea(
         child: Column(
           children: [
-            // Header
+            // Header with navigation
             Container(
               padding: EdgeInsets.all(16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Chat Camera',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => setState(() => _selectedIndex = 0),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: _selectedIndex == 0 ? Colors.blue : Colors.transparent,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'Camera',
+                            style: TextStyle(
+                              color: _selectedIndex == 0 ? Colors.white : Colors.grey[400],
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      GestureDetector(
+                        onTap: () => setState(() => _selectedIndex = 1),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: _selectedIndex == 1 ? Colors.blue : Colors.transparent,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'Gallery',
+                            style: TextStyle(
+                              color: _selectedIndex == 1 ? Colors.white : Colors.grey[400],
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   if (_capturedImages.isNotEmpty)
                     Text(
@@ -430,19 +463,52 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
       child: SafeArea(
         child: Column(
           children: [
-            // Header
+            // Header with navigation
             Container(
               padding: EdgeInsets.all(16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Gallery',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => setState(() => _selectedIndex = 0),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: _selectedIndex == 0 ? Colors.blue : Colors.transparent,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'Camera',
+                            style: TextStyle(
+                              color: _selectedIndex == 0 ? Colors.white : Colors.grey[400],
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      GestureDetector(
+                        onTap: () => setState(() => _selectedIndex = 1),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: _selectedIndex == 1 ? Colors.blue : Colors.transparent,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'Gallery',
+                            style: TextStyle(
+                              color: _selectedIndex == 1 ? Colors.white : Colors.grey[400],
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   if (_capturedImages.isNotEmpty)
                     TextButton(
@@ -521,16 +587,6 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
     return Scaffold(
       body: _selectedIndex == 0 ? _buildCameraView(context) : _buildGalleryView(context),
       backgroundColor: Colors.black,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        backgroundColor: Colors.black,
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.grey[600],
-        type: BottomNavigationBarType.fixed,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        items: [
-        ],
-      ),
     );
   }
 }
