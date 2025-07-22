@@ -131,7 +131,7 @@ class ApiClient {
       print('Creating user with data: $data');
 
       final response = await _dio.post(
-        '/api/v1/users', // Use relative path
+        '/api/v1/users/', // Use relative path
         data: data,
       );
 
@@ -160,7 +160,7 @@ class ApiClient {
   // Get all users - Fixed return type casting
   Future<List<AppUser>> getUsers() async {
     try {
-      final response = await _dio.get('/api/v1/users');
+      final response = await _dio.get('/api/v1/users/');
 
       if (response.data['data'] is List) {
         final List<dynamic> usersJson = response.data['data'] as List<dynamic>;
