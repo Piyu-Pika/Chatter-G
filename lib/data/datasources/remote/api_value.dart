@@ -410,4 +410,137 @@ class ApiClient {
       return false;
     }
   }
+
+  // Friend Management Operations
+
+// Send a friend request to another user
+Future<Map<String, dynamic>> sendFriendRequest({
+  required String receiverUsername,
+}) async {
+  try {
+    if (receiverUsername.isEmpty) {
+      throw Exception('Receiver username cannot be empty');
+    }
+
+    final response = await _dio.post(
+      '/api/v1/friends/request',
+      data: {'receiver_username': receiverUsername},
+    );
+
+    return response.data as Map<String, dynamic>;
+  } on DioException catch (e) {
+    throw Exception(await _handleError(e));
+  }
+}
+
+// Accept or reject a friend request
+Future<Map<String, dynamic>> respondToFriendRequest({
+  required String requestId,
+  required String action, // "accept" or "reject"
+}) async {
+  try {
+    if (requestId.isEmpty) {
+      throw Exception('Request ID cannot be empty');
+    }
+    if (action != 'accept' && action != 'reject') {
+      throw Exception('Action must be "accept" or "reject"');
+    }
+
+    final response = await _dio.put(
+      '/api/v1/friends/request/$requestId',
+      data: {'action': action},
+    );
+
+    return response.data as Map<String, dynamic>;
+  } on DioException catch (e) {
+    throw Exception(await _handleError(e));
+  }
+}
+
+// Get friend requests (sent or received)
+Future<Map<String, dynamic>> getFriendRequests({
+  required String type, // "sent" or "received"
+}) async {
+  try {
+    if (type != 'sent' && type != 'received') {
+      throw Exception('Type must be "sent" or "received"');
+    }
+
+    final response = await _dio.get(
+      '/api/v1/friends/requests',
+      queryParameters: {'type': type},
+    );
+
+    return response.data as Map<String, dynamic>;
+  } on DioException catch (e) {
+    throw Exception(await _handleError(e));
+  }
+}
+
+// Get current user's friends list
+Future<List<dynamic>> getFriends() async {
+  try {
+    final response = await _dio.get('/api/v1/friends/');
+
+    if (response.data['data'] is List) {
+      return response.data['data'] as List<dynamic>;
+    } else {
+      throw Exception('Unexpected response format: data is not a list');
+    }
+  } on DioException catch (e) {
+    throw Exception(await _handleError(e));
+  }
+}
+
+// Block a user by username
+Future<Map<String, dynamic>> blockUser({
+  required String username,
+}) async {
+  try {
+    if (username.isEmpty) {
+      throw Exception('Username cannot be empty');
+    }
+
+    final response = await _dio.post(
+      '/api/v1/friends/block',
+      data: {'username': username},
+    );
+
+    return response.data as Map<String, dynamic>;
+  } on DioException catch (e) {
+    throw Exception(await _handleError(e));
+  }
+}
+
+// Unblock a previously blocked user
+Future<Map<String, dynamic>> unblockUser({
+  required String username,
+}) async {
+  try {
+    if (username.isEmpty) {
+      throw Exception('Username cannot be empty');
+    }
+
+    final response = await _dio.delete('/api/v1/friends/block/$username');
+
+    return response.data as Map<String, dynamic>;
+  } on DioException catch (e) {
+    throw Exception(await _handleError(e));
+  }
+}
+
+// Get current user's blocked users list
+Future<List<dynamic>> getBlockedUsers() async {
+  try {
+    final response = await _dio.get('/api/v1/friends/blocked');
+
+    if (response.data['data'] is List) {
+      return response.data['data'] as List<dynamic>;
+    } else {
+      throw Exception('Unexpected response format: data is not a list');
+    }
+  } on DioException catch (e) {
+    throw Exception(await _handleError(e));
+  }
+}
 }
