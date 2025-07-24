@@ -495,7 +495,7 @@ Future<List<AppUser>> getFriends() async {
 
 // Block a user by username
 Future<Map<String, dynamic>> blockUser({
-  required String username,
+  required String user_uuid,
 }) async {
   try {
     if (user_uuid.isEmpty) {
@@ -516,6 +516,7 @@ Future<Map<String, dynamic>> blockUser({
 // Unblock a previously blocked user
 Future<Map<String, dynamic>> unblockUser({
   required String user_uuid,
+  required String receiverUuid,
 }) async {
   try {
     if (user_uuid.isEmpty) {
