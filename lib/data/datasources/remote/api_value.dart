@@ -415,16 +415,16 @@ class ApiClient {
 
 // Send a friend request to another user
 Future<Map<String, dynamic>> sendFriendRequest({
-  required String receiverUsername,
+  required String receiver_uuid
 }) async {
   try {
-    if (receiverUsername.isEmpty) {
+    if (receiver_uuid.isEmpty) {
       throw Exception('Receiver username cannot be empty');
     }
 
     final response = await _dio.post(
       '/api/v1/friends/request',
-      data: {'receiver_username': receiverUsername},
+      data: {'receiver_uuid': receiver_uuid}
     );
 
     return response.data as Map<String, dynamic>;
@@ -478,12 +478,12 @@ Future<Map<String, dynamic>> getFriendRequests({
 }
 
 // Get current user's friends list
-Future<List<dynamic>> getFriends() async {
+Future<List<AppUser>> getFriends() async {
   try {
     final response = await _dio.get('/api/v1/friends/');
 
     if (response.data['data'] is List) {
-      return response.data['data'] as List<dynamic>;
+      return response.data['data'] as List<AppUser>;
     } else {
       throw Exception('Unexpected response format: data is not a list');
     }
@@ -494,16 +494,16 @@ Future<List<dynamic>> getFriends() async {
 
 // Block a user by username
 Future<Map<String, dynamic>> blockUser({
-  required String username,
+  required String user_uuid,
 }) async {
   try {
-    if (username.isEmpty) {
+    if (user_uuid.isEmpty) {
       throw Exception('Username cannot be empty');
     }
 
     final response = await _dio.post(
       '/api/v1/friends/block',
-      data: {'username': username},
+      data: {'user_uuid': user_uuid},
     );
 
     return response.data as Map<String, dynamic>;
@@ -514,14 +514,14 @@ Future<Map<String, dynamic>> blockUser({
 
 // Unblock a previously blocked user
 Future<Map<String, dynamic>> unblockUser({
-  required String username,
+  required String user_uuid,
 }) async {
   try {
-    if (username.isEmpty) {
+    if (user_uuid.isEmpty) {
       throw Exception('Username cannot be empty');
     }
 
-    final response = await _dio.delete('/api/v1/friends/block/$username');
+    final response = await _dio.delete('/api/v1/friends/block/$user_uuid');
 
     return response.data as Map<String, dynamic>;
   } on DioException catch (e) {

@@ -10,7 +10,9 @@ import '../../../data/datasources/remote/notification_service.dart';
 import '../../../data/models/user_model.dart';
 import '../camera_screen/camera_screen.dart';
 import '../chat_screen/chat_screen.dart';
+import '../pending_request_screen/pending_request_screen.dart';
 import '../profile_screen/ProfileScreen.dart';
+import '../serach_friend/search_friend_screen.dart';
 import 'home_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -137,7 +139,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               scale: _fabAnimation,
               child: FloatingActionButton(
                 onPressed: () {
-                  // Add new chat functionality
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const SearchFriendScreen()));
                 },
                 backgroundColor: Theme.of(context).colorScheme.secondary,
                 child:
@@ -211,6 +213,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ),
       actions: [
         if (selectedIndex == 1) ...[
+          IconButton(icon: Icon(Icons.notifications_rounded), onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const PendingRequestScreen()));
+          }),
           IconButton(
             icon: Container(
               padding: const EdgeInsets.all(8),

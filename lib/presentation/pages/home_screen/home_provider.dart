@@ -62,7 +62,7 @@ class HomeScreenNotifier extends StateNotifier<HomeScreenState> {
     try {
       ApiClient apiClient = ApiClient();
       // MongoDBDataSource mongoDBDataSource = MongoDBDataSource();
-      final fetchedUsers = await apiClient.getUsers();
+      final fetchedUsers = await apiClient.getFriends();
       final chatrooms = <String, List<dynamic>>{};
       for (var user in fetchedUsers) {
         chatrooms[user.name] = [];
