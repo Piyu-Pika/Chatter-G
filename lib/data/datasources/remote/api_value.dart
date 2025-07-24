@@ -415,11 +415,12 @@ class ApiClient {
 
 // Send a friend request to another user
 Future<Map<String, dynamic>> sendFriendRequest({
+  required String receiverUuid,
   required String receiver_uuid
 }) async {
   try {
-    if (receiver_uuid.isEmpty) {
-      throw Exception('Receiver username cannot be empty');
+    if (receiverUuid.isEmpty) {
+      throw Exception('Receiver UUID cannot be empty');
     }
 
     final response = await _dio.post(
@@ -436,14 +437,14 @@ Future<Map<String, dynamic>> sendFriendRequest({
 // Accept or reject a friend request
 Future<Map<String, dynamic>> respondToFriendRequest({
   required String requestId,
-  required String action, // "accept" or "reject"
+  required String action, // "accepted" or "rejected"
 }) async {
   try {
     if (requestId.isEmpty) {
       throw Exception('Request ID cannot be empty');
     }
-    if (action != 'accept' && action != 'reject') {
-      throw Exception('Action must be "accept" or "reject"');
+    if (action != 'accepted' && action != 'rejected') {
+      throw Exception('Action must be "accepted" or "rejected"');
     }
 
     final response = await _dio.put(
@@ -494,7 +495,7 @@ Future<List<AppUser>> getFriends() async {
 
 // Block a user by username
 Future<Map<String, dynamic>> blockUser({
-  required String user_uuid,
+  required String username,
 }) async {
   try {
     if (user_uuid.isEmpty) {
@@ -521,7 +522,12 @@ Future<Map<String, dynamic>> unblockUser({
       throw Exception('Username cannot be empty');
     }
 
-    final response = await _dio.delete('/api/v1/friends/block/$user_uuid');
+    // Note: The backend route has :username parameter but expects receiver_uuid in body
+    // You may want to coordinate with backend to fix this inconsistency
+    final response = await _dio.delete(
+      '/api/v1/friends/block/placeholder', // Using placeholder since backend expects body
+      data: {'receiver_uuid': receiverUuid},
+    );
 
     return response.data as Map<String, dynamic>;
   } on DioException catch (e) {
@@ -543,4 +549,5 @@ Future<List<dynamic>> getBlockedUsers() async {
     throw Exception(await _handleError(e));
   }
 }
+
 }
