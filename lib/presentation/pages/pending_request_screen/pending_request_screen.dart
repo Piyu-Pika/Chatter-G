@@ -98,8 +98,8 @@ class PendingRequestScreen extends ConsumerWidget {
                     request: request,
                     isProcessing: state.isRequestProcessing(request['id']),
                     onTap: () => _showProfileBottomSheet(context, request, notifier),
-                    onAccept: () => notifier.respondToRequest(request['id'], 'accept'),
-                    onReject: () => notifier.respondToRequest(request['id'], 'reject'),
+                    onAccept: () => notifier.respondToRequest(request['id'], 'accepted'),  // ✅ Correct
+                    onReject: () => notifier.respondToRequest(request['id'], 'rejected'),  // ✅ Correct
                   );
                 },
               ),
@@ -273,7 +273,8 @@ class _PendingRequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sender = request['sender'] as Map<String, dynamic>;
+    // Parse sender info from API structure
+    final senderInfo = request['sender_info'] as Map<String, dynamic>? ?? {};
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -300,9 +301,9 @@ class _PendingRequestCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    _buildAvatar(sender),
+                    _buildAvatar(senderInfo),
                     const SizedBox(width: 16),
-                    Expanded(child: _buildUserInfo(sender, context)),
+                    Expanded(child: _buildUserInfo(senderInfo, context)),
                     if (!isProcessing) _buildTapIndicator(),
                   ],
                 ),
@@ -316,7 +317,7 @@ class _PendingRequestCard extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatar(Map<String, dynamic> sender) {
+  Widget _buildAvatar(Map<String, dynamic> senderInfo) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
@@ -324,39 +325,48 @@ class _PendingRequestCard extends StatelessWidget {
       ),
       child: CircleAvatar(
         radius: 28,
-        backgroundImage: sender['profilePicture'] != null
-            ? NetworkImage(sender['profilePicture'])
+        backgroundImage: senderInfo['profile_pic'] != null && 
+                         senderInfo['profile_pic'].toString().isNotEmpty
+            ? NetworkImage(senderInfo['profile_pic'])
             : null,
         backgroundColor: AppColors.accent.withOpacity(0.2),
-        child: sender['profilePicture'] == null
+        child: senderInfo['profile_pic'] == null || 
+                senderInfo['profile_pic'].toString().isEmpty
             ? const Icon(Icons.person, color: AppColors.primary, size: 28)
             : null,
       ),
     );
   }
 
-  Widget _buildUserInfo(Map<String, dynamic> sender, BuildContext context) {
+  Widget _buildUserInfo(Map<String, dynamic> senderInfo, BuildContext context) {
+    // Build display name from name and surname
+    final firstName = senderInfo['name']?.toString() ?? '';
+    final lastName = senderInfo['surname']?.toString() ?? '';
+    final displayName = '$firstName $lastName'.trim();
+    final username = senderInfo['username']?.toString();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          sender['displayName'] ?? sender['username'],
+          displayName.isNotEmpty ? displayName : username ?? 'Unknown User',
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.primary,
           ),
         ),
-        Text(
-          '@${sender['username']}',
-          style: const TextStyle(
-            fontSize: 14,
-            color: AppColors.textSecondary,
+        if (username != null && username.isNotEmpty)
+          Text(
+            '@$username',
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+            ),
           ),
-        ),
         const SizedBox(height: 4),
         Text(
-          _formatTimeAgo(request['createdAt']),
+          _formatTimeAgo(request['created_at']),
           style: const TextStyle(
             fontSize: 12,
             color: AppColors.textSecondary,
@@ -500,8 +510,13 @@ class _ProfileBottomSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sender = request['sender'] as Map<String, dynamic>;
-    final isBlocked = notifier.isUserBlocked(sender['username']);
+    // Parse sender info from API structure
+    final senderInfo = request['sender_info'] as Map<String, dynamic>? ?? {};
+    
+    // Get user identifier for blocking/unblocking
+    final userIdentifier = senderInfo['uuid'] ?? senderInfo['username'];
+    final isBlocked = userIdentifier != null ? notifier.isUserBlocked(userIdentifier) : false;
+    
     final state = ref.watch(pendingRequestProvider);
     final isProcessing = state.isRequestProcessing(request['id']);
 
@@ -531,13 +546,15 @@ class _ProfileBottomSheet extends ConsumerWidget {
                 controller: scrollController,
                 padding: const EdgeInsets.all(24),
                 children: [
-                  _buildProfileHeader(sender, isBlocked),
+                  _buildProfileHeader(senderInfo, isBlocked),
                   const SizedBox(height: 32),
-                  if (sender['bio'] != null && sender['bio'].isNotEmpty) ...[
-                    _buildBioSection(sender['bio']),
+                  if (senderInfo['bio'] != null && senderInfo['bio'].toString().isNotEmpty) ...[
+                    _buildBioSection(senderInfo['bio']),
                     const SizedBox(height: 24),
                   ],
                   _buildRequestDetails(),
+                  const SizedBox(height: 24),
+                  _buildUserDetails(senderInfo),
                   const SizedBox(height: 32),
                   _buildActionButtons(context, isBlocked, isProcessing),
                 ],
@@ -549,7 +566,13 @@ class _ProfileBottomSheet extends ConsumerWidget {
     );
   }
 
-  Widget _buildProfileHeader(Map<String, dynamic> sender, bool isBlocked) {
+  Widget _buildProfileHeader(Map<String, dynamic> senderInfo, bool isBlocked) {
+    // Build display name from name and surname
+    final firstName = senderInfo['name']?.toString() ?? '';
+    final lastName = senderInfo['surname']?.toString() ?? '';
+    final displayName = '$firstName $lastName'.trim();
+    final username = senderInfo['username']?.toString();
+
     return Center(
       child: Column(
         children: [
@@ -567,31 +590,34 @@ class _ProfileBottomSheet extends ConsumerWidget {
             ),
             child: CircleAvatar(
               radius: 50,
-              backgroundImage: sender['profilePicture'] != null
-                  ? NetworkImage(sender['profilePicture'])
+              backgroundImage: senderInfo['profile_pic'] != null && 
+                               senderInfo['profile_pic'].toString().isNotEmpty
+                  ? NetworkImage(senderInfo['profile_pic'])
                   : null,
               backgroundColor: AppColors.accent.withOpacity(0.2),
-              child: sender['profilePicture'] == null
+              child: senderInfo['profile_pic'] == null || 
+                      senderInfo['profile_pic'].toString().isEmpty
                   ? const Icon(Icons.person, size: 40, color: AppColors.primary)
                   : null,
             ),
           ),
           const SizedBox(height: 16),
           Text(
-            sender['displayName'] ?? sender['username'],
+            displayName.isNotEmpty ? displayName : username ?? 'Unknown User',
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: AppColors.primary,
             ),
           ),
-          Text(
-            '@${sender['username']}',
-            style: const TextStyle(
-              fontSize: 16,
-              color: AppColors.textSecondary,
+          if (username != null && username.isNotEmpty)
+            Text(
+              '@$username',
+              style: const TextStyle(
+                fontSize: 16,
+                color: AppColors.textSecondary,
+              ),
             ),
-          ),
           if (isBlocked) ...[
             const SizedBox(height: 8),
             Container(
@@ -657,6 +683,85 @@ class _ProfileBottomSheet extends ConsumerWidget {
     );
   }
 
+  Widget _buildUserDetails(Map<String, dynamic> senderInfo) {
+    final details = <String, String>{};
+    
+    if (senderInfo['email'] != null && senderInfo['email'].toString().isNotEmpty) {
+      details['Email'] = senderInfo['email'];
+    }
+    
+    if (senderInfo['date_of_birth'] != null && senderInfo['date_of_birth'].toString().isNotEmpty) {
+      details['Date of Birth'] = senderInfo['date_of_birth'];
+    }
+    
+    if (senderInfo['gender'] != null && senderInfo['gender'].toString().isNotEmpty) {
+      details['Gender'] = senderInfo['gender'];
+    }
+
+    if (details.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Details',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.accent.withOpacity(0.1),
+                AppColors.primary.withOpacity(0.05),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            children: details.entries.map((entry) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 100,
+                    child: Text(
+                      '${entry.key}:',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      entry.value,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildRequestDetails() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -684,16 +789,35 @@ class _ProfileBottomSheet extends ConsumerWidget {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppColors.border),
           ),
-          child: Row(
+          child: Column(
             children: [
-              const Icon(Icons.schedule, size: 20, color: AppColors.accent),
-              const SizedBox(width: 8),
-              Text(
-                'Sent ${_formatTimeAgo(request['createdAt'])}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textPrimary,
-                ),
+              Row(
+                children: [
+                  const Icon(Icons.schedule, size: 20, color: AppColors.accent),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Sent ${_formatTimeAgo(request['created_at'])}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.info_outline, size: 20, color: AppColors.accent),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Status: ${request['status']?.toString().toUpperCase() ?? 'PENDING'}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -703,13 +827,17 @@ class _ProfileBottomSheet extends ConsumerWidget {
   }
 
   Widget _buildActionButtons(BuildContext context, bool isBlocked, bool isProcessing) {
+    final username = request['sender_info']?['username']?.toString();
+    
     if (isBlocked) {
       return SizedBox(
         width: double.infinity,
         child: _ActionButton(
           onPressed: isProcessing ? null : () {
             Navigator.of(context).pop();
-            notifier.unblockUser(request['sender']['username']);
+            if (username != null) {
+              notifier.unblockUser(username);
+            }
           },
           isLoading: isProcessing,
           label: 'Unblock User',
@@ -727,7 +855,7 @@ class _ProfileBottomSheet extends ConsumerWidget {
               child: _ActionButton(
                 onPressed: isProcessing ? null : () {
                   Navigator.of(context).pop();
-                  notifier.respondToRequest(request['id'], 'reject');
+                  notifier.respondToRequest(request['id'], 'rejected');
                 },
                 isLoading: isProcessing,
                 label: 'Reject',
@@ -740,7 +868,7 @@ class _ProfileBottomSheet extends ConsumerWidget {
               child: _ActionButton(
                 onPressed: isProcessing ? null : () {
                   Navigator.of(context).pop();
-                  notifier.respondToRequest(request['id'], 'accept');
+                  notifier.respondToRequest(request['id'], 'accepted');
                 },
                 isLoading: isProcessing,
                 label: 'Accept',
@@ -754,9 +882,9 @@ class _ProfileBottomSheet extends ConsumerWidget {
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
-            onPressed: isProcessing ? null : () {
+            onPressed: isProcessing || username == null ? null : () {
               Navigator.of(context).pop();
-              notifier.blockUser(request['sender']['username']);
+              notifier.blockUser(username);
             },
             icon: const Icon(Icons.block, color: Colors.red),
             label: const Text(

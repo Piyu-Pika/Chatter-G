@@ -145,27 +145,84 @@ class _SearchFriendScreenState extends ConsumerState<SearchFriendScreen> {
     SearchFriendScreenState state,
     SearchFriendScreenNotifier notifier,
   ) {
-    if (state.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+    // Show loading indicator if either users or friends are still loading
+    if (state.isLoading || state.isLoadingFriends) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(
+              state.isLoading && state.isLoadingFriends
+                  ? 'Loading users and friends...'
+                  : state.isLoading
+                      ? 'Loading users...'
+                      : 'Loading friends...',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     if (state.filteredUsers.isEmpty) {
       return _buildEmptyState(
         state.isSearching
-            ? 'No users found for "${state.searchQuery}"'
-            : 'No users available',
+            ? 'No users found for "${state.searchQuery}"\n(Friends are excluded from search)'
+            : 'No new users to add\n(All users are already your friends or you)',
       );
     }
 
     return RefreshIndicator(
       onRefresh: notifier.refreshUsers,
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: state.filteredUsers.length,
-        itemBuilder: (context, index) {
-          final user = state.filteredUsers[index];
-          return _buildUserTile(context, user, notifier);
-        },
+      child: Column(
+        children: [
+          // Show info about filtering
+          if (state.friends.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Showing users who are not your friends (${state.friends.length} friends excluded)',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          
+          // User list
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: state.filteredUsers.length,
+              itemBuilder: (context, index) {
+                final user = state.filteredUsers[index];
+                return _buildUserTile(context, user, notifier);
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -284,45 +341,61 @@ class _SearchFriendScreenState extends ConsumerState<SearchFriendScreen> {
     );
   }
 
-  Widget _buildProfileBottomSheet(
-    BuildContext context,
-    AppUser user,
-    SearchFriendScreenState state,
-    SearchFriendScreenNotifier notifier,
-  ) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.6,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
-        ),
+Widget _buildProfileBottomSheet(
+  BuildContext context,
+  AppUser user,
+  SearchFriendScreenState state,
+  SearchFriendScreenNotifier notifier,
+) {
+  return Container(
+    height: MediaQuery.of(context).size.height * 0.45,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(28),
+        topRight: Radius.circular(28),
       ),
-      child: Column(
-        children: [
-          // Handle bar
-          Container(
-            width: 40,
-            height: 4,
-            margin: const EdgeInsets.only(top: 12),
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
-            ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 20,
+          offset: const Offset(0, -5),
+        ),
+      ],
+    ),
+    child: Column(
+      children: [
+        // Handle bar
+        Container(
+          width: 50,
+          height: 5,
+          margin: const EdgeInsets.only(top: 16),
+          decoration: BoxDecoration(
+            color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(3),
           ),
-          
-          // Profile Header
-          Container(
-            padding: const EdgeInsets.all(24),
+        ),
+        
+        // Scrollable Profile Content
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 32, 24, 20),
             child: Column(
               children: [
+                // Profile Picture
                 Container(
-                  width: 100,
-                  height: 100,
+                  width: 80,
+                  height: 80,
                   decoration: BoxDecoration(
                     gradient: context.buttonGradient,
-                    borderRadius: BorderRadius.circular(50),
+                    borderRadius: BorderRadius.circular(40),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
                   ),
                   child: Center(
                     child: Text(
@@ -330,166 +403,179 @@ class _SearchFriendScreenState extends ConsumerState<SearchFriendScreen> {
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 36,
+                        fontSize: 28,
                       ),
                     ),
                   ),
                 ),
+                
                 const SizedBox(height: 16),
-                Text(
-                  user.name,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                
+                // Username and Full Name in a row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Username
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        '@${user.username}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(width: 12),
+                    
+                    // Separator dot
+                    Container(
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[400],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    
+                    const SizedBox(width: 12),
+                    
+                    // Full Name (name + surname)
+                    Flexible(
+                      child: Text(
+                        '${user.name} ${user.surname}', // Combine name and surname
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  '@${user.username}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // User Details
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildInfoRow(
-                    context,
-                    Icons.email_rounded,
-                    'Email',
-                    user.email,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildInfoRow(
-                    context,
-                    Icons.fingerprint_rounded,
-                    'User ID',
-                    user.uuid,
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Add Friend Button
-          Container(
-            padding: const EdgeInsets.all(24),
-            child: SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: state.isSendingRequest
-                    ? null
-                    : () async {
-                        await notifier.sendFriendRequest(user.uuid);
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
+                
+                const SizedBox(height: 20),
+                
+                // Bio section
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
                     borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey[200]!),
                   ),
-                  elevation: 0,
-                ),
-                child: state.isSendingRequest
-                    ? const Row(
-                        mainAxisSize: MainAxisSize.min,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
+                          Icon(
+                            Icons.info_outline,
+                            size: 16,
+                            color: Colors.grey[600],
                           ),
-                          SizedBox(width: 12),
-                          Text('Sending Request...'),
-                        ],
-                      )
-                    : const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.person_add_rounded),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           Text(
-                            'Add Friend',
+                            'Bio',
                             style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[600],
                             ),
                           ),
                         ],
                       ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(BuildContext context, IconData icon, String label, String value) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: Theme.of(context).colorScheme.primary,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
+                      const SizedBox(height: 8),
+                      Text(
+                        user.bio ?? 'No bio available', // Use actual bio field
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[700],
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+                
+                const SizedBox(height: 20),
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+        
+        // Add Friend Button (Fixed at bottom)
+        Container(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          child: SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: state.isSendingRequest
+                  ? null
+                  : () async {
+                      await notifier.sendFriendRequest(user.uuid);
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                elevation: 0,
+                shadowColor: Colors.transparent,
+              ),
+              child: state.isSendingRequest
+                  ? const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor: AlwaysStoppedAnimation(Colors.white),
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        Text(
+                          'Sending Request...',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    )
+                  : const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.person_add_rounded, size: 20),
+                        SizedBox(width: 10),
+                        Text(
+                          'Add Friend',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+
 }

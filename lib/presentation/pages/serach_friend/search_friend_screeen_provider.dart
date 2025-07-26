@@ -7,43 +7,51 @@ import '../../providers/auth_provider.dart';
 class SearchFriendScreenState {
   final List<AppUser> allUsers;
   final List<AppUser> filteredUsers;
+  final List<AppUser> friends; // Add friends list to state
   final bool isLoading;
   final String currentUserUuid;
   final String searchQuery;
   final bool isSearching;
   final AppUser? selectedUser;
   final bool isSendingRequest;
+  final bool isLoadingFriends; // Add loading state for friends
 
   SearchFriendScreenState({
     required this.allUsers,
     required this.filteredUsers,
+    required this.friends,
     required this.isLoading,
     required this.currentUserUuid,
     required this.searchQuery,
     required this.isSearching,
     this.selectedUser,
     required this.isSendingRequest,
+    required this.isLoadingFriends,
   });
 
   SearchFriendScreenState copyWith({
     List<AppUser>? allUsers,
     List<AppUser>? filteredUsers,
+    List<AppUser>? friends,
     bool? isLoading,
     String? currentUserUuid,
     String? searchQuery,
     bool? isSearching,
     AppUser? selectedUser,
     bool? isSendingRequest,
+    bool? isLoadingFriends,
   }) {
     return SearchFriendScreenState(
       allUsers: allUsers ?? this.allUsers,
       filteredUsers: filteredUsers ?? this.filteredUsers,
+      friends: friends ?? this.friends,
       isLoading: isLoading ?? this.isLoading,
       currentUserUuid: currentUserUuid ?? this.currentUserUuid,
       searchQuery: searchQuery ?? this.searchQuery,
       isSearching: isSearching ?? this.isSearching,
       selectedUser: selectedUser ?? this.selectedUser,
       isSendingRequest: isSendingRequest ?? this.isSendingRequest,
+      isLoadingFriends: isLoadingFriends ?? this.isLoadingFriends,
     );
   }
 }
@@ -56,11 +64,13 @@ class SearchFriendScreenNotifier extends StateNotifier<SearchFriendScreenState> 
       : super(SearchFriendScreenState(
           allUsers: [],
           filteredUsers: [],
+          friends: [],
           isLoading: true,
           currentUserUuid: '',
           searchQuery: '',
           isSearching: false,
           isSendingRequest: false,
+          isLoadingFriends: false,
         )) {
     _initializeData();
   }
@@ -71,7 +81,12 @@ class SearchFriendScreenNotifier extends StateNotifier<SearchFriendScreenState> 
       final userId = await authProvider.getUid();
       
       state = state.copyWith(currentUserUuid: userId);
-      await _loadUsers();
+      
+      // Load both users and friends concurrently
+      await Future.wait([
+        _loadUsers(),
+        _loadFriends(),
+      ]);
     } catch (e) {
       state = state.copyWith(isLoading: false);
       _showError('Failed to initialize: $e');
@@ -86,18 +101,63 @@ class SearchFriendScreenNotifier extends StateNotifier<SearchFriendScreenState> 
       final fetchedUsers = await apiClient.getUsers();
       
       // Filter out current user from the list
-      final filteredUsers = fetchedUsers
+      final usersWithoutCurrentUser = fetchedUsers
           .where((user) => user.uuid != state.currentUserUuid)
           .toList();
 
       state = state.copyWith(
-        allUsers: filteredUsers,
-        filteredUsers: filteredUsers,
+        allUsers: usersWithoutCurrentUser,
         isLoading: false,
       );
+      
+      // Apply filtering after users are loaded
+      _applyFiltering();
     } catch (e) {
       state = state.copyWith(isLoading: false);
       _showError('Failed to load users: $e');
+    }
+  }
+
+  Future<void> _loadFriends() async {
+    try {
+      state = state.copyWith(isLoadingFriends: true);
+      
+      ApiClient apiClient = ApiClient();
+      final fetchedFriends = await apiClient.getFriends(userUuid: state.currentUserUuid);
+      
+      state = state.copyWith(
+        friends: fetchedFriends,
+        isLoadingFriends: false,
+      );
+      
+      // Apply filtering after friends are loaded
+      _applyFiltering();
+    } catch (e) {
+      state = state.copyWith(isLoadingFriends: false);
+      _showError('Failed to load friends: $e');
+    }
+  }
+
+  void _applyFiltering() {
+    // Get friend UUIDs for easy comparison
+    final friendUuids = state.friends.map((friend) => friend.uuid).toSet();
+    
+    // Filter out friends from all users
+    final usersWithoutFriends = state.allUsers
+        .where((user) => !friendUuids.contains(user.uuid))
+        .toList();
+
+    if (state.searchQuery.isEmpty) {
+      state = state.copyWith(filteredUsers: usersWithoutFriends);
+    } else {
+      // Apply search filter to users without friends
+      final searchFiltered = usersWithoutFriends
+          .where((user) =>
+              user.name.toLowerCase().contains(state.searchQuery.toLowerCase()) ||
+              user.username!.toLowerCase().contains(state.searchQuery.toLowerCase()))
+          .toList();
+      
+      state = state.copyWith(filteredUsers: searchFiltered);
     }
   }
 
@@ -107,17 +167,7 @@ class SearchFriendScreenNotifier extends StateNotifier<SearchFriendScreenState> 
       isSearching: query.isNotEmpty,
     );
 
-    if (query.isEmpty) {
-      state = state.copyWith(filteredUsers: state.allUsers);
-    } else {
-      final filtered = state.allUsers
-          .where((user) =>
-              user.name.toLowerCase().contains(query.toLowerCase()) ||
-              user.username!.toLowerCase().contains(query.toLowerCase()))
-          .toList();
-      
-      state = state.copyWith(filteredUsers: filtered);
-    }
+    _applyFiltering();
   }
 
   Future<void> selectUser(AppUser user) async {
@@ -139,7 +189,8 @@ class SearchFriendScreenNotifier extends StateNotifier<SearchFriendScreenState> 
       
       ApiClient apiClient = ApiClient();
       final result = await apiClient.sendFriendRequest(
-        receiver_uuid: receiver_uuid,
+        userUuid: state.currentUserUuid,
+        receiverUuid: receiver_uuid,
       );
       
       state = state.copyWith(isSendingRequest: false);
@@ -154,6 +205,14 @@ class SearchFriendScreenNotifier extends StateNotifier<SearchFriendScreenState> 
         );
       });
       
+      // Optional: Remove the user from the filtered list after sending request
+      // This prevents users from sending multiple requests to the same person
+      final updatedFilteredUsers = state.filteredUsers
+          .where((user) => user.uuid != receiver_uuid)
+          .toList();
+      
+      state = state.copyWith(filteredUsers: updatedFilteredUsers);
+      
     } catch (e) {
       state = state.copyWith(isSendingRequest: false);
       _showError('Failed to send friend request: $e');
@@ -165,7 +224,16 @@ class SearchFriendScreenNotifier extends StateNotifier<SearchFriendScreenState> 
   }
 
   Future<void> refreshUsers() async {
-    await _loadUsers();
+    // Reset loading states and reload both users and friends
+    state = state.copyWith(
+      isLoading: true,
+      isLoadingFriends: true,
+    );
+    
+    await Future.wait([
+      _loadUsers(),
+      _loadFriends(),
+    ]);
   }
 
   void _showError(String message) {
