@@ -9,7 +9,6 @@ import '../../reciver_profile/reciver_profile.dart';
 import '../../widgets/message_box.dart';
 import 'chat_provider.dart';
 
-
 class ChatScreen extends ConsumerWidget {
   final AppUser receiver;
 
@@ -22,11 +21,11 @@ class ChatScreen extends ConsumerWidget {
     final messages = chatState.messages;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-    NavigationService.setCurrentChatUser(receiver.uuid);
-    // Clear notifications for this user
-    NotificationService.clearNotificationsForUser(receiver.uuid);
-  });
-  
+      NavigationService.setCurrentChatUser(receiver.uuid);
+      // Clear notifications for this user
+      NotificationService.clearNotificationsForUser(receiver.uuid);
+    });
+
     print('Rendering ${messages.length} messages for ${receiver.name}');
 
     // Show loading indicator if not initialized
@@ -103,8 +102,13 @@ class ChatScreen extends ConsumerWidget {
           children: [
             const SizedBox(width: 12),
             GestureDetector(
-              onTap: (){
-                Navigator.push(context, MaterialPageRoute(builder: (context)=>ReciverProfileScreen(uuid: receiver.uuid,)));
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => ReciverProfileScreen(
+                              uuid: receiver.uuid,
+                            )));
               },
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -240,7 +244,8 @@ class ChatScreen extends ConsumerWidget {
                                     isUser: isUser,
                                     senderId: message.senderId,
                                     recipientId: message.recipientId,
-                                    timestamp: DateTime.parse(message.timestamp),
+                                    timestamp:
+                                        DateTime.parse(message.timestamp),
                                   ),
                                   // Add read receipt for user messages
                                   if (isUser)
@@ -251,7 +256,8 @@ class ChatScreen extends ConsumerWidget {
                                         bottom: 8.0,
                                       ),
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
                                         children: [
                                           Text(
                                             DateFormat('HH:mm').format(
@@ -261,7 +267,8 @@ class ChatScreen extends ConsumerWidget {
                                             ),
                                             style: TextStyle(
                                               fontSize: 10,
-                                              color: Colors.grey.withOpacity(0.7),
+                                              color:
+                                                  Colors.grey.withOpacity(0.7),
                                             ),
                                           ),
                                           const SizedBox(width: 4),
@@ -286,7 +293,8 @@ class ChatScreen extends ConsumerWidget {
                                         bottom: 8.0,
                                       ),
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.start,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
                                         children: [
                                           Text(
                                             DateFormat('HH:mm').format(
@@ -296,7 +304,8 @@ class ChatScreen extends ConsumerWidget {
                                             ),
                                             style: TextStyle(
                                               fontSize: 10,
-                                              color: Colors.grey.withOpacity(0.7),
+                                              color:
+                                                  Colors.grey.withOpacity(0.7),
                                             ),
                                           ),
                                         ],

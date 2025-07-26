@@ -10,7 +10,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return  AppLifecycleManager(
+    return AppLifecycleManager(
       child: MaterialApp(
         navigatorKey: NavigationService.navigatorKey,
         title: "Chatter G",

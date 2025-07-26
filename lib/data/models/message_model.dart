@@ -3,10 +3,11 @@ import 'package:objectbox/objectbox.dart';
 
 @Entity()
 class ChatMessage {
-   int id = 0; // ObjectBox requires a primary key
+  int id = 0; // ObjectBox requires a primary key
   final String senderId;
   final String recipientId;
   final String content;
+  // final String type; // "message" or "image"
   final String timestamp;
 
   bool isRead;
@@ -17,6 +18,7 @@ class ChatMessage {
     required this.recipientId,
     required this.content,
     required this.timestamp,
+    // this.type = 'message',
     this.isRead = false,
   });
 
@@ -26,8 +28,9 @@ class ChatMessage {
       senderId: json['sender_id'] ?? json['senderId'] ?? '',
       recipientId: json['recipient_id'] ?? json['recipientId'] ?? '',
       content: json['content'] ?? '',
-      timestamp: json['timestamp'] is String 
-          ? json['timestamp'] 
+      // type: json['type'] ?? 'message',
+      timestamp: json['timestamp'] is String
+          ? json['timestamp']
           : DateTime.parse(json['timestamp']).toIso8601String(),
     );
   }
@@ -38,19 +41,20 @@ class ChatMessage {
       'sender_id': senderId,
       'recipient_id': recipientId,
       'content': content,
+      // 'type': type,
       'timestamp': timestamp,
     };
   }
 
   // FIXED: Use server-compatible field names for sending
   Map<String, dynamic> toServerJson() {
-  return {
-    'sender_id': senderId, // Changed from 'senderId'
-    'recipient_id': recipientId, // Changed from 'recipientId'
-    'content': content,
-    // 'timestamp': timestamp,
-  };
-}
+    return {
+      'sender_id': senderId, // Changed from 'senderId'
+      'recipient_id': recipientId, // Changed from 'recipientId'
+      'content': content,
+      // 'timestamp': timestamp,
+    };
+  }
 
   // Add the fromMessagebox factory method
   factory ChatMessage.fromMessagebox(Messagebox messagebox) {

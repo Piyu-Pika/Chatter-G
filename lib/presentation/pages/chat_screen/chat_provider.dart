@@ -93,7 +93,7 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
 
   void _initializeChat() async {
     if (state.isInitialized) return;
-    
+
     try {
       print('Initializing chat for receiver: $receiverUuid');
       final authProvider = ref.read(authServiceProvider);
@@ -116,8 +116,9 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
       }
 
       // Load local messages from ObjectBox
-      final localMessages = objectBox.getMessagesFor(currentUserUuid, receiver.uuid);
-      
+      final localMessages =
+          objectBox.getMessagesFor(currentUserUuid, receiver.uuid);
+
       // Update state first
       state = state.copyWith(
         messages: localMessages,
@@ -134,7 +135,8 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
         };
       });
 
-      print('Chat initialized with roomName: $roomName for receiver: ${receiver.name}');
+      print(
+          'Chat initialized with roomName: $roomName for receiver: ${receiver.name}');
 
       // Scroll to bottom after initialization
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -144,10 +146,10 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
       // Watch messages for the room
       ref.listen(chatMessagesProvider, (previous, next) {
         if (!mounted) return;
-        
+
         final messages = next[roomName] ?? [];
         print('New messages received for room $roomName: ${messages.length}');
-        
+
         if (mounted) {
           state = state.copyWith(messages: messages);
 
@@ -170,7 +172,8 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
 
   final Map<String, void Function(ChatMessage)> _roomListeners = {};
 
-  void registerRoomListener(String roomName, void Function(ChatMessage) callback) {
+  void registerRoomListener(
+      String roomName, void Function(ChatMessage) callback) {
     _roomListeners[roomName] = callback;
   }
 
@@ -180,7 +183,7 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
 
   void markAsRead(ChatMessage message) {
     if (!mounted) return;
-    
+
     final updatedMessages = state.messages.map((m) {
       if (m.timestamp == message.timestamp && m.senderId == message.senderId) {
         return ChatMessage(
@@ -193,7 +196,7 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
       }
       return m;
     }).toList();
-    
+
     state = state.copyWith(messages: updatedMessages);
 
     // Notify the server to mark the message as read
@@ -259,26 +262,26 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
     }
   }
 
-  Map<String, List<ChatMessage>> groupMessagesByDate(List<ChatMessage> messages) {
-  final groupedMessages = <String, List<ChatMessage>>{};
-  for (final message in messages) {
-    DateTime messageDate;
-    try {
-      // Always parse as UTC then convert to local
-      messageDate = DateTime.parse(message.timestamp).toUtc().toLocal();
-    } catch (e) {
-      messageDate = DateTime.now();
+  Map<String, List<ChatMessage>> groupMessagesByDate(
+      List<ChatMessage> messages) {
+    final groupedMessages = <String, List<ChatMessage>>{};
+    for (final message in messages) {
+      DateTime messageDate;
+      try {
+        // Always parse as UTC then convert to local
+        messageDate = DateTime.parse(message.timestamp).toUtc().toLocal();
+      } catch (e) {
+        messageDate = DateTime.now();
+      }
+      // Format date from local DateTime
+      final dateStr = DateFormat('yyyy-MM-dd').format(messageDate);
+      if (!groupedMessages.containsKey(dateStr)) {
+        groupedMessages[dateStr] = [];
+      }
+      groupedMessages[dateStr]!.add(message);
     }
-    // Format date from local DateTime
-    final dateStr = DateFormat('yyyy-MM-dd').format(messageDate);
-    if (!groupedMessages.containsKey(dateStr)) {
-      groupedMessages[dateStr] = [];
-    }
-    groupedMessages[dateStr]!.add(message);
+    return groupedMessages;
   }
-  return groupedMessages;
-}
-
 
   String getReadableDate(String dateStr) {
     final now = DateTime.now();
@@ -307,7 +310,8 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
 
 // Family provider that creates a separate instance for each receiver
 final chatScreenProvider =
-    StateNotifierProvider.family<ChatScreenNotifier, ChatScreenState, String>((ref, receiverUuid) {
+    StateNotifierProvider.family<ChatScreenNotifier, ChatScreenState, String>(
+        (ref, receiverUuid) {
   return ChatScreenNotifier(ref, receiverUuid);
 });
 

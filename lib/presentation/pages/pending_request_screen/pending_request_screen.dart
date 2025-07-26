@@ -57,7 +57,8 @@ class PendingRequestScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildBody(BuildContext context, PendingRequestState state, PendingRequestNotifier notifier) {
+  Widget _buildBody(BuildContext context, PendingRequestState state,
+      PendingRequestNotifier notifier) {
     return RefreshIndicator(
       onRefresh: () => notifier.loadPendingRequests(isRefresh: true),
       color: AppColors.primary,
@@ -72,7 +73,7 @@ class PendingRequestScreen extends ConsumerWidget {
                 onRetry: () => notifier.loadPendingRequests(),
               ),
             ),
-          
+
           // Loading indicator
           if (state.isLoading && state.pendingRequests.isEmpty)
             const SliverFillRemaining(
@@ -80,11 +81,11 @@ class PendingRequestScreen extends ConsumerWidget {
                 child: CircularProgressIndicator(color: AppColors.primary),
               ),
             )
-          
+
           // Empty state
           else if (state.pendingRequests.isEmpty && !state.isLoading)
             SliverFillRemaining(child: _buildEmptyState(context))
-          
+
           // Request list
           else
             SliverPadding(
@@ -97,9 +98,12 @@ class PendingRequestScreen extends ConsumerWidget {
                     key: ValueKey(request['id']),
                     request: request,
                     isProcessing: state.isRequestProcessing(request['id']),
-                    onTap: () => _showProfileBottomSheet(context, request, notifier),
-                    onAccept: () => notifier.respondToRequest(request['id'], 'accepted'),  // ✅ Correct
-                    onReject: () => notifier.respondToRequest(request['id'], 'rejected'),  // ✅ Correct
+                    onTap: () =>
+                        _showProfileBottomSheet(context, request, notifier),
+                    onAccept: () => notifier.respondToRequest(
+                        request['id'], 'accepted'), // ✅ Correct
+                    onReject: () => notifier.respondToRequest(
+                        request['id'], 'rejected'), // ✅ Correct
                   );
                 },
               ),
@@ -132,7 +136,7 @@ class PendingRequestScreen extends ConsumerWidget {
   String _formatLastUpdated(DateTime lastUpdated) {
     final now = DateTime.now();
     final difference = now.difference(lastUpdated);
-    
+
     if (difference.inMinutes < 1) return 'now';
     if (difference.inMinutes < 60) return '${difference.inMinutes}m ago';
     if (difference.inHours < 24) return '${difference.inHours}h ago';
@@ -234,9 +238,9 @@ class _EmptyState extends StatelessWidget {
           Text(
             'No pending requests',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
-            ),
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
           ),
           const SizedBox(height: 8),
           Padding(
@@ -244,8 +248,8 @@ class _EmptyState extends StatelessWidget {
             child: Text(
               'All caught up! No friend requests at the moment.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textSecondary,
-              ),
+                    color: AppColors.textSecondary,
+                  ),
               textAlign: TextAlign.center,
             ),
           ),
@@ -325,12 +329,12 @@ class _PendingRequestCard extends StatelessWidget {
       ),
       child: CircleAvatar(
         radius: 28,
-        backgroundImage: senderInfo['profile_pic'] != null && 
-                         senderInfo['profile_pic'].toString().isNotEmpty
+        backgroundImage: senderInfo['profile_pic'] != null &&
+                senderInfo['profile_pic'].toString().isNotEmpty
             ? NetworkImage(senderInfo['profile_pic'])
             : null,
         backgroundColor: AppColors.accent.withOpacity(0.2),
-        child: senderInfo['profile_pic'] == null || 
+        child: senderInfo['profile_pic'] == null ||
                 senderInfo['profile_pic'].toString().isEmpty
             ? const Icon(Icons.person, color: AppColors.primary, size: 28)
             : null,
@@ -423,7 +427,7 @@ class _PendingRequestCard extends StatelessWidget {
       final date = DateTime.parse(timestamp);
       final now = DateTime.now();
       final difference = now.difference(date);
-      
+
       if (difference.inDays > 0) return '${difference.inDays}d ago';
       if (difference.inHours > 0) return '${difference.inHours}h ago';
       if (difference.inMinutes > 0) return '${difference.inMinutes}m ago';
@@ -455,7 +459,7 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isFilled = style == _ActionButtonStyle.filled;
-    
+
     return Container(
       decoration: isFilled
           ? BoxDecoration(
@@ -512,11 +516,12 @@ class _ProfileBottomSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Parse sender info from API structure
     final senderInfo = request['sender_info'] as Map<String, dynamic>? ?? {};
-    
+
     // Get user identifier for blocking/unblocking
     final userIdentifier = senderInfo['uuid'] ?? senderInfo['username'];
-    final isBlocked = userIdentifier != null ? notifier.isUserBlocked(userIdentifier) : false;
-    
+    final isBlocked =
+        userIdentifier != null ? notifier.isUserBlocked(userIdentifier) : false;
+
     final state = ref.watch(pendingRequestProvider);
     final isProcessing = state.isRequestProcessing(request['id']);
 
@@ -548,7 +553,8 @@ class _ProfileBottomSheet extends ConsumerWidget {
                 children: [
                   _buildProfileHeader(senderInfo, isBlocked),
                   const SizedBox(height: 32),
-                  if (senderInfo['bio'] != null && senderInfo['bio'].toString().isNotEmpty) ...[
+                  if (senderInfo['bio'] != null &&
+                      senderInfo['bio'].toString().isNotEmpty) ...[
                     _buildBioSection(senderInfo['bio']),
                     const SizedBox(height: 24),
                   ],
@@ -590,12 +596,12 @@ class _ProfileBottomSheet extends ConsumerWidget {
             ),
             child: CircleAvatar(
               radius: 50,
-              backgroundImage: senderInfo['profile_pic'] != null && 
-                               senderInfo['profile_pic'].toString().isNotEmpty
+              backgroundImage: senderInfo['profile_pic'] != null &&
+                      senderInfo['profile_pic'].toString().isNotEmpty
                   ? NetworkImage(senderInfo['profile_pic'])
                   : null,
               backgroundColor: AppColors.accent.withOpacity(0.2),
-              child: senderInfo['profile_pic'] == null || 
+              child: senderInfo['profile_pic'] == null ||
                       senderInfo['profile_pic'].toString().isEmpty
                   ? const Icon(Icons.person, size: 40, color: AppColors.primary)
                   : null,
@@ -685,16 +691,19 @@ class _ProfileBottomSheet extends ConsumerWidget {
 
   Widget _buildUserDetails(Map<String, dynamic> senderInfo) {
     final details = <String, String>{};
-    
-    if (senderInfo['email'] != null && senderInfo['email'].toString().isNotEmpty) {
+
+    if (senderInfo['email'] != null &&
+        senderInfo['email'].toString().isNotEmpty) {
       details['Email'] = senderInfo['email'];
     }
-    
-    if (senderInfo['date_of_birth'] != null && senderInfo['date_of_birth'].toString().isNotEmpty) {
+
+    if (senderInfo['date_of_birth'] != null &&
+        senderInfo['date_of_birth'].toString().isNotEmpty) {
       details['Date of Birth'] = senderInfo['date_of_birth'];
     }
-    
-    if (senderInfo['gender'] != null && senderInfo['gender'].toString().isNotEmpty) {
+
+    if (senderInfo['gender'] != null &&
+        senderInfo['gender'].toString().isNotEmpty) {
       details['Gender'] = senderInfo['gender'];
     }
 
@@ -728,34 +737,36 @@ class _ProfileBottomSheet extends ConsumerWidget {
             border: Border.all(color: AppColors.border),
           ),
           child: Column(
-            children: details.entries.map((entry) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: 100,
-                    child: Text(
-                      '${entry.key}:',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
+            children: details.entries
+                .map((entry) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: 100,
+                            child: Text(
+                              '${entry.key}:',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              entry.value,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      entry.value,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            )).toList(),
+                    ))
+                .toList(),
           ),
         ),
       ],
@@ -807,7 +818,8 @@ class _ProfileBottomSheet extends ConsumerWidget {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(Icons.info_outline, size: 20, color: AppColors.accent),
+                  const Icon(Icons.info_outline,
+                      size: 20, color: AppColors.accent),
                   const SizedBox(width: 8),
                   Text(
                     'Status: ${request['status']?.toString().toUpperCase() ?? 'PENDING'}',
@@ -826,19 +838,22 @@ class _ProfileBottomSheet extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, bool isBlocked, bool isProcessing) {
+  Widget _buildActionButtons(
+      BuildContext context, bool isBlocked, bool isProcessing) {
     final username = request['sender_info']?['username']?.toString();
-    
+
     if (isBlocked) {
       return SizedBox(
         width: double.infinity,
         child: _ActionButton(
-          onPressed: isProcessing ? null : () {
-            Navigator.of(context).pop();
-            if (username != null) {
-              notifier.unblockUser(username);
-            }
-          },
+          onPressed: isProcessing
+              ? null
+              : () {
+                  Navigator.of(context).pop();
+                  if (username != null) {
+                    notifier.unblockUser(username);
+                  }
+                },
           isLoading: isProcessing,
           label: 'Unblock User',
           icon: Icons.person_add,
@@ -853,10 +868,12 @@ class _ProfileBottomSheet extends ConsumerWidget {
           children: [
             Expanded(
               child: _ActionButton(
-                onPressed: isProcessing ? null : () {
-                  Navigator.of(context).pop();
-                  notifier.respondToRequest(request['id'], 'rejected');
-                },
+                onPressed: isProcessing
+                    ? null
+                    : () {
+                        Navigator.of(context).pop();
+                        notifier.respondToRequest(request['id'], 'rejected');
+                      },
                 isLoading: isProcessing,
                 label: 'Reject',
                 icon: Icons.close,
@@ -866,10 +883,12 @@ class _ProfileBottomSheet extends ConsumerWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _ActionButton(
-                onPressed: isProcessing ? null : () {
-                  Navigator.of(context).pop();
-                  notifier.respondToRequest(request['id'], 'accepted');
-                },
+                onPressed: isProcessing
+                    ? null
+                    : () {
+                        Navigator.of(context).pop();
+                        notifier.respondToRequest(request['id'], 'accepted');
+                      },
                 isLoading: isProcessing,
                 label: 'Accept',
                 icon: Icons.check,
@@ -882,10 +901,12 @@ class _ProfileBottomSheet extends ConsumerWidget {
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
-            onPressed: isProcessing || username == null ? null : () {
-              Navigator.of(context).pop();
-              notifier.blockUser(username);
-            },
+            onPressed: isProcessing || username == null
+                ? null
+                : () {
+                    Navigator.of(context).pop();
+                    notifier.blockUser(username);
+                  },
             icon: const Icon(Icons.block, color: Colors.red),
             label: const Text(
               'Block User',
@@ -907,7 +928,7 @@ class _ProfileBottomSheet extends ConsumerWidget {
       final date = DateTime.parse(timestamp);
       final now = DateTime.now();
       final difference = now.difference(date);
-      
+
       if (difference.inDays > 0) {
         return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
       } else if (difference.inHours > 0) {

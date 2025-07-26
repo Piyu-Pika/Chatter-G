@@ -5,7 +5,7 @@ abstract class ChatRepository {
   Stream<String> get connectionStream;
   bool get isConnected;
   String? get currentUserId;
-  
+
   Future<void> connect(String userId);
   Future<void> disconnect();
   Future<void> sendMessage(String receiverId, String message, String senderId);

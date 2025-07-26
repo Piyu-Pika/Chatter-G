@@ -21,11 +21,11 @@ class WebSocketService {
   int _reconnectAttempts = 0;
   static const int _maxReconnectAttempts = 5;
   static const Duration _reconnectDelay = Duration(seconds: 3);
-  
+
   // Add throttling to prevent rapid sends
   DateTime? _lastSendTime;
   static const Duration _sendThrottleDelay = Duration(milliseconds: 100);
-  
+
   // Add flag to prevent automatic sends during message processing
   bool _isProcessingMessage = false;
 
@@ -54,9 +54,10 @@ class WebSocketService {
       print('Blocking send - currently processing incoming message');
       return true;
     }
-    
+
     final now = DateTime.now();
-    if (_lastSendTime != null && now.difference(_lastSendTime!) < _sendThrottleDelay) {
+    if (_lastSendTime != null &&
+        now.difference(_lastSendTime!) < _sendThrottleDelay) {
       print('Throttling send - too frequent');
       return true;
     }
@@ -65,12 +66,12 @@ class WebSocketService {
   }
 
   void reconnect() {
-  if (_currentUserId != null) {
-    final url = 'wss://chatterg-go-production.up.railway.app/ws?userID=$_currentUserId';
-    connect(url);
+    if (_currentUserId != null) {
+      final url =
+          'wss://chatterg-go-production.up.railway.app/ws?userID=$_currentUserId';
+      connect(url);
+    }
   }
-}
-
 
   // Connect to WebSocket server
   Future<void> connect(String url) async {
@@ -114,7 +115,7 @@ class WebSocketService {
   void _handleMessage(dynamic data) {
     // Set flag to prevent automatic sends during message processing
     _isProcessingMessage = true;
-    
+
     try {
       print('Raw WebSocket message received: $data');
 
@@ -131,13 +132,13 @@ class WebSocketService {
         // Handle server ping/pong responses
         if (jsonData.containsKey('type')) {
           final messageType = jsonData['type'];
-          
+
           if (messageType == 'ping') {
             print('Received ping from server, sending pong');
             _sendPong();
             return; // Don't process ping as a regular message
           }
-          
+
           if (messageType == 'pong') {
             print('Received pong from server');
             return; // Don't process pong as a regular message
@@ -153,7 +154,8 @@ class WebSocketService {
           _messageController.add(message);
           print('Chat message processed: ${message.content}');
         } catch (e) {
-          print('Received non-chat message or failed to parse as ChatMessage: $e');
+          print(
+              'Received non-chat message or failed to parse as ChatMessage: $e');
         }
       }
     } catch (e) {
@@ -194,31 +196,38 @@ class WebSocketService {
     try {
       // Parse the JSON to validate and fix it
       final messageData = jsonDecode(messageJson);
-      
+
       // Validate required fields for chat messages
-      if (messageData.containsKey('content') || messageData.containsKey('recipient_id')) {
+      if (messageData.containsKey('content') ||
+          messageData.containsKey('recipient_id')) {
         // This looks like a chat message, validate required fields
-        if (!messageData.containsKey('sender_id') || messageData['sender_id'] == null || messageData['sender_id'].toString().trim().isEmpty) {
+        if (!messageData.containsKey('sender_id') ||
+            messageData['sender_id'] == null ||
+            messageData['sender_id'].toString().trim().isEmpty) {
           print('Invalid message: missing or empty sender_id');
           return;
         }
-        
-        if (!messageData.containsKey('recipient_id') || messageData['recipient_id'] == null || messageData['recipient_id'].toString().trim().isEmpty) {
+
+        if (!messageData.containsKey('recipient_id') ||
+            messageData['recipient_id'] == null ||
+            messageData['recipient_id'].toString().trim().isEmpty) {
           print('Invalid message: missing or empty recipient_id');
           return;
         }
-        
-        if (!messageData.containsKey('content') || messageData['content'] == null || messageData['content'].toString().trim().isEmpty) {
+
+        if (!messageData.containsKey('content') ||
+            messageData['content'] == null ||
+            messageData['content'].toString().trim().isEmpty) {
           print('Invalid message: missing or empty content');
           return;
         }
       }
-      
+
       // Fix timestamp format if present
       if (messageData.containsKey('timestamp')) {
         messageData['timestamp'] = _generateTimestamp();
       }
-      
+
       final correctedJson = jsonEncode(messageData);
       print('Sending validated message: $correctedJson');
       _channel!.sink.add(correctedJson);
@@ -350,7 +359,7 @@ class WebSocketService {
             'type': 'ping',
             'timestamp': _generateTimestamp(),
           };
-          
+
           final pingJson = jsonEncode(pingMessage);
           print('Sending heartbeat ping: $pingJson');
           _channel!.sink.add(pingJson);
@@ -378,7 +387,7 @@ class WebSocketService {
           'type': 'pong',
           'timestamp': _generateTimestamp(),
         };
-        
+
         final pongJson = jsonEncode(pongMessage);
         print('Sending pong response: $pongJson');
         _channel!.sink.add(pongJson);

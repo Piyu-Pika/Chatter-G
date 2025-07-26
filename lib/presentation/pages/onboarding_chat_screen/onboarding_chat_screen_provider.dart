@@ -397,144 +397,143 @@ class OnboardingChatNotifier extends StateNotifier<OnboardingChatState> {
   }
 
   Future<void> _submitUserData() async {
-  // Prevent infinite retries
-  if (state.retryCount >= maxRetryAttempts) {
-    state = state.copyWith(
-      isLoading: false,
-      errorMessage: 'Failed to save profile after multiple attempts',
-    );
-
-    _addBotMessage(
-      "❌ I'm having trouble saving your profile right now. Please check your internet connection and try again later. You can restart the setup process if needed.",
-      null,
-    );
-
-    // Optionally provide a retry button or manual retry option
-    Future.delayed(const Duration(milliseconds: 2000), () {
-      _addBotMessage(
-        "Would you like me to try saving your profile one more time? You can also proceed to the main app and complete your profile later from settings.",
-        OnboardingStep.completed,
+    // Prevent infinite retries
+    if (state.retryCount >= maxRetryAttempts) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to save profile after multiple attempts',
       );
-      state = state.copyWith(currentStep: OnboardingStep.completed);
-    });
 
-    return;
-  }
-
-  state = state.copyWith(isLoading: true);
-
-  try {
-    final authProvider = ref.read(authServiceProvider);
-    final currentUser = authProvider.currentUser;
-
-    if (currentUser == null) {
-      throw Exception('User not authenticated');
-    }
-
-    print('Starting user data submission for UUID: ${currentUser.uid}');
-
-    // Step 1: Check if user exists, if not create the user first
-    bool userExists = false;
-    try {
-      await _apiClient.getUserByUUID(uuid: currentUser.uid);
-      userExists = true;
-      print('User already exists in database');
-    } catch (e) {
-      print('User does not exist, will create new user: $e');
-      userExists = false;
-    }
-
-    // Step 2: Create user if they don't exist
-    if (!userExists) {
-      print('Creating new user...');
-      try {
-        await _apiClient.createUser(
-          uuid: currentUser.uid,
-          name: currentUser.displayName ?? state.userData['username'] ?? 'User',
-          email: currentUser.email ?? '',
-        );
-        print('User created successfully');
-        
-        _addBotMessage(
-          "✅ Account created! Now saving your profile information...",
-          null,
-        );
-      } catch (createError) {
-        print('Error creating user: $createError');
-        throw Exception('Failed to create user account: $createError');
-      }
-    }
-
-    // Step 3: Update user with onboarding data
-    print('Updating user profile with onboarding data...');
-    
-    // Prepare the profile data from onboarding
-    final profileData = Map<String, dynamic>.from(state.userData);
-    
-    // Set defaults for missing values
-    final username = profileData['username'] ?? 
-        currentUser.displayName?.replaceAll(' ', '').toLowerCase() ?? 
-        'user${currentUser.uid.substring(0, 6)}';
-    
-    final response = await _apiClient.updateUser(
-      uuid: currentUser.uid,
-      name: currentUser.displayName ?? username,
-      username: username,
-      bio: profileData['bio'] ?? '',
-      dateOfBirth: profileData['date_of_birth'] ?? '',
-      gender: profileData['gender'] ?? '',
-      phoneNumber: profileData['phone_number'] ?? '',
-      profilePic: profileData['profile_pic'] ?? '',
-    );
-    
-    print('User profile updated successfully: $response');
-
-    _addBotMessage(
-      "✅ Perfect! Your profile has been saved successfully. Welcome to ChatterG! You can now start chatting with other users.",
-      OnboardingStep.completed,
-    );
-
-    state = state.copyWith(
-      currentStep: OnboardingStep.completed,
-      isLoading: false,
-      retryCount: 0, // Reset retry count on success
-    );
-
-    // Navigate to main chat screen after a short delay
-    Future.delayed(const Duration(milliseconds: 2000), () {
-      // This should be handled by the UI to navigate
-    });
-    
-  } catch (e) {
-    print('Error in user data submission: $e');
-
-    // Increment retry count
-    final newRetryCount = state.retryCount + 1;
-    state = state.copyWith(
-      isLoading: false,
-      errorMessage: 'Failed to save profile: $e',
-      retryCount: newRetryCount,
-    );
-
-    if (newRetryCount < maxRetryAttempts) {
       _addBotMessage(
-        "😅 Oops! There was an issue saving your profile. Don't worry, let me try again... (Attempt $newRetryCount of $maxRetryAttempts)",
+        "❌ I'm having trouble saving your profile right now. Please check your internet connection and try again later. You can restart the setup process if needed.",
         null,
       );
 
-      // Retry after a short delay with exponential backoff
-      final delaySeconds = 2 * newRetryCount; // 2, 4, 6 seconds
-      Future.delayed(Duration(seconds: delaySeconds), () {
-        if (mounted) {
-          // Check if still mounted
-          _submitUserData();
-        }
+      // Optionally provide a retry button or manual retry option
+      Future.delayed(const Duration(milliseconds: 2000), () {
+        _addBotMessage(
+          "Would you like me to try saving your profile one more time? You can also proceed to the main app and complete your profile later from settings.",
+          OnboardingStep.completed,
+        );
+        state = state.copyWith(currentStep: OnboardingStep.completed);
       });
-    }
-    // If max retries reached, the check at the beginning of the method will handle it
-  }
-}
 
+      return;
+    }
+
+    state = state.copyWith(isLoading: true);
+
+    try {
+      final authProvider = ref.read(authServiceProvider);
+      final currentUser = authProvider.currentUser;
+
+      if (currentUser == null) {
+        throw Exception('User not authenticated');
+      }
+
+      print('Starting user data submission for UUID: ${currentUser.uid}');
+
+      // Step 1: Check if user exists, if not create the user first
+      bool userExists = false;
+      try {
+        await _apiClient.getUserByUUID(uuid: currentUser.uid);
+        userExists = true;
+        print('User already exists in database');
+      } catch (e) {
+        print('User does not exist, will create new user: $e');
+        userExists = false;
+      }
+
+      // Step 2: Create user if they don't exist
+      if (!userExists) {
+        print('Creating new user...');
+        try {
+          await _apiClient.createUser(
+            uuid: currentUser.uid,
+            name:
+                currentUser.displayName ?? state.userData['username'] ?? 'User',
+            email: currentUser.email ?? '',
+          );
+          print('User created successfully');
+
+          _addBotMessage(
+            "✅ Account created! Now saving your profile information...",
+            null,
+          );
+        } catch (createError) {
+          print('Error creating user: $createError');
+          throw Exception('Failed to create user account: $createError');
+        }
+      }
+
+      // Step 3: Update user with onboarding data
+      print('Updating user profile with onboarding data...');
+
+      // Prepare the profile data from onboarding
+      final profileData = Map<String, dynamic>.from(state.userData);
+
+      // Set defaults for missing values
+      final username = profileData['username'] ??
+          currentUser.displayName?.replaceAll(' ', '').toLowerCase() ??
+          'user${currentUser.uid.substring(0, 6)}';
+
+      final response = await _apiClient.updateUser(
+        uuid: currentUser.uid,
+        name: currentUser.displayName ?? username,
+        username: username,
+        bio: profileData['bio'] ?? '',
+        dateOfBirth: profileData['date_of_birth'] ?? '',
+        gender: profileData['gender'] ?? '',
+        phoneNumber: profileData['phone_number'] ?? '',
+        profilePic: profileData['profile_pic'] ?? '',
+      );
+
+      print('User profile updated successfully: $response');
+
+      _addBotMessage(
+        "✅ Perfect! Your profile has been saved successfully. Welcome to ChatterG! You can now start chatting with other users.",
+        OnboardingStep.completed,
+      );
+
+      state = state.copyWith(
+        currentStep: OnboardingStep.completed,
+        isLoading: false,
+        retryCount: 0, // Reset retry count on success
+      );
+
+      // Navigate to main chat screen after a short delay
+      Future.delayed(const Duration(milliseconds: 2000), () {
+        // This should be handled by the UI to navigate
+      });
+    } catch (e) {
+      print('Error in user data submission: $e');
+
+      // Increment retry count
+      final newRetryCount = state.retryCount + 1;
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to save profile: $e',
+        retryCount: newRetryCount,
+      );
+
+      if (newRetryCount < maxRetryAttempts) {
+        _addBotMessage(
+          "😅 Oops! There was an issue saving your profile. Don't worry, let me try again... (Attempt $newRetryCount of $maxRetryAttempts)",
+          null,
+        );
+
+        // Retry after a short delay with exponential backoff
+        final delaySeconds = 2 * newRetryCount; // 2, 4, 6 seconds
+        Future.delayed(Duration(seconds: delaySeconds), () {
+          if (mounted) {
+            // Check if still mounted
+            _submitUserData();
+          }
+        });
+      }
+      // If max retries reached, the check at the beginning of the method will handle it
+    }
+  }
 
   // Add a manual retry method for user-initiated retries
   void retrySubmission() {

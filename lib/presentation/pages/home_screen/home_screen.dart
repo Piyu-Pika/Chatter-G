@@ -33,9 +33,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void initState() {
     super.initState();
     Future.microtask(() => _initializeNotifications(
-      FirebaseAuth.instance.currentUser!, // Ensure you pass a valid user
-    ));
-    
+          FirebaseAuth.instance.currentUser!, // Ensure you pass a valid user
+        ));
+
     _fabAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -47,7 +47,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       parent: _fabAnimationController,
       curve: Curves.easeInOut,
     ));
-    
+
     _pageTransitionController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -59,7 +59,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       parent: _pageTransitionController,
       curve: Curves.easeInOutCubic,
     ));
-    
+
     _fabAnimationController.forward();
     _pageTransitionController.forward();
   }
@@ -90,7 +90,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       final user = AppUser.fromJson(userModel);
       final token = await firebaseUser.getIdToken();
 
-      await NotificationService.initialize(user, authToken: token??'');
+      await NotificationService.initialize(user, authToken: token ?? '');
       debugPrint('Notifications initialized and FCM token sent to server');
     } catch (e) {
       debugPrint('Failed to initialize notifications: $e');
@@ -139,7 +139,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               scale: _fabAnimation,
               child: FloatingActionButton(
                 onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const SearchFriendScreen()));
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const SearchFriendScreen()));
                 },
                 backgroundColor: Theme.of(context).colorScheme.secondary,
                 child:
@@ -213,9 +216,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ),
       actions: [
         if (selectedIndex == 1) ...[
-          IconButton(icon: Icon(Icons.notifications_rounded), onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const PendingRequestScreen()));
-          }),
+          IconButton(
+              icon: Icon(Icons.notifications_rounded),
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const PendingRequestScreen()));
+              }),
           IconButton(
             icon: Container(
               padding: const EdgeInsets.all(8),
@@ -543,57 +551,57 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 }
-  // Widget _buildConversationTile(dynamic user) {
-  //   return Container(
-  //     margin: const EdgeInsets.only(bottom: 12),
-  //     decoration: BoxDecoration(
-  //       color: Colors.white,
-  //       borderRadius: BorderRadius.circular(16),
-  //       boxShadow: [
-  //         BoxShadow(
-  //           color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-  //           blurRadius: 8,
-  //           offset: const Offset(0, 2),
-  //         ),
-  //       ],
-  //     ),
-  //     child: ListTile(
-  //       contentPadding: const EdgeInsets.all(16),
-  //       title: Text(
-  //         user.name,
-  //         style: const TextStyle(
-  //           fontWeight: FontWeight.bold,
-  //           fontSize: 16,
-  //         ),
-  //       ),
-  //       subtitle: const Text(
-  //         'No messages yet',
-  //         style: TextStyle(color: Colors.grey),
-  //       ),
-  //       leading: CircleAvatar(
-  //         radius: 25,
-  //         backgroundColor: Theme.of(context).colorScheme.primary,
-  //         child: Text(
-  //           user.name[0].toUpperCase(),
-  //           style: const TextStyle(
-  //             color: Colors.white,
-  //             fontWeight: FontWeight.bold,
-  //             fontSize: 18,
-  //           ),
-  //         ),
-  //       ),
-  //       trailing: Icon(
-  //         Icons.arrow_forward_ios_rounded,
-  //         color: Theme.of(context).colorScheme.primary,
-  //         size: 16,
-  //       ),
-  //       onTap: () {
-  //         ref.read(currentReceiverProvider.notifier).state = user;
-  //         Navigator.push(
-  //           context,
-  //           MaterialPageRoute(builder: (context) => const ChatScreen()),
-  //         );
-  //       },
-  //     ),
-  //   );
-  // }
+// Widget _buildConversationTile(dynamic user) {
+//   return Container(
+//     margin: const EdgeInsets.only(bottom: 12),
+//     decoration: BoxDecoration(
+//       color: Colors.white,
+//       borderRadius: BorderRadius.circular(16),
+//       boxShadow: [
+//         BoxShadow(
+//           color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+//           blurRadius: 8,
+//           offset: const Offset(0, 2),
+//         ),
+//       ],
+//     ),
+//     child: ListTile(
+//       contentPadding: const EdgeInsets.all(16),
+//       title: Text(
+//         user.name,
+//         style: const TextStyle(
+//           fontWeight: FontWeight.bold,
+//           fontSize: 16,
+//         ),
+//       ),
+//       subtitle: const Text(
+//         'No messages yet',
+//         style: TextStyle(color: Colors.grey),
+//       ),
+//       leading: CircleAvatar(
+//         radius: 25,
+//         backgroundColor: Theme.of(context).colorScheme.primary,
+//         child: Text(
+//           user.name[0].toUpperCase(),
+//           style: const TextStyle(
+//             color: Colors.white,
+//             fontWeight: FontWeight.bold,
+//             fontSize: 18,
+//           ),
+//         ),
+//       ),
+//       trailing: Icon(
+//         Icons.arrow_forward_ios_rounded,
+//         color: Theme.of(context).colorScheme.primary,
+//         size: 16,
+//       ),
+//       onTap: () {
+//         ref.read(currentReceiverProvider.notifier).state = user;
+//         Navigator.push(
+//           context,
+//           MaterialPageRoute(builder: (context) => const ChatScreen()),
+//         );
+//       },
+//     ),
+//   );
+// }

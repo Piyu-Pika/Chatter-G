@@ -38,7 +38,7 @@ class LocalDataSource {
         _keyLastSeen: data.lastSeen?.toIso8601String() ?? '',
         _keyUsername: data.username ?? '',
         _keyBio: data.bio ?? '',
-        _keyDateOfBirth: data.dateOfBirth ,
+        _keyDateOfBirth: data.dateOfBirth,
         _keyGender: data.gender ?? '',
         _keyPhoneNumber: data.phoneNumber ?? '',
       };

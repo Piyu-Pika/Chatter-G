@@ -12,7 +12,8 @@ class AppLifecycleManager extends StatefulWidget {
   State<AppLifecycleManager> createState() => _AppLifecycleManagerState();
 }
 
-class _AppLifecycleManagerState extends State<AppLifecycleManager> with WidgetsBindingObserver {
+class _AppLifecycleManagerState extends State<AppLifecycleManager>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
@@ -30,12 +31,12 @@ class _AppLifecycleManagerState extends State<AppLifecycleManager> with WidgetsB
     switch (state) {
       case AppLifecycleState.resumed:
         debugPrint('App in foreground - reconnecting WebSocket');
-        WebSocketService().reconnect();  // You can create this method if not yet
+        WebSocketService().reconnect(); // You can create this method if not yet
         final currentChatUser = NavigationService.getCurrentChatUser();
-  if (currentChatUser != null) {
-    NotificationService.clearNotificationsForUser(currentChatUser);
-  }
-  break;
+        if (currentChatUser != null) {
+          NotificationService.clearNotificationsForUser(currentChatUser);
+        }
+        break;
       case AppLifecycleState.inactive:
       case AppLifecycleState.paused:
         debugPrint('App moved to background - can manage tasks here');

@@ -56,7 +56,8 @@ class SearchFriendScreenState {
   }
 }
 
-class SearchFriendScreenNotifier extends StateNotifier<SearchFriendScreenState> {
+class SearchFriendScreenNotifier
+    extends StateNotifier<SearchFriendScreenState> {
   final Ref ref;
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -79,9 +80,9 @@ class SearchFriendScreenNotifier extends StateNotifier<SearchFriendScreenState> 
     try {
       final authProvider = ref.read(authServiceProvider);
       final userId = await authProvider.getUid();
-      
+
       state = state.copyWith(currentUserUuid: userId);
-      
+
       // Load both users and friends concurrently
       await Future.wait([
         _loadUsers(),
@@ -96,10 +97,10 @@ class SearchFriendScreenNotifier extends StateNotifier<SearchFriendScreenState> 
   Future<void> _loadUsers() async {
     try {
       state = state.copyWith(isLoading: true);
-      
+
       ApiClient apiClient = ApiClient();
       final fetchedUsers = await apiClient.getUsers();
-      
+
       // Filter out current user from the list
       final usersWithoutCurrentUser = fetchedUsers
           .where((user) => user.uuid != state.currentUserUuid)
@@ -109,7 +110,7 @@ class SearchFriendScreenNotifier extends StateNotifier<SearchFriendScreenState> 
         allUsers: usersWithoutCurrentUser,
         isLoading: false,
       );
-      
+
       // Apply filtering after users are loaded
       _applyFiltering();
     } catch (e) {
@@ -121,15 +122,16 @@ class SearchFriendScreenNotifier extends StateNotifier<SearchFriendScreenState> 
   Future<void> _loadFriends() async {
     try {
       state = state.copyWith(isLoadingFriends: true);
-      
+
       ApiClient apiClient = ApiClient();
-      final fetchedFriends = await apiClient.getFriends(userUuid: state.currentUserUuid);
-      
+      final fetchedFriends =
+          await apiClient.getFriends(userUuid: state.currentUserUuid);
+
       state = state.copyWith(
         friends: fetchedFriends,
         isLoadingFriends: false,
       );
-      
+
       // Apply filtering after friends are loaded
       _applyFiltering();
     } catch (e) {
@@ -141,7 +143,7 @@ class SearchFriendScreenNotifier extends StateNotifier<SearchFriendScreenState> 
   void _applyFiltering() {
     // Get friend UUIDs for easy comparison
     final friendUuids = state.friends.map((friend) => friend.uuid).toSet();
-    
+
     // Filter out friends from all users
     final usersWithoutFriends = state.allUsers
         .where((user) => !friendUuids.contains(user.uuid))
@@ -153,10 +155,14 @@ class SearchFriendScreenNotifier extends StateNotifier<SearchFriendScreenState> 
       // Apply search filter to users without friends
       final searchFiltered = usersWithoutFriends
           .where((user) =>
-              user.name.toLowerCase().contains(state.searchQuery.toLowerCase()) ||
-              user.username!.toLowerCase().contains(state.searchQuery.toLowerCase()))
+              user.name
+                  .toLowerCase()
+                  .contains(state.searchQuery.toLowerCase()) ||
+              user.username!
+                  .toLowerCase()
+                  .contains(state.searchQuery.toLowerCase()))
           .toList();
-      
+
       state = state.copyWith(filteredUsers: searchFiltered);
     }
   }
@@ -176,7 +182,7 @@ class SearchFriendScreenNotifier extends StateNotifier<SearchFriendScreenState> 
       ApiClient apiClient = ApiClient();
       final userDetails = await apiClient.getUserByUUID(uuid: user.uuid);
       final detailedUser = AppUser.fromJson(userDetails);
-      
+
       state = state.copyWith(selectedUser: detailedUser);
     } catch (e) {
       _showError('Failed to load user details: $e');
@@ -186,15 +192,15 @@ class SearchFriendScreenNotifier extends StateNotifier<SearchFriendScreenState> 
   Future<void> sendFriendRequest(String receiver_uuid) async {
     try {
       state = state.copyWith(isSendingRequest: true);
-      
+
       ApiClient apiClient = ApiClient();
       final result = await apiClient.sendFriendRequest(
         userUuid: state.currentUserUuid,
         receiverUuid: receiver_uuid,
       );
-      
+
       state = state.copyWith(isSendingRequest: false);
-      
+
       // Show success message
       scaffoldKey.currentContext?.let((context) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -204,15 +210,14 @@ class SearchFriendScreenNotifier extends StateNotifier<SearchFriendScreenState> 
           ),
         );
       });
-      
+
       // Optional: Remove the user from the filtered list after sending request
       // This prevents users from sending multiple requests to the same person
       final updatedFilteredUsers = state.filteredUsers
           .where((user) => user.uuid != receiver_uuid)
           .toList();
-      
+
       state = state.copyWith(filteredUsers: updatedFilteredUsers);
-      
     } catch (e) {
       state = state.copyWith(isSendingRequest: false);
       _showError('Failed to send friend request: $e');
@@ -229,7 +234,7 @@ class SearchFriendScreenNotifier extends StateNotifier<SearchFriendScreenState> 
       isLoading: true,
       isLoadingFriends: true,
     );
-    
+
     await Future.wait([
       _loadUsers(),
       _loadFriends(),

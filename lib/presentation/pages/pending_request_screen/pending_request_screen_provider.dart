@@ -54,14 +54,16 @@ class PendingRequestState {
     );
   }
 
-  bool isRequestProcessing(String requestId) => processingRequests.contains(requestId);
+  bool isRequestProcessing(String requestId) =>
+      processingRequests.contains(requestId);
 }
 
 class PendingRequestNotifier extends StateNotifier<PendingRequestState> {
   final ApiClient _apiClient;
   final Ref _ref;
 
-  PendingRequestNotifier(this._apiClient, this._ref) : super(const PendingRequestState()) {
+  PendingRequestNotifier(this._apiClient, this._ref)
+      : super(const PendingRequestState()) {
     _initialize();
   }
 
@@ -79,7 +81,7 @@ class PendingRequestNotifier extends StateNotifier<PendingRequestState> {
     try {
       final authProvider = _ref.read(authServiceProvider);
       final userId = await authProvider.getUid();
-      
+
       state = state.copyWith(currentUserUuid: userId);
     } catch (e) {
       state = state.copyWith(
@@ -107,12 +109,11 @@ class PendingRequestNotifier extends StateNotifier<PendingRequestState> {
 
     try {
       final response = await _apiClient.getFriendRequests(
-        type: 'received', 
-        userUuid: state.currentUserUuid!
-      );
-      
-      final requests = (response['data'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-      
+          type: 'received', userUuid: state.currentUserUuid!);
+
+      final requests =
+          (response['data'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+
       state = state.copyWith(
         pendingRequests: requests,
         isLoading: false,
@@ -132,74 +133,74 @@ class PendingRequestNotifier extends StateNotifier<PendingRequestState> {
   Future<void> loadBlockedUsers() async {
     try {
       final blockedUsers = await _apiClient.getBlockedUsers();
-      state = state.copyWith(blockedUsers: blockedUsers.cast<Map<String, dynamic>>());
+      state = state.copyWith(
+          blockedUsers: blockedUsers.cast<Map<String, dynamic>>());
     } catch (e) {
       debugPrint('Error loading blocked users: $e');
     }
   }
 
   Future<void> respondToRequest(String requestId, String action) async {
-  // Add optimistic update
-  final requestIndex = state.pendingRequests.indexWhere((r) => r['id'] == requestId);
-  if (requestIndex == -1) return;
+    // Add optimistic update
+    final requestIndex =
+        state.pendingRequests.indexWhere((r) => r['id'] == requestId);
+    if (requestIndex == -1) return;
 
-  // Mark request as processing
-  final updatedProcessing = Set<String>.from(state.processingRequests)..add(requestId);
-  state = state.copyWith(processingRequests: updatedProcessing);
+    // Mark request as processing
+    final updatedProcessing = Set<String>.from(state.processingRequests)
+      ..add(requestId);
+    state = state.copyWith(processingRequests: updatedProcessing);
 
-  try {
-    // Use action directly (should be "accepts" or "rejects")
-    await _apiClient.respondToFriendRequest(
-      requestId: requestId, 
-      action: action,
-      userUuid: state.currentUserUuid!
-    );
-    
-    // Remove request on success
-    final updatedRequests = List<Map<String, dynamic>>.from(state.pendingRequests)
-      ..removeWhere((request) => request['id'] == requestId);
-    
-    final updatedProcessingFinal = Set<String>.from(state.processingRequests)..remove(requestId);
-    
-    state = state.copyWith(
-      pendingRequests: updatedRequests,
-      processingRequests: updatedProcessingFinal,
-    );
+    try {
+      // Use action directly (should be "accepts" or "rejects")
+      await _apiClient.respondToFriendRequest(
+          requestId: requestId,
+          action: action,
+          userUuid: state.currentUserUuid!);
 
-    // Show success feedback with complete messages
-    _showSuccessMessage(
-      action == 'accepted' ? 'Friend request accepted' : 'Friend request rejected'
-    );
-    
-  } catch (e) {
-    // Remove processing state and show error
-    final updatedProcessingError = Set<String>.from(state.processingRequests)..remove(requestId);
-    state = state.copyWith(
-      processingRequests: updatedProcessingError,
-      error: _formatError(e),
-    );
+      // Remove request on success
+      final updatedRequests =
+          List<Map<String, dynamic>>.from(state.pendingRequests)
+            ..removeWhere((request) => request['id'] == requestId);
+
+      final updatedProcessingFinal = Set<String>.from(state.processingRequests)
+        ..remove(requestId);
+
+      state = state.copyWith(
+        pendingRequests: updatedRequests,
+        processingRequests: updatedProcessingFinal,
+      );
+
+      // Show success feedback with complete messages
+      _showSuccessMessage(action == 'accepted'
+          ? 'Friend request accepted'
+          : 'Friend request rejected');
+    } catch (e) {
+      // Remove processing state and show error
+      final updatedProcessingError = Set<String>.from(state.processingRequests)
+        ..remove(requestId);
+      state = state.copyWith(
+        processingRequests: updatedProcessingError,
+        error: _formatError(e),
+      );
+    }
   }
-}
-
 
   Future<void> blockUser(String userUuid) async {
     try {
       await _apiClient.blockUser(user_uuid: userUuid);
-      
+
       // Remove any pending request from this user
-      final updatedRequests = state.pendingRequests
-          .where((request) {
-            final sender = request['sender'] as Map<String, dynamic>?;
-            return sender?['user_uuid'] != userUuid && sender?['id'] != userUuid;
-          })
-          .toList();
-      
+      final updatedRequests = state.pendingRequests.where((request) {
+        final sender = request['sender'] as Map<String, dynamic>?;
+        return sender?['user_uuid'] != userUuid && sender?['id'] != userUuid;
+      }).toList();
+
       state = state.copyWith(pendingRequests: updatedRequests);
-      
+
       // Reload blocked users
       await loadBlockedUsers();
       _showSuccessMessage('User blocked successfully');
-      
     } catch (e) {
       state = state.copyWith(error: _formatError(e));
     }
@@ -216,11 +217,10 @@ class PendingRequestNotifier extends StateNotifier<PendingRequestState> {
   }
 
   bool isUserBlocked(String userIdentifier) {
-    return state.blockedUsers.any((user) => 
-      user['user_uuid'] == userIdentifier || 
-      user['username'] == userIdentifier ||
-      user['id'] == userIdentifier
-    );
+    return state.blockedUsers.any((user) =>
+        user['user_uuid'] == userIdentifier ||
+        user['username'] == userIdentifier ||
+        user['id'] == userIdentifier);
   }
 
   void clearError() {
@@ -250,7 +250,8 @@ class PendingRequestNotifier extends StateNotifier<PendingRequestState> {
 }
 
 // Provider definition
-final pendingRequestProvider = StateNotifierProvider<PendingRequestNotifier, PendingRequestState>(
+final pendingRequestProvider =
+    StateNotifierProvider<PendingRequestNotifier, PendingRequestState>(
   (ref) => PendingRequestNotifier(ref.read(apiClientProvider), ref),
 );
 

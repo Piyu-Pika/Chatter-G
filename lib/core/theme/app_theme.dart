@@ -180,8 +180,8 @@ extension GradientExtensions on BuildContext {
 //     return Container(
 //       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
 //       decoration: BoxDecoration(
-//         gradient: isUser 
-//             ? context.chatBubbleGradient 
+//         gradient: isUser
+//             ? context.chatBubbleGradient
 //             : context.buttonGradient,
 //         borderRadius: BorderRadius.circular(20),
 //         boxShadow: [

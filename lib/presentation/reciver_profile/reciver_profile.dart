@@ -8,11 +8,12 @@ import '../../../data/models/user_model.dart';
 // import 'profileScreenProvider.dart';
 
 class ReciverProfileScreen extends ConsumerStatefulWidget {
-  const ReciverProfileScreen({super.key,required this.uuid});
+  const ReciverProfileScreen({super.key, required this.uuid});
   final String uuid;
 
   @override
-  ConsumerState<ReciverProfileScreen> createState() => _ReciverProfileScreenState();
+  ConsumerState<ReciverProfileScreen> createState() =>
+      _ReciverProfileScreenState();
 }
 
 class _ReciverProfileScreenState extends ConsumerState<ReciverProfileScreen> {
@@ -178,12 +179,19 @@ class _ReciverProfileScreenState extends ConsumerState<ReciverProfileScreen> {
             _buildProfileHeader(isDarkMode, primaryColor),
             const SizedBox(height: 30),
             _buildSection('Personal Information', [
-              _buildNonEditableField('Name', 'name', Icons.person, isDarkMode,
-                ),
+              _buildNonEditableField(
+                'Name',
+                'name',
+                Icons.person,
+                isDarkMode,
+              ),
               _buildNonEditableField('Email', 'email', Icons.email, isDarkMode),
               _buildNonEditableField(
-                  'Username', 'username', Icons.alternate_email, isDarkMode,
-                  ),
+                'Username',
+                'username',
+                Icons.alternate_email,
+                isDarkMode,
+              ),
             ]),
             const SizedBox(height: 20),
             _buildSection('Contact Details', [
@@ -399,6 +407,7 @@ class _ReciverProfileScreenState extends ConsumerState<ReciverProfileScreen> {
       ),
     );
   }
+
   // Build bio field with multiline support
   Widget _buildBioField(bool isDarkMode) {
     return Padding(
@@ -515,7 +524,6 @@ class _ReciverProfileScreenState extends ConsumerState<ReciverProfileScreen> {
       ),
     );
   }
-
 
   // Build individual gender option
 }

@@ -142,20 +142,19 @@ class ApiClient {
   }
 
   Future<void> updateFcmToken(String uuid, String fcmToken) async {
-  try {
-    await _dio.put(
-      '/api/v1/users/$uuid/fcm-token',
-      data: {'fcm_token': fcmToken},
-      options: Options(headers: {
-        // 'Authorization': 'Bearer $_authToken',  // Ensure you manage the token here
-      }),
-    );
-  } catch (e) {
-    print('Failed to update FCM token: $e');
-    throw e;
+    try {
+      await _dio.put(
+        '/api/v1/users/$uuid/fcm-token',
+        data: {'fcm_token': fcmToken},
+        options: Options(headers: {
+          // 'Authorization': 'Bearer $_authToken',  // Ensure you manage the token here
+        }),
+      );
+    } catch (e) {
+      print('Failed to update FCM token: $e');
+      throw e;
+    }
   }
-}
-
 
   // Get all users - Fixed return type casting
   Future<List<AppUser>> getUsers() async {
@@ -414,201 +413,202 @@ class ApiClient {
   // Friend Management Operations
 
 // Send a friend request to another user
-Future<Map<String, dynamic>> sendFriendRequest({
-  required String receiverUuid,
-  required String userUuid, // X-User-ID header is required
-}) async {
-  try {
-    if (receiverUuid.isEmpty) {
-      throw Exception('Receiver UUID cannot be empty');
-    }
-    if (userUuid.isEmpty) {
-      throw Exception('User UUID (for X-User-ID header) cannot be empty');
-    }
+  Future<Map<String, dynamic>> sendFriendRequest({
+    required String receiverUuid,
+    required String userUuid, // X-User-ID header is required
+  }) async {
+    try {
+      if (receiverUuid.isEmpty) {
+        throw Exception('Receiver UUID cannot be empty');
+      }
+      if (userUuid.isEmpty) {
+        throw Exception('User UUID (for X-User-ID header) cannot be empty');
+      }
 
-    final response = await _dio.post(
-      '/api/v1/friends/request',
-      data: {'receiver_uuid': receiverUuid},
-      options: Options(
-        headers: {'X-User-ID': userUuid},
-      ),
-    );
+      final response = await _dio.post(
+        '/api/v1/friends/request',
+        data: {'receiver_uuid': receiverUuid},
+        options: Options(
+          headers: {'X-User-ID': userUuid},
+        ),
+      );
 
-    return response.data as Map<String, dynamic>;
-  } on DioException catch (e) {
-    throw Exception(await _handleError(e));
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw Exception(await _handleError(e));
+    }
   }
-}
 
 // Accept or reject a friend request
 
-Future<Map<String, dynamic>> acceptFriendRequest({
-  required String requestId,
-  required String userUuid,
-}) async {
-  try {
-    if (requestId.isEmpty) {
-      throw Exception('Request ID cannot be empty');
+  Future<Map<String, dynamic>> acceptFriendRequest({
+    required String requestId,
+    required String userUuid,
+  }) async {
+    try {
+      if (requestId.isEmpty) {
+        throw Exception('Request ID cannot be empty');
+      }
+
+      final response = await _dio.put(
+        '/api/v1/friends/request/$requestId/accept',
+        options: Options(
+          headers: {'X-User-ID': userUuid},
+        ),
+      );
+
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw Exception(await _handleError(e));
     }
-
-    final response = await _dio.put(
-      '/api/v1/friends/request/$requestId/accept',
-      options: Options(
-        headers: {'X-User-ID': userUuid},
-      ),
-    );
-
-    return response.data as Map<String, dynamic>;
-  } on DioException catch (e) {
-    throw Exception(await _handleError(e));
   }
-}
 
 // Reject friend request
-Future<Map<String, dynamic>> rejectFriendRequest({
-  required String requestId,
-  required String userUuid,
-}) async {
-  try {
-    if (requestId.isEmpty) {
-      throw Exception('Request ID cannot be empty');
+  Future<Map<String, dynamic>> rejectFriendRequest({
+    required String requestId,
+    required String userUuid,
+  }) async {
+    try {
+      if (requestId.isEmpty) {
+        throw Exception('Request ID cannot be empty');
+      }
+
+      final response = await _dio.put(
+        '/api/v1/friends/request/$requestId/reject',
+        options: Options(
+          headers: {'X-User-ID': userUuid},
+        ),
+      );
+
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw Exception(await _handleError(e));
     }
-
-    final response = await _dio.put(
-      '/api/v1/friends/request/$requestId/reject',
-      options: Options(
-        headers: {'X-User-ID': userUuid},
-      ),
-    );
-
-    return response.data as Map<String, dynamic>;
-  } on DioException catch (e) {
-    throw Exception(await _handleError(e));
   }
-}
 
-Future<Map<String, dynamic>> respondToFriendRequest({
-  required String requestId,
-  required String action, // "accepted" or "rejected"
-  required String userUuid,
-}) async {
-  if (action == 'accepted') {
-    return await acceptFriendRequest(
-      requestId: requestId,
-      userUuid: userUuid,
-    );
-  } else if (action == 'rejected') {
-    return await rejectFriendRequest(
-      requestId: requestId,
-      userUuid: userUuid,
-    );
-  } else {
-    throw Exception('Action must be "accepted" or "rejected"');
+  Future<Map<String, dynamic>> respondToFriendRequest({
+    required String requestId,
+    required String action, // "accepted" or "rejected"
+    required String userUuid,
+  }) async {
+    if (action == 'accepted') {
+      return await acceptFriendRequest(
+        requestId: requestId,
+        userUuid: userUuid,
+      );
+    } else if (action == 'rejected') {
+      return await rejectFriendRequest(
+        requestId: requestId,
+        userUuid: userUuid,
+      );
+    } else {
+      throw Exception('Action must be "accepted" or "rejected"');
+    }
   }
-}
+
 // Get friend requests (sent or received)
-Future<Map<String, dynamic>> getFriendRequests({
-  required String type, // "sent" or "received"
-  required String userUuid, // X-User-ID header is required
-}) async {
-  try {
-    if (type != 'sent' && type != 'received') {
-      throw Exception('Type must be "sent" or "received"');
+  Future<Map<String, dynamic>> getFriendRequests({
+    required String type, // "sent" or "received"
+    required String userUuid, // X-User-ID header is required
+  }) async {
+    try {
+      if (type != 'sent' && type != 'received') {
+        throw Exception('Type must be "sent" or "received"');
+      }
+
+      final response = await _dio.get(
+        '/api/v1/friends/requests',
+        queryParameters: {'type': type},
+        options: Options(
+          headers: {'X-User-ID': userUuid},
+        ),
+      );
+
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw Exception(await _handleError(e));
     }
-
-    final response = await _dio.get(
-      '/api/v1/friends/requests',
-      queryParameters: {'type': type},
-      options: Options(
-        headers: {'X-User-ID': userUuid},
-      ),
-    );
-
-    return response.data as Map<String, dynamic>;
-  } on DioException catch (e) {
-    throw Exception(await _handleError(e));
   }
-}
 
 // Get current user's friends list
-Future<List<AppUser>> getFriends({required String userUuid}) async {
-  try {
-    final response = await _dio.get(
-      '/api/v1/friends/',
-      options: Options(
-        headers: {'X-User-ID': userUuid},
-      ),
-    );
+  Future<List<AppUser>> getFriends({required String userUuid}) async {
+    try {
+      final response = await _dio.get(
+        '/api/v1/friends/',
+        options: Options(
+          headers: {'X-User-ID': userUuid},
+        ),
+      );
 
-    if (response.data['data'] is List) {
-      final List<dynamic> friendsJson = response.data['data'] as List<dynamic>;
-      return friendsJson
-          .map((json) => AppUser.fromJson(json as Map<String, dynamic>))
-          .toList();
-    } else {
-      throw Exception('Unexpected response format: data is not a list');
+      if (response.data['data'] is List) {
+        final List<dynamic> friendsJson =
+            response.data['data'] as List<dynamic>;
+        return friendsJson
+            .map((json) => AppUser.fromJson(json as Map<String, dynamic>))
+            .toList();
+      } else {
+        throw Exception('Unexpected response format: data is not a list');
+      }
+    } on DioException catch (e) {
+      throw Exception(await _handleError(e));
     }
-  } on DioException catch (e) {
-    throw Exception(await _handleError(e));
   }
-}
 
 // Block a user by username
-Future<Map<String, dynamic>> blockUser({
-  required String user_uuid,
-}) async {
-  try {
-    if (user_uuid.isEmpty) {
-      throw Exception('Username cannot be empty');
+  Future<Map<String, dynamic>> blockUser({
+    required String user_uuid,
+  }) async {
+    try {
+      if (user_uuid.isEmpty) {
+        throw Exception('Username cannot be empty');
+      }
+
+      final response = await _dio.post(
+        '/api/v1/friends/block',
+        data: {'user_uuid': user_uuid},
+      );
+
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw Exception(await _handleError(e));
     }
-
-    final response = await _dio.post(
-      '/api/v1/friends/block',
-      data: {'user_uuid': user_uuid},
-    );
-
-    return response.data as Map<String, dynamic>;
-  } on DioException catch (e) {
-    throw Exception(await _handleError(e));
   }
-}
 
 // Unblock a previously blocked user
-Future<Map<String, dynamic>> unblockUser({
-  required String user_uuid,
-  // required String receiverUuid,
-}) async {
-  try {
-    if (user_uuid.isEmpty) {
-      throw Exception('Username cannot be empty');
+  Future<Map<String, dynamic>> unblockUser({
+    required String user_uuid,
+    // required String receiverUuid,
+  }) async {
+    try {
+      if (user_uuid.isEmpty) {
+        throw Exception('Username cannot be empty');
+      }
+
+      // Note: The backend route has :username parameter but expects receiver_uuid in body
+      // You may want to coordinate with backend to fix this inconsistency
+      final response = await _dio.delete(
+        '/api/v1/friends/block/placeholder', // Using placeholder since backend expects body
+        data: {'receiver_uuid': user_uuid},
+      );
+
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw Exception(await _handleError(e));
     }
-
-    // Note: The backend route has :username parameter but expects receiver_uuid in body
-    // You may want to coordinate with backend to fix this inconsistency
-    final response = await _dio.delete(
-      '/api/v1/friends/block/placeholder', // Using placeholder since backend expects body
-      data: {'receiver_uuid': user_uuid},
-    );
-
-    return response.data as Map<String, dynamic>;
-  } on DioException catch (e) {
-    throw Exception(await _handleError(e));
   }
-}
 
 // Get current user's blocked users list
-Future<List<dynamic>> getBlockedUsers() async {
-  try {
-    final response = await _dio.get('/api/v1/friends/blocked');
+  Future<List<dynamic>> getBlockedUsers() async {
+    try {
+      final response = await _dio.get('/api/v1/friends/blocked');
 
-    if (response.data['data'] is List) {
-      return response.data['data'] as List<dynamic>;
-    } else {
-      throw Exception('Unexpected response format: data is not a list');
+      if (response.data['data'] is List) {
+        return response.data['data'] as List<dynamic>;
+      } else {
+        throw Exception('Unexpected response format: data is not a list');
+      }
+    } on DioException catch (e) {
+      throw Exception(await _handleError(e));
     }
-  } on DioException catch (e) {
-    throw Exception(await _handleError(e));
   }
-}
-
 }

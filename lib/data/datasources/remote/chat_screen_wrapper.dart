@@ -6,7 +6,6 @@ import '../../../presentation/pages/chat_screen/chat_screen.dart';
 import 'navigation_service.dart';
 import 'notification_service.dart';
 
-
 class ChatScreenWrapper extends StatefulWidget {
   final AppUser receiver;
 

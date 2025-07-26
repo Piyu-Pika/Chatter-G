@@ -30,15 +30,16 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
     try {
       final dir = await getApplicationDocumentsDirectory();
       final imageDir = Directory('${dir.path}/chat_images');
-      
+
       if (await imageDir.exists()) {
         final files = await imageDir.list().toList();
         final imageFiles = files
-            .where((file) => file.path.toLowerCase().endsWith('.jpg') || 
-                           file.path.toLowerCase().endsWith('.png'))
+            .where((file) =>
+                file.path.toLowerCase().endsWith('.jpg') ||
+                file.path.toLowerCase().endsWith('.png'))
             .map((file) => XFile(file.path))
             .toList();
-        
+
         setState(() {
           _capturedImages = imageFiles;
         });
@@ -134,7 +135,7 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
     try {
       final dir = await getApplicationDocumentsDirectory();
       final imageDir = Directory('${dir.path}/chat_images');
-      
+
       if (!await imageDir.exists()) {
         await imageDir.create(recursive: true);
       }
@@ -142,9 +143,9 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final filename = 'chat_image_$timestamp.jpg';
       final savedPath = p.join(imageDir.path, filename);
-      
+
       await File(image.path).copy(savedPath);
-      
+
       setState(() {
         _capturedImages.insert(0, XFile(savedPath));
       });
@@ -166,7 +167,8 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Permission Required'),
-        content: Text('This app needs $permission permission to function properly.'),
+        content:
+            Text('This app needs $permission permission to function properly.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -263,7 +265,8 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
         ),
         child: Icon(icon, color: Colors.white, size: 24),
       ),
-      title: Text(title, style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+      title: Text(title,
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
       subtitle: Text(subtitle, style: TextStyle(color: Colors.grey[400])),
       onTap: onTap,
     );
@@ -286,15 +289,20 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
                       GestureDetector(
                         onTap: () => setState(() => _selectedIndex = 0),
                         child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
-                            color: _selectedIndex == 0 ? Colors.blue : Colors.transparent,
+                            color: _selectedIndex == 0
+                                ? Colors.blue
+                                : Colors.transparent,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             'Camera',
                             style: TextStyle(
-                              color: _selectedIndex == 0 ? Colors.white : Colors.grey[400],
+                              color: _selectedIndex == 0
+                                  ? Colors.white
+                                  : Colors.grey[400],
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                             ),
@@ -305,15 +313,20 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
                       GestureDetector(
                         onTap: () => setState(() => _selectedIndex = 1),
                         child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
-                            color: _selectedIndex == 1 ? Colors.blue : Colors.transparent,
+                            color: _selectedIndex == 1
+                                ? Colors.blue
+                                : Colors.transparent,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             'Gallery',
                             style: TextStyle(
-                              color: _selectedIndex == 1 ? Colors.white : Colors.grey[400],
+                              color: _selectedIndex == 1
+                                  ? Colors.white
+                                  : Colors.grey[400],
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                             ),
@@ -330,7 +343,7 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
                 ],
               ),
             ),
-            
+
             // Camera placeholder/recent image
             Expanded(
               child: Container(
@@ -378,7 +391,7 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
                       ),
               ),
             ),
-            
+
             // Bottom controls
             Container(
               padding: EdgeInsets.all(20),
@@ -474,15 +487,20 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
                       GestureDetector(
                         onTap: () => setState(() => _selectedIndex = 0),
                         child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
-                            color: _selectedIndex == 0 ? Colors.blue : Colors.transparent,
+                            color: _selectedIndex == 0
+                                ? Colors.blue
+                                : Colors.transparent,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             'Camera',
                             style: TextStyle(
-                              color: _selectedIndex == 0 ? Colors.white : Colors.grey[400],
+                              color: _selectedIndex == 0
+                                  ? Colors.white
+                                  : Colors.grey[400],
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                             ),
@@ -493,15 +511,20 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
                       GestureDetector(
                         onTap: () => setState(() => _selectedIndex = 1),
                         child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
-                            color: _selectedIndex == 1 ? Colors.blue : Colors.transparent,
+                            color: _selectedIndex == 1
+                                ? Colors.blue
+                                : Colors.transparent,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             'Gallery',
                             style: TextStyle(
-                              color: _selectedIndex == 1 ? Colors.white : Colors.grey[400],
+                              color: _selectedIndex == 1
+                                  ? Colors.white
+                                  : Colors.grey[400],
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                             ),
@@ -524,7 +547,7 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
                 ],
               ),
             ),
-            
+
             // Gallery grid
             Expanded(
               child: _capturedImages.isEmpty
@@ -585,7 +608,9 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _selectedIndex == 0 ? _buildCameraView(context) : _buildGalleryView(context),
+      body: _selectedIndex == 0
+          ? _buildCameraView(context)
+          : _buildGalleryView(context),
       backgroundColor: Colors.black,
     );
   }

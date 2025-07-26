@@ -57,14 +57,11 @@ class _SplashscreenState extends ConsumerState<Splashscreen> {
 
   Future<void> _startServerAndTimer() async {
     // Start both processes simultaneously
-   
+
     _tryStartingServer();
     _startMinimumTimer();
-    
   }
 
-
- 
   // Function to ensure minimum splash display time
   Future<void> _startMinimumTimer() async {
     await Future.delayed(const Duration(seconds: 3));
@@ -159,7 +156,6 @@ class _SplashscreenState extends ConsumerState<Splashscreen> {
   }
 }
 
-
 // import 'dart:async';
 // import 'package:chatterg/data/datasources/remote/api_value.dart';
 // import 'package:firebase_auth/firebase_auth.dart';
@@ -216,7 +212,7 @@ class _SplashscreenState extends ConsumerState<Splashscreen> {
 //   Future<void> _startServerAndTimer() async {
 //     // Initialize notifications early (will send FCM token if user is logged in)
 //     _initializeNotifications();
-    
+
 //     // Start both server check and timer
 //     _tryStartingServer();
 //     _startMinimumTimer();

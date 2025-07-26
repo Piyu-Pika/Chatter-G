@@ -1,10 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:async';
-// import 'package:chatterg/data/models/user_model.dart' as AppUser; 
+// import 'package:chatterg/data/models/user_model.dart' as AppUser;
 
 // import '../../data/datasources/remote/api_value.dart';
 import '../../data/datasources/remote/api_value.dart';
@@ -107,7 +106,6 @@ class AuthService extends ChangeNotifier {
       await NotificationService.initializeBasic();
     }
   }
-
 
   // This listener updates the internal state and notifies listeners.
   // UI reacting to authServiceProvider or authStateChangesProvider

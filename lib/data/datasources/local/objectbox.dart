@@ -1,7 +1,6 @@
 import '../../../objectbox.g.dart';
 import '../../models/message_model.dart';
 
-
 class ObjectBox {
   late final Store store;
   late final Box<ChatMessage> chatBox;
@@ -20,12 +19,14 @@ class ObjectBox {
   }
 
   List<ChatMessage> getMessagesFor(String userId1, String userId2) {
-    final query = chatBox.query(
-  ChatMessage_.senderId.equals(userId1).and(ChatMessage_.recipientId.equals(userId2))
-    |
-  ChatMessage_.senderId.equals(userId2).and(ChatMessage_.recipientId.equals(userId1))
-).build();
-
+    final query = chatBox
+        .query(ChatMessage_.senderId
+                .equals(userId1)
+                .and(ChatMessage_.recipientId.equals(userId2)) |
+            ChatMessage_.senderId
+                .equals(userId2)
+                .and(ChatMessage_.recipientId.equals(userId1)))
+        .build();
 
     final messages = query.find();
     query.close();

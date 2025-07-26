@@ -25,7 +25,8 @@ final webSocketConnectionProvider = FutureProvider<void>((ref) async {
 });
 
 // Chat Messages Notifier
-class ChatMessagesNotifier extends StateNotifier<Map<String, List<ChatMessage>>> {
+class ChatMessagesNotifier
+    extends StateNotifier<Map<String, List<ChatMessage>>> {
   final Ref ref;
 
   ChatMessagesNotifier(this.ref) : super({}) {
@@ -33,24 +34,22 @@ class ChatMessagesNotifier extends StateNotifier<Map<String, List<ChatMessage>>>
   }
 
   void _initializeWebSocketListener() {
-  final webSocketService = ref.read(webSocketServiceProvider);
+    final webSocketService = ref.read(webSocketServiceProvider);
 
-  webSocketService.messages.listen((data) {
-    try {
-      print('Received message data: $data');
+    webSocketService.messages.listen((data) {
+      try {
+        print('Received message data: $data');
 
-      // Try to parse as ChatMessage without relying on 'type'
-      final message = ChatMessage.fromJson(data);
-      addMessage(message);
-
-    } catch (e) {
-      print('Non-chat or invalid message format: $e');
-    }
-  }, onError: (error) {
-    print('WebSocket error: $error');
-  });
-}
-
+        // Try to parse as ChatMessage without relying on 'type'
+        final message = ChatMessage.fromJson(data);
+        addMessage(message);
+      } catch (e) {
+        print('Non-chat or invalid message format: $e');
+      }
+    }, onError: (error) {
+      print('WebSocket error: $error');
+    });
+  }
 
   void addMessage(ChatMessage message) {
     final roomName = getRoomName(message.senderId, message.recipientId);
@@ -64,10 +63,9 @@ class ChatMessagesNotifier extends StateNotifier<Map<String, List<ChatMessage>>>
 
     // Check if message already exists to avoid duplicates
     final messageExists = currentMessages.any((m) =>
-      m.timestamp == message.timestamp &&
-      m.senderId == message.senderId &&
-      m.content == message.content
-    );
+        m.timestamp == message.timestamp &&
+        m.senderId == message.senderId &&
+        m.content == message.content);
 
     if (!messageExists) {
       final updatedMessages = [...currentMessages, message];
@@ -89,7 +87,8 @@ class ChatMessagesNotifier extends StateNotifier<Map<String, List<ChatMessage>>>
         roomName: updatedMessages,
       };
 
-      print('Message added to room $roomName. Total messages: ${updatedMessages.length}');
+      print(
+          'Message added to room $roomName. Total messages: ${updatedMessages.length}');
     } else {
       print('Message already exists, skipping duplicate');
     }
@@ -111,7 +110,7 @@ class ChatMessagesNotifier extends StateNotifier<Map<String, List<ChatMessage>>>
         }
         return message;
       }).toList();
-      
+
       if (updatedMessages != messages) {
         state = {
           ...state,
@@ -136,7 +135,8 @@ class ChatMessagesNotifier extends StateNotifier<Map<String, List<ChatMessage>>>
   }
 
   // Method to load historical messages (if you have an API for this)
-  Future<void> loadHistoricalMessages(String roomName, String userId1, String userId2) async {
+  Future<void> loadHistoricalMessages(
+      String roomName, String userId1, String userId2) async {
     // Implement API call to load historical messages
     // This would typically be called when entering a chat room
     print('Loading historical messages for room: $roomName');
