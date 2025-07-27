@@ -94,32 +94,32 @@ class ChatMessagesNotifier
     }
   }
 
-  void _markMessageAsRead(String messageId, String senderId) {
-    // Find the room containing this message
-    for (final roomName in state.keys) {
-      final messages = state[roomName] ?? [];
-      final updatedMessages = messages.map((message) {
-        if (message.timestamp == messageId && message.senderId == senderId) {
-          return ChatMessage(
-            senderId: message.senderId,
-            recipientId: message.recipientId,
-            content: message.content,
-            timestamp: message.timestamp,
-            isRead: true,
-          );
-        }
-        return message;
-      }).toList();
+  // void _markMessageAsRead(String messageId, String senderId) {
+  //   // Find the room containing this message
+  //   for (final roomName in state.keys) {
+  //     final messages = state[roomName] ?? [];
+  //     final updatedMessages = messages.map((message) {
+  //       if (message.timestamp == messageId && message.senderId == senderId) {
+  //         return ChatMessage(
+  //           senderId: message.senderId,
+  //           recipientId: message.recipientId,
+  //           content: message.content,
+  //           timestamp: message.timestamp,
+  //           isRead: true,
+  //         );
+  //       }
+  //       return message;
+  //     }).toList();
 
-      if (updatedMessages != messages) {
-        state = {
-          ...state,
-          roomName: updatedMessages,
-        };
-        break;
-      }
-    }
-  }
+  //     if (updatedMessages != messages) {
+  //       state = {
+  //         ...state,
+  //         roomName: updatedMessages,
+  //       };
+  //       break;
+  //     }
+  //   }
+  // }
 
   // Method to get messages for a specific room
   List<ChatMessage> getMessagesForRoom(String roomName) {

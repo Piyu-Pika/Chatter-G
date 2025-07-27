@@ -154,11 +154,7 @@ class AuthService extends ChangeNotifier {
         email: email,
         password: password,
       )
-          .catchError((error) {
-        // Handle error if needed
-        _setError(error.toString());
-        _setLoading(false);
-      });
+       ;
       // Sign-in success triggers the authStateChanges stream.
       // The _onAuthStateChanged listener will update the state.
 

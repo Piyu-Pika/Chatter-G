@@ -46,8 +46,9 @@ class _AppLifecycleManagerState extends State<AppLifecycleManager>
         WebSocketService().disconnect();
         break;
       case AppLifecycleState.hidden:
-        // TODO: Handle this case.
-        throw UnimplementedError();
+        debugPrint('App is hidden - disconnecting WebSocket');
+        WebSocketService().disconnect();
+        // throw UnimplementedError();
     }
   }
 

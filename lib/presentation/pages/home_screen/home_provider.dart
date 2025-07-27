@@ -1,8 +1,10 @@
 import 'package:chatterg/data/datasources/remote/api_value.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// import '../../../data/models/user_model.dart' as User;
+import '../../../data/datasources/remote/notification_service.dart';
+// import '../../../data/models/user_model.dart' ;
 import '../../../data/models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/websocket_provider.dart';
@@ -47,6 +49,9 @@ class HomeScreenNotifier extends StateNotifier<HomeScreenState> {
           fetchedUsers: [],
         )) {
     _initializeUserData().then((_) => _loadChatrooms());
+    Future.microtask(() => _initializeNotifications(
+          FirebaseAuth.instance.currentUser!, // Ensure you pass a valid user
+        ));
   }
 
   Future<void> _initializeUserData() async {
@@ -56,6 +61,22 @@ class HomeScreenNotifier extends StateNotifier<HomeScreenState> {
     // Initialize WebSocket connection
     ref.read(webSocketServiceProvider).connect(
         'wss://chatterg-go-production.up.railway.app/ws?userID=$userId');
+  }
+
+  Future<void> _initializeNotifications(User firebaseUser) async {
+    try {
+      final uuid = firebaseUser.uid;
+      final userModel = await ApiClient().getUserByUUID(uuid: uuid);
+
+      // Assuming your userModel includes uuid, etc.
+      final user = AppUser.fromJson(userModel);
+      final token = await firebaseUser.getIdToken();
+
+      await NotificationService.initialize(user, authToken: token ?? '');
+      debugPrint('Notifications initialized and FCM token sent to server');
+    } catch (e) {
+      debugPrint('Failed to initialize notifications: $e');
+    }
   }
 
   Future<void> _loadChatrooms() async {

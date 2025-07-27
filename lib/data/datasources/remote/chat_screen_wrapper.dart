@@ -1,6 +1,6 @@
 // Create a new file: chat_screen_wrapper.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/models/user_model.dart';
 import '../../../presentation/pages/chat_screen/chat_screen.dart';
 import 'navigation_service.dart';

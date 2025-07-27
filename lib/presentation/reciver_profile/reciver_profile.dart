@@ -22,7 +22,6 @@ class _ReciverProfileScreenState extends ConsumerState<ReciverProfileScreen> {
   late Future<AppUser> _userDataFuture;
   final Map<String, TextEditingController> _controllers = {};
   final _formKey = GlobalKey<FormState>();
-  String _selectedGender = '';
 
   @override
   void initState() {
@@ -85,7 +84,6 @@ class _ReciverProfileScreenState extends ConsumerState<ReciverProfileScreen> {
           } else if (snapshot.hasData) {
             final user = snapshot.data!;
             _initializeControllers(user);
-            _selectedGender = user.gender!;
             return _buildProfileForm(isDarkMode, primaryColor);
           } else {
             return Center(

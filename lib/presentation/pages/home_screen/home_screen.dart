@@ -9,7 +9,7 @@ import '../../../data/datasources/remote/chat_screen_wrapper.dart';
 import '../../../data/datasources/remote/notification_service.dart';
 import '../../../data/models/user_model.dart';
 import '../camera_screen/camera_screen.dart';
-import '../chat_screen/chat_screen.dart';
+// import '../chat_screen/chat_screen.dart';
 import '../pending_request_screen/pending_request_screen.dart';
 import '../profile_screen/ProfileScreen.dart';
 import '../serach_friend/search_friend_screen.dart';
@@ -32,9 +32,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => _initializeNotifications(
-          FirebaseAuth.instance.currentUser!, // Ensure you pass a valid user
-        ));
+    // Future.microtask(() => _initializeNotifications(
+    //       FirebaseAuth.instance.currentUser!, // Ensure you pass a valid user
+    //     ));
 
     _fabAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -81,21 +81,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
   }
 
-  Future<void> _initializeNotifications(User firebaseUser) async {
-    try {
-      final uuid = firebaseUser.uid;
-      final userModel = await ApiClient().getUserByUUID(uuid: uuid);
+  // Future<void> _initializeNotifications(User firebaseUser) async {
+  //   try {
+  //     final uuid = firebaseUser.uid;
+  //     final userModel = await ApiClient().getUserByUUID(uuid: uuid);
 
-      // Assuming your userModel includes uuid, etc.
-      final user = AppUser.fromJson(userModel);
-      final token = await firebaseUser.getIdToken();
+  //     // Assuming your userModel includes uuid, etc.
+  //     final user = AppUser.fromJson(userModel);
+  //     final token = await firebaseUser.getIdToken();
 
-      await NotificationService.initialize(user, authToken: token ?? '');
-      debugPrint('Notifications initialized and FCM token sent to server');
-    } catch (e) {
-      debugPrint('Failed to initialize notifications: $e');
-    }
-  }
+  //     await NotificationService.initialize(user, authToken: token ?? '');
+  //     debugPrint('Notifications initialized and FCM token sent to server');
+  //   } catch (e) {
+  //     debugPrint('Failed to initialize notifications: $e');
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -217,8 +217,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       actions: [
         if (selectedIndex == 1) ...[
           IconButton(
-              icon: Icon(Icons.notifications_rounded),
-              onPressed: () {
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.notifications_rounded, color: Colors.white),
+            ),
+            onPressed: () {
                 Navigator.push(
                     context,
                     MaterialPageRoute(

@@ -14,8 +14,6 @@ class NotificationService {
   static final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 
-  static AppUser? _currentUser;
-  static String? _authToken;
 
   // Initialize with just Firebase user - for splash screen
   static Future<void> initializeBasic() async {
@@ -29,8 +27,6 @@ class NotificationService {
   // Full initialization with AppUser - for login
   static Future<void> initialize(AppUser user,
       {required String authToken}) async {
-    _currentUser = user;
-    _authToken = authToken;
 
     await _requestPermission();
     await _initLocalNotifications();

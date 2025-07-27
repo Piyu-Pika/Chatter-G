@@ -198,6 +198,7 @@ class SearchFriendScreenNotifier
         userUuid: state.currentUserUuid,
         receiverUuid: receiver_uuid,
       );
+      print(result);
 
       state = state.copyWith(isSendingRequest: false);
 
