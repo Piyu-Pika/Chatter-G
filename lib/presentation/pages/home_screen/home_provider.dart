@@ -1,6 +1,7 @@
 import 'package:chatterg/data/datasources/remote/api_value.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/datasources/remote/notification_service.dart';
@@ -60,7 +61,10 @@ class HomeScreenNotifier extends StateNotifier<HomeScreenState> {
     state = state.copyWith(currentUserUuid: userId);
     // Initialize WebSocket connection
     ref.read(webSocketServiceProvider).connect(
-        'wss://chatterg-go-production.up.railway.app/ws?userID=$userId');
+        // 'wss://chatterg-go-production.up.railway.app/ws?userID=$userId');
+  // 'wss://abfcbf7ad979.ngrok-free.app/ws?userID=$userId');
+  '${dotenv.env['WEBSOCKET_URL']}/ws?userID=$userId');
+
   }
 
   Future<void> _initializeNotifications(User firebaseUser) async {

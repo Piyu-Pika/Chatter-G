@@ -2,8 +2,6 @@ import 'dart:developer';
 
 import 'package:chatterg/data/models/user_model.dart';
 import 'package:dio/dio.dart';
-
-import 'package:dio/dio.dart' as dio;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // API client class to interact with the Godzilla-Go backend API
@@ -94,7 +92,7 @@ class ApiClient {
     try {
       final response = await _dio.get(
         '/health', // Use relative path since baseUrl is set
-        options: dio.Options(
+        options: Options(
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
           },
@@ -505,6 +503,32 @@ class ApiClient {
       throw Exception('Action must be "accepted" or "rejected"');
     }
   }
+
+  Future<Map<String, dynamic>> sendImageMessage({
+  required String userUuid,
+  required String receiverId,
+  required String base64Content,
+  required String fileType,
+}) async {
+  try {
+    if (userUuid.isEmpty || receiverId.isEmpty || base64Content.isEmpty) {
+      throw Exception('User UUID, receiver ID, and content cannot be empty');
+    }
+
+    final response = await _dio.post(
+      '/api/v1/messages/$userUuid/image',
+      data: {
+        'receiverId': receiverId,
+        'content': base64Content,
+        'filetype': fileType,
+      },
+    );
+
+    return response.data as Map<String, dynamic>;
+  } on DioException catch (e) {
+    throw Exception(await _handleError(e));
+  }
+}
 
 // Get friend requests (sent or received)
   Future<Map<String, dynamic>> getFriendRequests({

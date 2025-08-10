@@ -1,6 +1,8 @@
 // lib/data/services/websocket_service.dart
 import 'dart:async';
 import 'dart:convert';
+import 'package:chatterg/data/datasources/remote/api_value.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/io.dart';
 
@@ -68,7 +70,10 @@ class WebSocketService {
   void reconnect() {
     if (_currentUserId != null) {
       final url =
-          'wss://chatterg-go-production.up.railway.app/ws?userID=$_currentUserId';
+          // 'wss://chatterg-go-production.up.railway.app/ws?userID=$_currentUserId';
+          // 'wss://abfcbf7ad979.ngrok-free.app/ws?userID=$_currentUserId';
+          '${dotenv.env['WEBSOCKET_URL']}/ws?userID=$_currentUserId';
+          
       connect(url);
     }
   }
@@ -113,55 +118,48 @@ class WebSocketService {
 
   // Handle incoming messages without relying on 'type'
   void _handleMessage(dynamic data) {
-    // Set flag to prevent automatic sends during message processing
     _isProcessingMessage = true;
-
     try {
       print('Raw WebSocket message received: $data');
-
       if (data is String) {
-        final jsonData = jsonDecode(data);
+        final jsonData = jsonDecode(data) as Map<String, dynamic>;
         print('Parsed JSON: $jsonData');
 
-        // Check for error messages from server
+        // Handle server responses
         if (jsonData.containsKey('error')) {
           print('Server error: ${jsonData['error']}');
           return;
         }
 
-        // Handle server ping/pong responses
+        // Handle ping/pong
         if (jsonData.containsKey('type')) {
           final messageType = jsonData['type'];
-
           if (messageType == 'ping') {
             print('Received ping from server, sending pong');
             _sendPong();
-            return; // Don't process ping as a regular message
+            return;
           }
-
           if (messageType == 'pong') {
             print('Received pong from server');
-            return; // Don't process pong as a regular message
+            return;
           }
         }
 
         // Add to messages stream for provider to handle
         _messagesController.add(jsonData);
 
-        // Try to parse as ChatMessage if possible
+        // Try to parse as ChatMessage
         try {
           final message = ChatMessage.fromJson(jsonData);
           _messageController.add(message);
-          print('Chat message processed: ${message.content}');
+          print('Message processed - Type: ${message.messageType ?? 'text'}, Content length: ${message.content.length}');
         } catch (e) {
-          print(
-              'Received non-chat message or failed to parse as ChatMessage: $e');
+          print('Failed to parse as ChatMessage: $e');
         }
       }
     } catch (e) {
       print('Error processing WebSocket message: $e');
     } finally {
-      // Reset flag after processing
       _isProcessingMessage = false;
     }
   }
@@ -285,6 +283,70 @@ class WebSocketService {
       throw Exception('Failed to send chat message: $e');
     }
   }
+
+  // Add this method to your WebSocketService class
+Future<void> sendImageMessage(String receiverId, String base64Content, String fileType) async {
+    if (!_isConnected || _channel == null) {
+      print('WebSocket not connected for image message');
+      throw Exception('WebSocket not connected');
+    }
+
+    if (_currentUserId == null) {
+      print('User ID not set for image message');
+      throw Exception('User ID not set');
+    }
+
+    if (_shouldThrottleSend()) {
+      print('Image message send throttled - too frequent');
+      return;
+    }
+
+    // Validate input parameters
+    if (receiverId.trim().isEmpty) {
+      print('Error: receiverId is empty');
+      throw Exception('Receiver ID cannot be empty');
+    }
+
+    if (base64Content.trim().isEmpty) {
+      print('Error: image content is empty');
+      throw Exception('Image content cannot be empty');
+    }
+
+    try {
+      final messageData = {
+        'sender_id': _currentUserId!,
+        'recipient_id': receiverId.trim(),
+        'content': base64Content.trim(),
+        'message_type': 'image',
+        'file_type': fileType.toLowerCase(),
+        'timestamp': _generateTimestamp(),
+      };
+
+      jsonEncode(messageData);
+
+      ApiClient().sendImageMessage(
+        userUuid: _currentUserId!,
+        receiverId: receiverId.trim(),
+        base64Content: base64Content.trim(),
+        fileType: fileType.toLowerCase(),
+      );
+      print('Sending image message: sender=${_currentUserId}, recipient=${receiverId}, fileType=${fileType}');
+      print('Message size: ${base64Content.length} characters');
+      
+      // _channel!.sink.add(jsonString);
+      // print('Image message sent successfully via WebSocket');
+
+      // Save to local database immediately
+      final localMessage = ChatMessage.fromJson(messageData);
+      objectBox.saveMessage(localMessage);
+      print('Image message saved to local database');
+
+    } catch (e) {
+      print('Error sending image message: $e');
+      throw Exception('Failed to send image message: $e');
+    }
+  }
+
 
   // Send typing indicator with validation
   Future<void> sendTypingIndicator(String receiverId, bool isTyping) async {
@@ -412,7 +474,9 @@ class WebSocketService {
         _reconnectAttempts++;
         print('Reconnection attempt $_reconnectAttempts');
         final url =
-            'wss://chatterg-go-production.up.railway.app/ws?userID=$_currentUserId';
+            // 'wss://chatterg-go-production.up.railway.app/ws?userID=$_currentUserId';
+            // 'wss://abfcbf7ad979.ngrok-free.app/ws?userID=$_currentUserId';
+            '${dotenv.env['WEBSOCKET_URL']}/ws?userID=$_currentUserId';
         connect(url).catchError((e) {
           print('Reconnection failed: $e');
         });

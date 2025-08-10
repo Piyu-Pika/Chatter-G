@@ -2,14 +2,10 @@ import 'package:chatterg/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
-import '../../../data/datasources/remote/api_value.dart';
 import '../../../data/datasources/remote/chat_screen_wrapper.dart';
-import '../../../data/datasources/remote/notification_service.dart';
 import '../../../data/models/user_model.dart';
-import '../camera_screen/camera_screen.dart';
 // import '../chat_screen/chat_screen.dart';
+import '../chatterG/chatterG_screen.dart';
 import '../pending_request_screen/pending_request_screen.dart';
 import '../profile_screen/ProfileScreen.dart';
 import '../serach_friend/search_friend_screen.dart';
@@ -105,7 +101,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     // List of pages
     final pages = [
-      ChatCameraScreen(),
+      AIChatScreen(),
       _buildChatScreen(homeState, homeNotifier),
       _buildChatterGScreen(homeState, homeNotifier),
       _buildCallLogsScreen(),
@@ -156,9 +152,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   PreferredSizeWidget _buildAnimatedAppBar(
       BuildContext context, int selectedIndex) {
-    final titles = ['Camera', 'Chats', 'ChatterG', 'Call Logs'];
+    final titles = ['AiChat', 'Chats', 'ChatterG', 'Call Logs'];
     final icons = [
-      Icons.camera_alt_rounded,
+      Icons.smart_toy,
       Icons.chat_bubble_rounded,
       Icons.chat_rounded,
       Icons.call_rounded,
@@ -231,19 +227,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     MaterialPageRoute(
                         builder: (context) => const PendingRequestScreen()));
               }),
-          IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.logout_rounded, color: Colors.white),
-            ),
-            onPressed: () async {
-              await ref.read(homeScreenProvider.notifier).signOut(context);
-            },
-          ),
+          
           IconButton(
             icon: Container(
               padding: const EdgeInsets.all(8),
@@ -307,8 +291,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             items: [
               SalomonBottomBarItem(
-                icon: const Icon(Icons.camera_alt_rounded, size: 24),
-                title: const Text("Camera",
+                icon: const Icon(Icons.smart_toy, size: 24),
+                title: const Text("Aichat",
                     style: TextStyle(fontWeight: FontWeight.w600)),
                 selectedColor: Theme.of(context).colorScheme.primary,
               ),

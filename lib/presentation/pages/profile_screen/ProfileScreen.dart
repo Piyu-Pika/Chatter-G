@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../data/datasources/remote/api_value.dart';
 // import '../../../data/models/user_model.dart' as AppUser;
 import '../../../data/models/user_model.dart';
+import '../home_screen/home_provider.dart';
 import 'profileScreenProvider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -257,6 +258,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   'Created At', 'createdAt', Icons.calendar_today, isDarkMode),
               _buildNonEditableField(
                   'Updated At', 'updatedAt', Icons.update, isDarkMode),
+            ]),
+            _buildSection('Logout', [
+              _buildlogoutButton(context),
             ]),
             const SizedBox(height: 80), // Extra space for FAB
           ],
@@ -793,6 +797,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     : Colors.black87,
             fontWeight:
                 _selectedGender == value ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildlogoutButton(BuildContext context) {
+    return Center(
+      child: ElevatedButton.icon(
+        icon: const Icon(Icons.logout_rounded),
+        label: const Text('Logout'),
+        onPressed: () async {
+          if (mounted) {
+            await ref.read(homeScreenProvider.notifier).signOut(context);
+          }
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.redAccent,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 30,
+            vertical: 12,
           ),
         ),
       ),

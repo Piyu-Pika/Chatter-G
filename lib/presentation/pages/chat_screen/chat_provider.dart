@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 // import 'dart:convert';
@@ -112,7 +113,10 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
       if (!webSocketService.isConnected) {
         print('WebSocket not connected. Attempting to connect...');
         webSocketService.connect(
-            'wss://chatterg-go-production.up.railway.app/ws?userID=$currentUserUuid');
+            // 'wss://chatterg-go-production.up.railway.app/ws?userID=$currentUserUuid');
+  //  'wss://abfcbf7ad979.ngrok-free.app/ws?userID=$currentUserUuid');
+   '${dotenv.env['WEBSOCKET_URL']}/ws?userID=$currentUserUuid');
+
       }
 
       // Load local messages from ObjectBox
@@ -298,6 +302,59 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
       return DateFormat('MMMM d, yyyy').format(date);
     }
   }
+  
+  // Add this method to ChatScreenNotifier class
+void sendImageMessage(String base64Image, String fileType) {
+  if (state.isLoading || !mounted) return;
+
+  state = state.copyWith(isLoading: true);
+  try {
+    final webSocketService = ref.read(webSocketServiceProvider);
+    if (!webSocketService.isConnected) {
+      throw Exception('WebSocket not connected');
+    }
+
+    print('Sending image message');
+    print('Current user UUID: ${state.currentUserUuid}');
+    print('Receiver UUID: ${state.receiver.uuid}');
+    print('File type: $fileType');
+    print('Image size: ${base64Image.length} characters');
+
+    webSocketService.sendImageMessage(state.receiver.uuid, base64Image, fileType);
+
+    // Create local image message
+    final message = ChatMessage(
+      senderId: state.currentUserUuid,
+      recipientId: state.receiver.uuid,
+      content: base64Image,
+      timestamp: DateTime.now().toIso8601String(),
+      messageType: 'image',
+      fileType: fileType,
+    );
+
+    print('Created local image message: ${message.toJson()}');
+    
+    // Add to chat messages provider
+    ref.read(chatMessagesProvider.notifier).addMessage(message);
+    
+    print('Image message sent successfully');
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToBottom();
+    });
+
+  } catch (e) {
+    print('Failed to send image message: $e');
+    if (mounted) {
+      state = state.copyWith(errorMessage: 'Failed to send image: $e');
+    }
+  } finally {
+    if (mounted) {
+      state = state.copyWith(isLoading: false);
+    }
+  }
+}
+
 
   @override
   void dispose() {

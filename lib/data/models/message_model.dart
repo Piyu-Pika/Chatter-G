@@ -9,6 +9,8 @@ class ChatMessage {
   final String content;
   // final String type; // "message" or "image"
   final String timestamp;
+   final String? messageType; // Add this field
+  final String? fileType;   // Add this field
 
   bool isRead;
 
@@ -20,31 +22,40 @@ class ChatMessage {
     required this.timestamp,
     // this.type = 'message',
     this.isRead = false,
+     this.messageType,
+    this.fileType,
+    
   });
 
   // FIXED: Handle both field name formats for compatibility
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
     return ChatMessage(
-      senderId: json['sender_id'] ?? json['senderId'] ?? '',
-      recipientId: json['recipient_id'] ?? json['recipientId'] ?? '',
-      content: json['content'] ?? '',
-      // type: json['type'] ?? 'message',
-      timestamp: json['timestamp'] is String
-          ? json['timestamp']
-          : DateTime.parse(json['timestamp']).toIso8601String(),
+      senderId: json['sender_id']?.toString() ?? '',
+      recipientId: json['recipient_id']?.toString() ?? '',
+      content: json['content']?.toString() ?? '',
+      timestamp: json['timestamp']?.toString() ?? DateTime.now().toIso8601String(),
+      isRead: json['is_read'] == true,
+      messageType: json['message_type']?.toString(),
+      fileType: json['file_type']?.toString(),
     );
   }
 
-  // FIXED: Use server-compatible field names
+  // Update your toJson method
   Map<String, dynamic> toJson() {
     return {
       'sender_id': senderId,
       'recipient_id': recipientId,
       'content': content,
-      // 'type': type,
       'timestamp': timestamp,
+      'is_read': isRead,
+      if (messageType != null) 'message_type': messageType,
+      if (fileType != null) 'file_type': fileType,
     };
   }
+
+  // Helper method to check if message is an image
+  bool get isImage => messageType == 'image';
+
 
   // FIXED: Use server-compatible field names for sending
   Map<String, dynamic> toServerJson() {

@@ -1,3 +1,4 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/datasources/remote/websocket_data_source.dart';
@@ -20,7 +21,10 @@ final webSocketConnectionProvider = FutureProvider<void>((ref) async {
   if (userId == null) {
     throw Exception('User not authenticated');
   }
-  final url = 'wss://chatterg-go-production.up.railway.app/ws?userID=$userId';
+  
+  // final url = 'wss://chatterg-go-production.up.railway.app/ws?userID=$userId';
+  // final url = 'wss://abfcbf7ad979.ngrok-free.app/ws?userID=$userId';
+  final url = '${dotenv.env['WEBSOCKET_URL']}/ws?userID=$userId';
   await ref.read(webSocketServiceProvider).connect(url);
 });
 

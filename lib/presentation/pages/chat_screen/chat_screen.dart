@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../../../data/datasources/remote/navigation_service.dart';
 import '../../../data/datasources/remote/notification_service.dart';
 import '../../../data/models/message_model.dart';
 import '../../../data/models/user_model.dart';
+import '../../../util/image_encoding.dart';
 import '../../reciver_profile/reciver_profile.dart';
 import '../../widgets/message_box.dart';
+import '../../providers/websocket_provider.dart';
+import '../camera_screen/camera_screen.dart';
 import 'chat_provider.dart';
 
 class ChatScreen extends ConsumerWidget {
@@ -22,25 +27,18 @@ class ChatScreen extends ConsumerWidget {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       NavigationService.setCurrentChatUser(receiver.uuid);
-      // Clear notifications for this user
       NotificationService.clearNotificationsForUser(receiver.uuid);
     });
 
     print('Rendering ${messages.length} messages for ${receiver.name}');
 
-    // Show loading indicator if not initialized
     if (!chatState.isInitialized) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text(receiver.name),
-        ),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        appBar: AppBar(title: Text(receiver.name)),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
-    // Show error state if there's an error
     if (chatState.errorMessage != null) {
       return Scaffold(
         appBar: AppBar(
@@ -66,9 +64,7 @@ class ChatScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
+                  onPressed: () => Navigator.of(context).pop(),
                   child: const Text('Go Back'),
                 ),
               ],
@@ -78,7 +74,6 @@ class ChatScreen extends ConsumerWidget {
       );
     }
 
-    // Sort messages by timestamp
     final sortedMessages = List<ChatMessage>.from(messages);
     sortedMessages.sort((a, b) {
       try {
@@ -92,8 +87,6 @@ class ChatScreen extends ConsumerWidget {
     });
 
     final groupedMessages = chatNotifier.groupMessagesByDate(sortedMessages);
-    print('Grouped messages: ${groupedMessages.keys}');
-
     final dateKeys = groupedMessages.keys.toList()..sort();
 
     return Scaffold(
@@ -104,11 +97,11 @@ class ChatScreen extends ConsumerWidget {
             GestureDetector(
               onTap: () {
                 Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => ReciverProfileScreen(
-                              uuid: receiver.uuid,
-                            )));
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ReciverProfileScreen(uuid: receiver.uuid),
+                  ),
+                );
               },
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,9 +117,7 @@ class ChatScreen extends ConsumerWidget {
                     receiver.isOnline == true ? 'Online' : 'Offline',
                     style: TextStyle(
                       fontSize: 12,
-                      color: receiver.isOnline == true
-                          ? Colors.green
-                          : Colors.grey,
+                      color: receiver.isOnline == true ? Colors.green : Colors.grey,
                     ),
                   ),
                 ],
@@ -200,12 +191,10 @@ class ChatScreen extends ConsumerWidget {
                       itemBuilder: (context, dateIndex) {
                         final dateKey = dateKeys[dateIndex];
                         final dateMessages = groupedMessages[dateKey]!;
-
                         return Column(
                           children: [
                             Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 8.0),
+                              padding: const EdgeInsets.symmetric(vertical: 8.0),
                               child: Center(
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
@@ -220,23 +209,20 @@ class ChatScreen extends ConsumerWidget {
                                   ),
                                   child: Text(
                                     chatNotifier.getReadableDate(dateKey),
-                                    style:
-                                        Theme.of(context).textTheme.bodySmall,
+                                    style: Theme.of(context).textTheme.bodySmall,
                                   ),
                                 ),
                               ),
                             ),
                             ...dateMessages.map((message) {
-                              final isUser =
-                                  message.senderId == chatState.currentUserUuid;
+                              final isUser = message.senderId == chatState.currentUserUuid;
+
                               if (!isUser && !message.isRead) {
-                                WidgetsBinding.instance
-                                    .addPostFrameCallback((_) {
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
                                   chatNotifier.markAsRead(message);
                                 });
                               }
 
-                              // Convert ChatMessage to Messagebox
                               return Column(
                                 children: [
                                   Messagebox(
@@ -244,10 +230,10 @@ class ChatScreen extends ConsumerWidget {
                                     isUser: isUser,
                                     senderId: message.senderId,
                                     recipientId: message.recipientId,
-                                    timestamp:
-                                        DateTime.parse(message.timestamp),
+                                    timestamp: DateTime.parse(message.timestamp),
+                                    messageType: message.messageType,
+                                    fileType: message.fileType,
                                   ),
-                                  // Add read receipt for user messages
                                   if (isUser)
                                     Padding(
                                       padding: const EdgeInsets.only(
@@ -256,8 +242,7 @@ class ChatScreen extends ConsumerWidget {
                                         bottom: 8.0,
                                       ),
                                       child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
+                                        mainAxisAlignment: MainAxisAlignment.end,
                                         children: [
                                           Text(
                                             DateFormat('HH:mm').format(
@@ -267,24 +252,18 @@ class ChatScreen extends ConsumerWidget {
                                             ),
                                             style: TextStyle(
                                               fontSize: 10,
-                                              color:
-                                                  Colors.grey.withOpacity(0.7),
+                                              color: Colors.grey.withOpacity(0.7),
                                             ),
                                           ),
                                           const SizedBox(width: 4),
                                           Icon(
-                                            message.isRead
-                                                ? Icons.done_all
-                                                : Icons.done,
+                                            message.isRead ? Icons.done_all : Icons.done,
                                             size: 16,
-                                            color: message.isRead
-                                                ? Colors.blue
-                                                : Colors.grey,
+                                            color: message.isRead ? Colors.blue : Colors.grey,
                                           ),
                                         ],
                                       ),
                                     ),
-                                  // Add timestamp for receiver messages
                                   if (!isUser)
                                     Padding(
                                       padding: const EdgeInsets.only(
@@ -293,8 +272,7 @@ class ChatScreen extends ConsumerWidget {
                                         bottom: 8.0,
                                       ),
                                       child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.start,
                                         children: [
                                           Text(
                                             DateFormat('HH:mm').format(
@@ -304,8 +282,7 @@ class ChatScreen extends ConsumerWidget {
                                             ),
                                             style: TextStyle(
                                               fontSize: 10,
-                                              color:
-                                                  Colors.grey.withOpacity(0.7),
+                                              color: Colors.grey.withOpacity(0.7),
                                             ),
                                           ),
                                         ],
@@ -331,23 +308,18 @@ class ChatScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
             child: SafeArea(
               child: Row(
                 children: [
                   IconButton(
                     icon: const Icon(Icons.attach_file),
-                    onPressed: () {
-                      // Implement attachment function
-                    },
+                    onPressed: () => _showAttachmentOptions(context, ref),
                   ),
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .surfaceContainerHighest,
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(24),
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -359,8 +331,7 @@ class ChatScreen extends ConsumerWidget {
                               decoration: const InputDecoration(
                                 hintText: 'Type a message',
                                 border: InputBorder.none,
-                                contentPadding:
-                                    EdgeInsets.symmetric(vertical: 12),
+                                contentPadding: EdgeInsets.symmetric(vertical: 12),
                               ),
                               maxLines: 5,
                               minLines: 1,
@@ -400,8 +371,7 @@ class ChatScreen extends ConsumerWidget {
                             height: 18,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation(Colors.white),
                             ),
                           )
                         : const Icon(Icons.send),
@@ -413,5 +383,95 @@ class ChatScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  void _showAttachmentOptions(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Colors.blue),
+              title: const Text('Camera'),
+              subtitle: const Text('Take a photo'),
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => ChatCameraScreen(
+                      receiverUuid: receiver.uuid,
+                      receiverName: receiver.name,
+                    ),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: Colors.green),
+              title: const Text('Gallery'),
+              subtitle: const Text('Choose from gallery'),
+              onTap: () {
+                Navigator.of(context).pop();
+                _pickImageFromGallery(context, ref);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImageFromGallery(BuildContext context, WidgetRef ref) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        // Read image bytes
+        final bytes = await File(image.path).readAsBytes();
+        
+        // Use optimized encoding
+        final base64Image = ImageEncoding.encodeImage(bytes, quality: 85);
+        final fileExtension = image.path.split('.').last.toLowerCase();
+
+        // Send via WebSocket with optimized encoding
+        final webSocketService = ref.read(webSocketServiceProvider);
+        await webSocketService.sendImageMessage(
+          receiver.uuid,
+          base64Image,
+          fileExtension,
+        );
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Image sent successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
