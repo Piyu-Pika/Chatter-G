@@ -167,6 +167,7 @@ class AIChatNotifier extends StateNotifier<AIChatState> {
         prompt.isEmpty ? "What's in this image?" : prompt,
         imageBytes,
         history: state.chatHistory,
+
       );
 
       final aiMessage = AIChatMessage(
@@ -246,4 +247,3 @@ final geminiServiceProvider = Provider<GeminiService>((ref) => GeminiService());
 final aiChatProvider = StateNotifierProvider<AIChatNotifier, AIChatState>(
   (ref) => AIChatNotifier(ref.read(geminiServiceProvider)),
 );
-

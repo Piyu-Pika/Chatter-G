@@ -9,6 +9,8 @@ import '../../../data/datasources/remote/notification_service.dart';
 import '../../../data/models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/websocket_provider.dart';
+import 'package:dev_log/dev_log.dart';
+
 
 class HomeScreenState {
   final Map<String, List<dynamic>> chatrooms;
@@ -77,9 +79,9 @@ class HomeScreenNotifier extends StateNotifier<HomeScreenState> {
       final token = await firebaseUser.getIdToken();
 
       await NotificationService.initialize(user, authToken: token ?? '');
-      debugPrint('Notifications initialized and FCM token sent to server');
+      L.i('Notifications initialized and FCM token sent to server');
     } catch (e) {
-      debugPrint('Failed to initialize notifications: $e');
+      L.wtf('Failed to initialize notifications: $e');
     }
   }
 

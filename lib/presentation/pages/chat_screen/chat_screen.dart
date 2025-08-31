@@ -13,6 +13,8 @@ import '../../widgets/message_box.dart';
 import '../../providers/websocket_provider.dart';
 import '../camera_screen/camera_screen.dart';
 import 'chat_provider.dart';
+import 'package:dev_log/dev_log.dart';
+
 
 class ChatScreen extends ConsumerWidget {
   final AppUser receiver;
@@ -30,7 +32,7 @@ class ChatScreen extends ConsumerWidget {
       NotificationService.clearNotificationsForUser(receiver.uuid);
     });
 
-    print('Rendering ${messages.length} messages for ${receiver.name}');
+    L.i('Rendering ${messages.length} messages for ${receiver.name}');
 
     if (!chatState.isInitialized) {
       return Scaffold(
@@ -81,7 +83,7 @@ class ChatScreen extends ConsumerWidget {
         final bTime = DateTime.parse(b.timestamp);
         return aTime.compareTo(bTime);
       } catch (e) {
-        print('Error parsing timestamp for sorting: $e');
+        L.e('Error parsing timestamp for sorting: $e');
         return 0;
       }
     });
@@ -163,14 +165,14 @@ class ChatScreen extends ConsumerWidget {
                           Icon(
                             Icons.chat_bubble_outline,
                             size: 64,
-                            color: Colors.grey.withOpacity(0.5),
+                            color: Colors.grey.withAlpha(128),
                           ),
                           const SizedBox(height: 16),
                           Text(
                             'No messages yet',
                             style: TextStyle(
                               fontSize: 16,
-                              color: Colors.grey.withOpacity(0.8),
+                              color: Colors.grey.withAlpha(255),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -178,7 +180,7 @@ class ChatScreen extends ConsumerWidget {
                             'Say hello to ${receiver.name}!',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.grey.withOpacity(0.6),
+                              color: Colors.grey.withAlpha(192),
                             ),
                           ),
                         ],
@@ -252,7 +254,7 @@ class ChatScreen extends ConsumerWidget {
                                             ),
                                             style: TextStyle(
                                               fontSize: 10,
-                                              color: Colors.grey.withOpacity(0.7),
+                                              color: Colors.grey.withAlpha(223),
                                             ),
                                           ),
                                           const SizedBox(width: 4),
@@ -282,7 +284,7 @@ class ChatScreen extends ConsumerWidget {
                                             ),
                                             style: TextStyle(
                                               fontSize: 10,
-                                              color: Colors.grey.withOpacity(0.7),
+                                              color: Colors.grey.withAlpha(223),
                                             ),
                                           ),
                                         ],
@@ -302,7 +304,7 @@ class ChatScreen extends ConsumerWidget {
               color: Theme.of(context).colorScheme.surface,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withAlpha(12),
                   blurRadius: 5,
                   offset: const Offset(0, -1),
                 ),

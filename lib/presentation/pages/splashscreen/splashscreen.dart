@@ -8,6 +8,8 @@ import '../../../core/theme/app_theme.dart';
 import '../login_page/login_page.dart';
 import '../../providers/auth_provider.dart';
 import '../home_screen/home_screen.dart';
+import 'package:dev_log/dev_log.dart';
+
 
 class AuthWrapper extends ConsumerWidget {
   const AuthWrapper({super.key});
@@ -85,7 +87,7 @@ class _SplashscreenState extends ConsumerState<Splashscreen> {
         }
       } catch (e) {
         // Log the error or handle it
-        print('Retrying to start server: $e');
+        L.e('Retrying to start server: $e');
         _isServerReady = true; // Reset the server status
       }
       await Future.delayed(const Duration(seconds: 1)); // Wait before retrying

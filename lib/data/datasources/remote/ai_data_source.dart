@@ -1,5 +1,6 @@
-import 'dart:convert';
+
 import 'dart:typed_data';
+import 'package:dev_log/dev_log.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 
@@ -10,7 +11,7 @@ class GeminiService {
   
   GeminiService() {
     _model = GenerativeModel(
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash-lite',
       apiKey: _apiKey,
       generationConfig: GenerationConfig(
         temperature: 0.7,
@@ -18,6 +19,8 @@ class GeminiService {
         topP: 1,
         maxOutputTokens: 4096,
       ),
+      systemInstruction: Content.text(
+          "Do not use markdown in your responses. For example, do not use **, *, or #."),
     );
     
     _visionModel = GenerativeModel(
@@ -29,6 +32,8 @@ class GeminiService {
         topP: 1,
         maxOutputTokens: 4096,
       ),
+      systemInstruction: Content.text(
+          "Do not use markdown in your responses. For example, do not use **, *, or #."),
     );
   }
 
@@ -45,7 +50,7 @@ class GeminiService {
       final response = await chat.sendMessage(Content.text(message));
       return response.text ?? 'Sorry, I couldn\'t generate a response.';
     } catch (e) {
-      print('Error sending message to Gemini: $e');
+      L.e('Error sending message to Gemini: $e');
       return 'Sorry, I encountered an error. Please try again.';
     }
   }
@@ -72,7 +77,7 @@ class GeminiService {
       final response = await chat.sendMessage(content);
       return response.text ?? 'Sorry, I couldn\'t analyze the image.';
     } catch (e) {
-      print('Error sending image to Gemini: $e');
+      L.e('Error sending image to Gemini: $e');
       return 'Sorry, I encountered an error analyzing the image.';
     }
   }

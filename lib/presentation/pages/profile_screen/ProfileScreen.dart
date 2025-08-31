@@ -9,6 +9,8 @@ import '../../../data/datasources/remote/api_value.dart';
 import '../../../data/models/user_model.dart';
 import '../home_screen/home_provider.dart';
 import 'profileScreenProvider.dart';
+import 'package:dev_log/dev_log.dart';
+
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -43,7 +45,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final userId = await authProvider.getUid();
     setState(() {
       _userDataFuture = _apiClient.getUserByUUID(uuid: userId).then((userData) {
-        print('User Data: $userData');
+        L.i('User Data: $userData');
         return AppUser(
           uuid: userData['uuid'] ?? '',
           name: userData['name'] ?? '',

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/models/user_model.dart';
 import '../../providers/auth_provider.dart';
+import 'package:dev_log/dev_log.dart';
+
 
 class SearchFriendScreenState {
   final List<AppUser> allUsers;
@@ -198,7 +200,7 @@ class SearchFriendScreenNotifier
         userUuid: state.currentUserUuid,
         receiverUuid: receiver_uuid,
       );
-      print(result);
+      L.i(result);
 
       state = state.copyWith(isSendingRequest: false);
 

@@ -1,3 +1,4 @@
+import 'package:dev_log/dev_log.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../models/user_model.dart';
@@ -46,9 +47,9 @@ class LocalDataSource {
       for (var entry in userMap.entries) {
         await _secureStorage.write(key: entry.key, value: entry.value);
       }
-      print("User data saved to secure storage successfully.");
+      L.d("User data saved to secure storage successfully.");
     } catch (e) {
-      print("Error saving data to secure storage: $e");
+      L.e("Error saving data to secure storage: $e");
     }
   }
 
@@ -95,7 +96,7 @@ class LocalDataSource {
       }
       return null;
     } catch (e) {
-      print("Error retrieving user from secure storage: $e");
+      L.e("Error retrieving user from secure storage: $e");
       return null;
     }
   }
@@ -107,7 +108,7 @@ class LocalDataSource {
         await _secureStorage.write(key: entry.key, value: entry.value);
       }
     } catch (e) {
-      print("Error updating data in secure storage: $e");
+      L.e("Error updating data in secure storage: $e");
     }
   }
 
@@ -116,7 +117,7 @@ class LocalDataSource {
     try {
       await _secureStorage.deleteAll();
     } catch (e) {
-      print("Error clearing data from secure storage: $e");
+      L.e("Error clearing data from secure storage: $e");
     }
   }
 }

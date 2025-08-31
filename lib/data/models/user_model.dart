@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dev_log/dev_log.dart';
+
 
 class AppUser {
   final String uuid; // Firebase UID
@@ -91,7 +93,7 @@ class AppUser {
         return dateValue;
       }
     } catch (e) {
-      print('Error parsing date: $dateValue, error: $e');
+      L.e('Error parsing date: $dateValue, error: $e');
     }
 
     return null;

@@ -1,7 +1,8 @@
 import 'dart:convert';
+import 'package:dev_log/dev_log.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter/foundation.dart';
+// import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:chatterg/data/models/user_model.dart';
 import 'navigation_service.dart';
@@ -43,7 +44,7 @@ class NotificationService {
     );
 
     if (settings.authorizationStatus != AuthorizationStatus.authorized) {
-      debugPrint('User declined or has not accepted permission');
+      L.wtf('User declined or has not accepted permission');
     }
   }
 
@@ -63,40 +64,40 @@ class NotificationService {
     try {
       String? token = await _fcm.getToken();
       if (token == null) {
-        debugPrint('FCM token is null');
+        L.w('FCM token is null');
         return;
       }
 
       // Get Firebase user
       final firebaseUser = FirebaseAuth.instance.currentUser;
       if (firebaseUser == null) {
-        debugPrint('No Firebase user found, cannot send FCM token');
+        L.wtf('No Firebase user found, cannot send FCM token');
         return;
       }
 
       final apiClient = ApiClient();
       await apiClient.updateFcmToken(firebaseUser.uid, token);
-      debugPrint('FCM token updated successfully on server');
+      L.i('FCM token updated successfully on server');
     } catch (e) {
-      debugPrint('Failed to update FCM token: $e');
+      L.e('Failed to update FCM token: $e');
     }
   }
 
   static void _listenToTokenRefresh() {
     _fcm.onTokenRefresh.listen((newToken) async {
-      debugPrint('FCM token refreshed: $newToken');
+      L.i('FCM token refreshed: $newToken');
       await _sendFcmTokenToServer();
     });
   }
 
   static void _listenToForegroundMessages() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint('Foreground message received: ${message.messageId}');
+      L.i('Foreground message received: ${message.messageId}');
 
       // Check if user is currently in chat with the sender
       final senderId = message.data['sender_id'];
       if (senderId != null && NavigationService.isInChatWith(senderId)) {
-        debugPrint(
+        L.wtf(
             'User is in chat with sender $senderId, not showing notification');
         return;
       }
@@ -144,7 +145,7 @@ class NotificationService {
   static void _handleNotificationNavigation(Map<String, dynamic> data) {
     final senderId = data['sender_id'];
     if (senderId != null) {
-      debugPrint('Navigate to chat screen for sender: $senderId');
+      L.i('Navigate to chat screen for sender: $senderId');
 
       // Clear notifications for this sender
       clearNotificationsForUser(senderId);
@@ -157,6 +158,6 @@ class NotificationService {
   static Future<void> clearNotificationsForUser(String userId) async {
     // Cancel all notifications (you might want to implement more specific logic)
     await _localNotifications.cancelAll();
-    debugPrint('Cleared notifications for user: $userId');
+    L.i('Cleared notifications for user: $userId');
   }
 }

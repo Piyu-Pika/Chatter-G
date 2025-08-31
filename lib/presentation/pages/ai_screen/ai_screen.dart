@@ -102,7 +102,7 @@ class AIMessageBox extends StatelessWidget {
                           DateFormat('HH:mm').format(message.timestamp),
                           style: TextStyle(
                             fontSize: 10,
-                            color: textColor.withOpacity(0.6),
+                            color: textColor.withAlpha(153),
                           ),
                         ),
                       ],

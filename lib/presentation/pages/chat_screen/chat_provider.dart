@@ -10,6 +10,8 @@ import '../../../main.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/websocket_provider.dart';
 import '../home_screen/home_provider.dart';
+import 'package:dev_log/dev_log.dart';
+
 
 class ChatScreenState {
   final String roomName;
@@ -96,7 +98,7 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
     if (state.isInitialized) return;
 
     try {
-      print('Initializing chat for receiver: $receiverUuid');
+      L.i('Initializing chat for receiver: $receiverUuid');
       final authProvider = ref.read(authServiceProvider);
       final currentUserUuid = authProvider.currentUser?.uid ?? '';
 
@@ -111,7 +113,7 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
       final webSocketService = ref.read(webSocketServiceProvider);
 
       if (!webSocketService.isConnected) {
-        print('WebSocket not connected. Attempting to connect...');
+        L.i('WebSocket not connected. Attempting to connect...');
         webSocketService.connect(
             // 'wss://chatterg-go-production.up.railway.app/ws?userID=$currentUserUuid');
   //  'wss://abfcbf7ad979.ngrok-free.app/ws?userID=$currentUserUuid');
@@ -139,7 +141,7 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
         };
       });
 
-      print(
+      L.i(
           'Chat initialized with roomName: $roomName for receiver: ${receiver.name}');
 
       // Scroll to bottom after initialization
@@ -152,7 +154,7 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
         if (!mounted) return;
 
         final messages = next[roomName] ?? [];
-        print('New messages received for room $roomName: ${messages.length}');
+        L.i('New messages received for room $roomName: ${messages.length}');
 
         if (mounted) {
           state = state.copyWith(messages: messages);
@@ -164,7 +166,7 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
         }
       });
     } catch (e) {
-      print('Error initializing chat: $e');
+      L.e('Error initializing chat: $e');
       if (mounted) {
         state = state.copyWith(
           errorMessage: 'Error initializing chat: $e',
@@ -210,7 +212,7 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
 
   void _scrollToBottom() {
     if (state.scrollController.hasClients) {
-      print('Scrolling to bottom...');
+      L.i('Scrolling to bottom...');
       state.scrollController.animateTo(
         state.scrollController.position.maxScrollExtent,
         duration: const Duration(milliseconds: 300),
@@ -230,9 +232,9 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
         throw Exception('WebSocket not connected');
       }
 
-      print('Sending message with text: ${text.trim()}');
-      print('Current user UUID: ${state.currentUserUuid}');
-      print('Receiver UUID: ${state.receiver.uuid}');
+      L.i('Sending message with text: ${text.trim()}');
+      L.i('Current user UUID: ${state.currentUserUuid}');
+      L.i('Receiver UUID: ${state.receiver.uuid}');
 
       webSocketService.sendChatMessage(state.receiver.uuid, text.trim());
 
@@ -244,18 +246,18 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
         // isRead: false,
       );
 
-      print('Created local message: ${message.toJson()}');
+      L.i('Created local message: ${message.toJson()}');
 
       ref.read(chatMessagesProvider.notifier).addMessage(message);
 
-      print('Message sent successfully');
+      L.i('Message sent successfully');
       state.textController.clear();
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollToBottom();
       });
     } catch (e) {
-      print('Failed to send message: $e');
+      L.e('Failed to send message: $e');
       if (mounted) {
         state = state.copyWith(errorMessage: 'Failed to send message: $e');
       }
@@ -314,11 +316,11 @@ void sendImageMessage(String base64Image, String fileType) {
       throw Exception('WebSocket not connected');
     }
 
-    print('Sending image message');
-    print('Current user UUID: ${state.currentUserUuid}');
-    print('Receiver UUID: ${state.receiver.uuid}');
-    print('File type: $fileType');
-    print('Image size: ${base64Image.length} characters');
+    L.i('Sending image message');
+    L.i('Current user UUID: ${state.currentUserUuid}');
+    L.i('Receiver UUID: ${state.receiver.uuid}');
+    L.i('File type: $fileType');
+    L.i('Image size: ${base64Image.length} characters');
 
     webSocketService.sendImageMessage(state.receiver.uuid, base64Image, fileType);
 
@@ -332,19 +334,19 @@ void sendImageMessage(String base64Image, String fileType) {
       fileType: fileType,
     );
 
-    print('Created local image message: ${message.toJson()}');
+    L.i('Created local image message: ${message.toJson()}');
     
     // Add to chat messages provider
     ref.read(chatMessagesProvider.notifier).addMessage(message);
     
-    print('Image message sent successfully');
+    L.i('Image message sent successfully');
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottom();
     });
 
   } catch (e) {
-    print('Failed to send image message: $e');
+    L.wtf('Failed to send image message: $e');
     if (mounted) {
       state = state.copyWith(errorMessage: 'Failed to send image: $e');
     }
@@ -358,7 +360,7 @@ void sendImageMessage(String base64Image, String fileType) {
 
   @override
   void dispose() {
-    print('Disposing ChatScreenNotifier for receiver: $receiverUuid');
+    L.e('Disposing ChatScreenNotifier for receiver: $receiverUuid');
     state.textController.dispose();
     state.scrollController.dispose();
     super.dispose();

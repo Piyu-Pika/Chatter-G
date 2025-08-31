@@ -66,7 +66,7 @@ class LoginPage extends ConsumerWidget {
                         Shadow(
                           offset: const Offset(0, 2),
                           blurRadius: 4,
-                          color: Colors.black.withOpacity(0.3),
+                          color: Colors.black.withAlpha(128),
                         ),
                       ],
                     ),

@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'image_message_box.dart';
+import 'package:dev_log/dev_log.dart';
+
 
 class Messagebox extends StatelessWidget {
   final String text;
@@ -11,7 +13,7 @@ class Messagebox extends StatelessWidget {
   final DateTime timestamp;
   final String? messageType;
   final String? fileType;
-
+  
   const Messagebox({
     super.key,
     required this.text,
@@ -27,17 +29,17 @@ class Messagebox extends StatelessWidget {
   bool get isImageMessage {
     // First check the explicit message type
     if (messageType == 'image') {
-      print('Message detected as image via messageType field');
+      L.i('Message detected as image via messageType field');
       return true;
     }
     
     // Then check if content looks like base64 image
     if (_isBase64Image(text)) {
-      print('Message detected as image via base64 content analysis');
+      L.i('Message detected as image via base64 content analysis');
       return true;
     }
     
-    print('Message detected as text message');
+    L.i('Message detected as text message');
     return false;
   }
 
@@ -93,7 +95,7 @@ class Messagebox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('Building message widget - isImage: $isImageMessage, messageType: $messageType, contentLength: ${text.length}');
+    L.i('Building message widget - isImage: $isImageMessage, messageType: $messageType, contentLength: ${text.length}');
     
     // If this is an image message, use the optimized image widget
     if (isImageMessage) {

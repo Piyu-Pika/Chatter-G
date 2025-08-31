@@ -3,15 +3,13 @@ import 'package:objectbox/objectbox.dart';
 
 @Entity()
 class ChatMessage {
-  int id = 0; // ObjectBox requires a primary key
+  int id = 0;
   final String senderId;
   final String recipientId;
   final String content;
-  // final String type; // "message" or "image"
   final String timestamp;
-   final String? messageType; // Add this field
-  final String? fileType;   // Add this field
-
+  final String? messageType;
+  final String? fileType;
   bool isRead;
 
   ChatMessage({
@@ -20,14 +18,11 @@ class ChatMessage {
     required this.recipientId,
     required this.content,
     required this.timestamp,
-    // this.type = 'message',
     this.isRead = false,
-     this.messageType,
+    this.messageType,
     this.fileType,
-    
   });
 
-  // FIXED: Handle both field name formats for compatibility
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
     return ChatMessage(
       senderId: json['sender_id']?.toString() ?? '',
@@ -40,7 +35,6 @@ class ChatMessage {
     );
   }
 
-  // Update your toJson method
   Map<String, dynamic> toJson() {
     return {
       'sender_id': senderId,
@@ -55,15 +49,15 @@ class ChatMessage {
 
   // Helper method to check if message is an image
   bool get isImage => messageType == 'image';
+  
+  // Check if this is an image notification (content is image ID)
+  bool get isImageNotification => messageType == 'image' && content.length <= 50;
 
-
-  // FIXED: Use server-compatible field names for sending
   Map<String, dynamic> toServerJson() {
     return {
-      'sender_id': senderId, // Changed from 'senderId'
-      'recipient_id': recipientId, // Changed from 'recipientId'
+      'sender_id': senderId,
+      'recipient_id': recipientId,
       'content': content,
-      // 'timestamp': timestamp,
     };
   }
 

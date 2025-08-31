@@ -5,6 +5,8 @@ import '../../data/datasources/remote/websocket_data_source.dart';
 import '../../data/models/message_model.dart';
 import '../../main.dart';
 import 'auth_provider.dart';
+import 'package:dev_log/dev_log.dart';
+
 
 // WebSocket Service Provider
 final webSocketServiceProvider = Provider<WebSocketService>((ref) {
@@ -42,22 +44,22 @@ class ChatMessagesNotifier
 
     webSocketService.messages.listen((data) {
       try {
-        print('Received message data: $data');
+        L.i('Received message data: $data');
 
         // Try to parse as ChatMessage without relying on 'type'
         final message = ChatMessage.fromJson(data);
         addMessage(message);
       } catch (e) {
-        print('Non-chat or invalid message format: $e');
+        L.e('Non-chat or invalid message format: $e');
       }
     }, onError: (error) {
-      print('WebSocket error: $error');
+      L.i('WebSocket error: $error');
     });
   }
 
   void addMessage(ChatMessage message) {
     final roomName = getRoomName(message.senderId, message.recipientId);
-    print('Adding message to room: $roomName');
+    L.i('Adding message to room: $roomName');
 
     // Save message to ObjectBox (local database)
     objectBox.saveMessage(message);
@@ -81,7 +83,7 @@ class ChatMessagesNotifier
           final bTime = DateTime.parse(b.timestamp);
           return aTime.compareTo(bTime);
         } catch (e) {
-          print('Error parsing timestamp for sorting: $e');
+          L.e('Error parsing timestamp for sorting: $e');
           return 0;
         }
       });
@@ -91,10 +93,10 @@ class ChatMessagesNotifier
         roomName: updatedMessages,
       };
 
-      print(
+      L.i(
           'Message added to room $roomName. Total messages: ${updatedMessages.length}');
     } else {
-      print('Message already exists, skipping duplicate');
+      L.i('Message already exists, skipping duplicate');
     }
   }
 
@@ -143,7 +145,7 @@ class ChatMessagesNotifier
       String roomName, String userId1, String userId2) async {
     // Implement API call to load historical messages
     // This would typically be called when entering a chat room
-    print('Loading historical messages for room: $roomName');
+    L.i('Loading historical messages for room: $roomName');
     // Example:
     // final historicalMessages = await chatRepository.getMessages(userId1, userId2);
     // for (final message in historicalMessages) {

@@ -1,4 +1,5 @@
 import 'package:chatterg/firebase_options.dart';
+import 'package:dev_log/dev_log.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,7 +12,7 @@ import 'data/datasources/local/objectbox.dart';
 // Background handler for Firebase Messaging
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  debugPrint('Handling background FCM message: ${message.messageId}');
+  L.i('Handling background FCM message: ${message.messageId}');
 }
 
 late ObjectBox objectBox;

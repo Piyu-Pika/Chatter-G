@@ -2,6 +2,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import '../../util/image_encoding.dart';
+import 'package:dev_log/dev_log.dart';
+
 
 class ImageMessageBox extends StatefulWidget {
   final String base64Image;
@@ -56,7 +58,7 @@ class _ImageMessageBoxState extends State<ImageMessageBox> {
         });
       }
     } catch (e) {
-      print('Error loading preview image: $e');
+      L.e('Error loading preview image: $e');
       if (mounted) {
         setState(() {
           _hasError = true;
@@ -233,7 +235,7 @@ class _FullScreenImageDialogState extends State<_FullScreenImageDialog> {
         });
       }
     } catch (e) {
-      print('Error loading full image: $e');
+      L.e('Error loading full image: $e');
       if (mounted) {
         setState(() {
           _hasError = true;

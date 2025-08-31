@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../../data/datasources/remote/api_value.dart';
 import '../../providers/auth_provider.dart';
+import 'package:dev_log/dev_log.dart';
+
 
 enum OnboardingStep {
   welcome,
@@ -323,7 +325,7 @@ class OnboardingChatNotifier extends StateNotifier<OnboardingChatState> {
         });
       }
     } catch (e) {
-      print('Error picking image: $e');
+      L.e('Error picking image: $e');
       _addBotMessage(
         "Oops! There was an issue with the image. You can try again or skip this step.",
         OnboardingStep.profilePic,
@@ -365,7 +367,7 @@ class OnboardingChatNotifier extends StateNotifier<OnboardingChatState> {
         });
       }
     } catch (e) {
-      print('Error taking photo: $e');
+      L.e('Error taking photo: $e');
       _addBotMessage(
         "Oops! There was an issue with the camera. You can try again or skip this step.",
         OnboardingStep.profilePic,
@@ -431,22 +433,22 @@ class OnboardingChatNotifier extends StateNotifier<OnboardingChatState> {
         throw Exception('User not authenticated');
       }
 
-      print('Starting user data submission for UUID: ${currentUser.uid}');
+      L.i('Starting user data submission for UUID: ${currentUser.uid}');
 
       // Step 1: Check if user exists, if not create the user first
       bool userExists = false;
       try {
         await _apiClient.getUserByUUID(uuid: currentUser.uid);
         userExists = true;
-        print('User already exists in database');
+        L.i('User already exists in database');
       } catch (e) {
-        print('User does not exist, will create new user: $e');
+        L.i('User does not exist, will create new user: $e');
         userExists = false;
       }
 
       // Step 2: Create user if they don't exist
       if (!userExists) {
-        print('Creating new user...');
+        L.i('Creating new user...');
         try {
           await _apiClient.createUser(
             uuid: currentUser.uid,
@@ -454,20 +456,20 @@ class OnboardingChatNotifier extends StateNotifier<OnboardingChatState> {
                 currentUser.displayName ?? state.userData['username'] ?? 'User',
             email: currentUser.email ?? '',
           );
-          print('User created successfully');
+          L.i('User created successfully');
 
           _addBotMessage(
             "✅ Account created! Now saving your profile information...",
             null,
           );
         } catch (createError) {
-          print('Error creating user: $createError');
+          L.e('Error creating user: $createError');
           throw Exception('Failed to create user account: $createError');
         }
       }
 
       // Step 3: Update user with onboarding data
-      print('Updating user profile with onboarding data...');
+      L.i('Updating user profile with onboarding data...');
 
       // Prepare the profile data from onboarding
       final profileData = Map<String, dynamic>.from(state.userData);
@@ -488,7 +490,7 @@ class OnboardingChatNotifier extends StateNotifier<OnboardingChatState> {
         profilePic: profileData['profile_pic'] ?? '',
       );
 
-      print('User profile updated successfully: $response');
+      L.i('User profile updated successfully: $response');
 
       _addBotMessage(
         "✅ Perfect! Your profile has been saved successfully. Welcome to ChatterG! You can now start chatting with other users.",
@@ -506,7 +508,7 @@ class OnboardingChatNotifier extends StateNotifier<OnboardingChatState> {
         // This should be handled by the UI to navigate
       });
     } catch (e) {
-      print('Error in user data submission: $e');
+      L.e('Error in user data submission: $e');
 
       // Increment retry count
       final newRetryCount = state.retryCount + 1;

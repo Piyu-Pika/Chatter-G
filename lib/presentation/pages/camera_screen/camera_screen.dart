@@ -7,6 +7,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../util/image_encoding.dart';
 import '../../providers/websocket_provider.dart';
+import 'package:dev_log/dev_log.dart';
+
 
 class ChatCameraScreen extends ConsumerStatefulWidget {
   final String receiverUuid;
@@ -52,7 +54,7 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
         });
       }
     } catch (e) {
-      print('Error loading saved images: $e');
+      L.e('Error loading saved images: $e');
     }
   }
 
@@ -129,7 +131,7 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
         _capturedImages.insert(0, XFile(savedPath));
       });
 
-      print('Image saved successfully to: $savedPath');
+      L.i('Image saved successfully to: $savedPath');
     } catch (e) {
       _showErrorSnackbar('Failed to save image: $e');
     }
@@ -140,17 +142,17 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
     try {
       setState(() => _isSending = true);
 
-      print('Starting image send process...');
+      L.i('Starting image send process...');
       
       // Read image file
       final bytes = await File(imageFile.path).readAsBytes();
-      print('Image file read - Size: ${bytes.length} bytes');
+      L.i('Image file read - Size: ${bytes.length} bytes');
       
       // Use optimized encoding
       final base64Image = ImageEncoding.encodeImage(bytes, quality: 85);
       final fileExtension = imageFile.path.split('.').last.toLowerCase();
       
-      print('Image encoded - Base64 length: ${base64Image.length}, Extension: $fileExtension');
+      L.i('Image encoded - Base64 length: ${base64Image.length}, Extension: $fileExtension');
 
       // Check WebSocket connection
       final webSocketService = ref.read(webSocketServiceProvider);
@@ -158,7 +160,7 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
         throw Exception('WebSocket not connected. Please check your internet connection.');
       }
 
-      print('Sending image via WebSocket...');
+      L.i('Sending image via WebSocket...');
       
       // Send via WebSocket
       await webSocketService.sendImageMessage(
@@ -167,7 +169,7 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
         fileExtension,
       );
 
-      print('Image sent successfully!');
+      L.i('Image sent successfully!');
 
       // Show success message
       if (mounted) {
@@ -189,7 +191,7 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
         Navigator.of(context).pop();
       }
     } catch (e) {
-      print('Error sending image: $e');
+      L.e('Error sending image: $e');
       _showErrorSnackbar('Failed to send image: $e');
     } finally {
       if (mounted) {
@@ -268,7 +270,7 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
               right: 8,
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
+                  color: Colors.black.withAlpha(178),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: IconButton(
@@ -294,7 +296,7 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
+                  color: Colors.black.withAlpha(178),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -320,7 +322,7 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
   void _showImagePreview(XFile image) {
     showDialog(
       context: context, // Add this line
-      barrierColor: Colors.black.withOpacity(0.9),
+      barrierColor: Colors.black.withAlpha(229),
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
         child: Column(
@@ -355,7 +357,7 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
                 margin: EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white.withOpacity(0.3)),
+                  border: Border.all(color: Colors.white.withAlpha(76)),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(11),
@@ -457,7 +459,7 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.2),
+                      color: Colors.blue.withAlpha(51),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
@@ -725,7 +727,7 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.2),
+                      color: Colors.blue.withAlpha(51),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(

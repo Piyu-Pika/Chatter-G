@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:chatterg/data/models/user_model.dart';
+import 'package:dev_log/dev_log.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -39,9 +40,9 @@ class ApiClient {
 
   // Helper method to handle API errors
   Future<String?> _handleError(DioException error) async {
-    print('API Error: ${error.type}');
-    print('Error message: ${error.message}');
-    print('Response data: ${error.response?.data}');
+    L.e('API Error: ${error.type}');
+    L.e('Error message: ${error.message}');
+    L.e('Response data: ${error.response?.data}');
 
     if (error.response != null) {
       // Handle different status codes
@@ -126,7 +127,7 @@ class ApiClient {
         'email': email, //required
       };
 
-      print('Creating user with data: $data');
+      L.i('Creating user with data: $data');
 
       final response = await _dio.post(
         '/api/v1/users/', // Use relative path
@@ -149,7 +150,7 @@ class ApiClient {
         }),
       );
     } catch (e) {
-      print('Failed to update FCM token: $e');
+      L.wtf('Failed to update FCM token: $e');
       throw e;
     }
   }
@@ -246,7 +247,7 @@ class ApiClient {
         throw Exception('No data provided for update');
       }
 
-      print('Updating user with data: $data');
+      L.i('Updating user with data: $data');
 
       final response = await _dio.put(
         '/api/v1/users/$uuid', // Fixed: added baseUrl path
@@ -403,7 +404,7 @@ class ApiClient {
       final response = await _dio.get('/health');
       return response.statusCode == 200;
     } catch (e) {
-      print('Connection test failed: $e');
+      L.wtf('Connection test failed: $e');
       return false;
     }
   }

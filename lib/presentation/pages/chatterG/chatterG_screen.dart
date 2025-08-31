@@ -159,7 +159,7 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
               color: Theme.of(context).colorScheme.surface,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withAlpha(12),
                   blurRadius: 5,
                   offset: const Offset(0, -1),
                 ),

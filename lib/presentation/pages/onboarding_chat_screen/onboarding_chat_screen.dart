@@ -58,7 +58,7 @@ class OnboardingChatScreen extends ConsumerWidget {
                     color: Theme.of(context)
                         .colorScheme
                         .onSurface
-                        .withOpacity(0.6),
+                        .withAlpha(192),
                   ),
                 ),
               ],

@@ -1,3 +1,4 @@
+import 'package:dev_log/dev_log.dart';
 import 'package:flutter/material.dart';
 
 import 'navigation_service.dart';
@@ -30,7 +31,7 @@ class _AppLifecycleManagerState extends State<AppLifecycleManager>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     switch (state) {
       case AppLifecycleState.resumed:
-        debugPrint('App in foreground - reconnecting WebSocket');
+        L.i('App in foreground - reconnecting WebSocket');
         WebSocketService().reconnect(); // You can create this method if not yet
         final currentChatUser = NavigationService.getCurrentChatUser();
         if (currentChatUser != null) {
@@ -39,14 +40,14 @@ class _AppLifecycleManagerState extends State<AppLifecycleManager>
         break;
       case AppLifecycleState.inactive:
       case AppLifecycleState.paused:
-        debugPrint('App moved to background - can manage tasks here');
+        L.i('App moved to background - can manage tasks here');
         break;
       case AppLifecycleState.detached:
-        debugPrint('App is terminating - disconnecting WebSocket');
+        L.i('App is terminating - disconnecting WebSocket');
         WebSocketService().disconnect();
         break;
       case AppLifecycleState.hidden:
-        debugPrint('App is hidden - disconnecting WebSocket');
+        L.i('App is hidden - disconnecting WebSocket');
         WebSocketService().disconnect();
         // throw UnimplementedError();
     }

@@ -1,6 +1,7 @@
 // api routes to send the data to go api to save in the database
 import 'package:chatterg/data/datasources/local/local_data_source.dart';
 import 'package:chatterg/data/models/user_model.dart';
+import 'package:dev_log/dev_log.dart';
 import 'package:dio/dio.dart' as dio;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -13,7 +14,7 @@ class MongoDBDataSource {
     // Convert the data to JSON format
     final String jsonData = jsonEncode(data);
     // Print the JSON data for debugging
-    print('JSON Data: $jsonData');
+    L.json('JSON Data: $jsonData');
 
     try {
       final response = await _dio.post('$baseUrl/api/v1/users/ ',
@@ -108,7 +109,7 @@ class MongoDBDataSource {
         }).toList();
 
         // Print the list of users for debugging
-        print('Users: $users'); // Debugging line
+        L.i('Users: $users'); // Debugging line
 
         return users;
       } else {
@@ -153,7 +154,7 @@ class MongoDBDataSource {
           'uuid': uuid,
         },
       );
-      print('Response: ${response.data}'); // Debugging line
+      L.json('Response: ${response.data}'); // Debugging line
 
       if (response.statusCode == 200) {
         final data = response.data;
@@ -172,7 +173,7 @@ class MongoDBDataSource {
         );
 
         // Print the user for debugging
-        print('User: $user'); // Debugging line
+        L.i('User: $user'); // Debugging line
 
         // Save the data in the local database
         await LocalDataSource().saveData(user);
@@ -192,7 +193,7 @@ class MongoDBDataSource {
     // Convert the data to JSON format
     final String jsonData = jsonEncode(data);
     // Print the JSON data for debugging
-    print('JSON Data: $jsonData');
+    L.json('JSON Data: $jsonData');
 
     try {
       final response = await _dio.patch('$baseUrl/user',
@@ -214,13 +215,13 @@ class MongoDBDataSource {
         return response.data;
       } else {
         // Log the response for debugging
-        print('Error Response: ${response.statusCode} - ${response.data}');
+        L.e('Error Response: ${response.statusCode} - ${response.data}');
         throw Exception(
             'Failed to save data: Server returned status code ${response.statusCode}');
       }
     } catch (e) {
       // Log the exception for debugging
-      print('Exception occurred: $e');
+      L.wtf('Exception occurred: $e');
       throw Exception('Failed to save data: $e');
     }
   }

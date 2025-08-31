@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:chatterg/data/datasources/remote/api_value.dart';
+import 'package:dev_log/dev_log.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/io.dart';
@@ -53,14 +54,14 @@ class WebSocketService {
   bool _shouldThrottleSend() {
     // Don't send during message processing to prevent automatic sends
     if (_isProcessingMessage) {
-      print('Blocking send - currently processing incoming message');
+      L.i('Blocking send - currently processing incoming message');
       return true;
     }
 
     final now = DateTime.now();
     if (_lastSendTime != null &&
         now.difference(_lastSendTime!) < _sendThrottleDelay) {
-      print('Throttling send - too frequent');
+      L.i('Throttling send - too frequent');
       return true;
     }
     _lastSendTime = now;
@@ -85,13 +86,13 @@ class WebSocketService {
     final userId = uri.queryParameters['userID'];
 
     if (_isConnected && _currentUserId == userId) {
-      print('Already connected for user: $userId');
+      L.i('Already connected for user: $userId');
       return;
     }
 
     try {
       _currentUserId = userId;
-      print('Connecting to WebSocket: $url');
+      L.i('Connecting to WebSocket: $url');
       _channel = IOWebSocketChannel.connect(uri);
 
       // Listen to the stream
@@ -106,9 +107,9 @@ class WebSocketService {
       _connectionController.add('connected');
       _startHeartbeat();
 
-      print('WebSocket connected successfully for user: $userId');
+      L.i('WebSocket connected successfully for user: $userId');
     } catch (e) {
-      print('WebSocket connection error: $e');
+      L.e('WebSocket connection error: $e');
       _isConnected = false;
       _connectionController.add('error: $e');
       _scheduleReconnect();
@@ -120,14 +121,14 @@ class WebSocketService {
   void _handleMessage(dynamic data) {
     _isProcessingMessage = true;
     try {
-      print('Raw WebSocket message received: $data');
+      L.json('Raw WebSocket message received: $data');
       if (data is String) {
         final jsonData = jsonDecode(data) as Map<String, dynamic>;
-        print('Parsed JSON: $jsonData');
+        L.json('Parsed JSON: $jsonData');
 
         // Handle server responses
         if (jsonData.containsKey('error')) {
-          print('Server error: ${jsonData['error']}');
+          L.e('Server error: ${jsonData['error']}');
           return;
         }
 
@@ -135,12 +136,12 @@ class WebSocketService {
         if (jsonData.containsKey('type')) {
           final messageType = jsonData['type'];
           if (messageType == 'ping') {
-            print('Received ping from server, sending pong');
+            L.i('Received ping from server, sending pong');
             _sendPong();
             return;
           }
           if (messageType == 'pong') {
-            print('Received pong from server');
+            L.i('Received pong from server');
             return;
           }
         }
@@ -152,13 +153,13 @@ class WebSocketService {
         try {
           final message = ChatMessage.fromJson(jsonData);
           _messageController.add(message);
-          print('Message processed - Type: ${message.messageType ?? 'text'}, Content length: ${message.content.length}');
+          L.i('Message processed - Type: ${message.messageType ?? 'text'}, Content length: ${message.content.length}');
         } catch (e) {
-          print('Failed to parse as ChatMessage: $e');
+          L.e('Failed to parse as ChatMessage: $e');
         }
       }
     } catch (e) {
-      print('Error processing WebSocket message: $e');
+      L.e('Error processing WebSocket message: $e');
     } finally {
       _isProcessingMessage = false;
     }
@@ -166,7 +167,7 @@ class WebSocketService {
 
   // Handle WebSocket errors
   void _handleError(dynamic error) {
-    print('WebSocket error: $error');
+    L.e('WebSocket error: $error');
     _isConnected = false;
     _connectionController.add('error: $error');
     _scheduleReconnect();
@@ -174,7 +175,7 @@ class WebSocketService {
 
   // Handle WebSocket disconnection
   void _handleDisconnection() {
-    print('WebSocket disconnected');
+    L.i('WebSocket disconnected');
     _isConnected = false;
     _connectionController.add('disconnected');
     _stopHeartbeat();
@@ -202,21 +203,21 @@ class WebSocketService {
         if (!messageData.containsKey('sender_id') ||
             messageData['sender_id'] == null ||
             messageData['sender_id'].toString().trim().isEmpty) {
-          print('Invalid message: missing or empty sender_id');
+          L.wtf('Invalid message: missing or empty sender_id');
           return;
         }
 
         if (!messageData.containsKey('recipient_id') ||
             messageData['recipient_id'] == null ||
             messageData['recipient_id'].toString().trim().isEmpty) {
-          print('Invalid message: missing or empty recipient_id');
+          L.wtf('Invalid message: missing or empty recipient_id');
           return;
         }
 
         if (!messageData.containsKey('content') ||
             messageData['content'] == null ||
             messageData['content'].toString().trim().isEmpty) {
-          print('Invalid message: missing or empty content');
+          L.wtf('Invalid message: missing or empty content');
           return;
         }
       }
@@ -227,12 +228,12 @@ class WebSocketService {
       }
 
       final correctedJson = jsonEncode(messageData);
-      print('Sending validated message: $correctedJson');
+      L.i('Sending validated message: $correctedJson');
       _channel!.sink.add(correctedJson);
       objectBox.saveMessage(messageData);
-      print('Message sent successfully');
+      L.i('Message sent successfully');
     } catch (e) {
-      print('Error sending message: $e');
+      L.e('Error sending message: $e');
       throw Exception('Failed to send message: $e');
     }
   }
@@ -249,18 +250,18 @@ class WebSocketService {
 
     // Throttle rapid sends
     if (_shouldThrottleSend()) {
-      print('Message send throttled - too frequent');
+      L.i('Message send throttled - too frequent');
       return;
     }
 
     // Validate input parameters
     if (receiverId.trim().isEmpty) {
-      print('Error: receiverId is empty');
+      L.e('Error: receiverId is empty');
       throw Exception('Receiver ID cannot be empty');
     }
 
     if (message.trim().isEmpty) {
-      print('Error: message content is empty');
+      L.e('Error: message content is empty');
       throw Exception('Message content cannot be empty');
     }
 
@@ -274,12 +275,12 @@ class WebSocketService {
       };
 
       final jsonString = jsonEncode(messageData);
-      print('Sending chat message: $jsonString');
+      L.json('Sending chat message: $jsonString');
 
       _channel!.sink.add(jsonString);
-      print('Chat message sent successfully');
+      L.i('Chat message sent successfully');
     } catch (e) {
-      print('Error sending chat message: $e');
+      L.e('Error sending chat message: $e');
       throw Exception('Failed to send chat message: $e');
     }
   }
@@ -287,28 +288,28 @@ class WebSocketService {
   // Add this method to your WebSocketService class
 Future<void> sendImageMessage(String receiverId, String base64Content, String fileType) async {
     if (!_isConnected || _channel == null) {
-      print('WebSocket not connected for image message');
+      L.e('WebSocket not connected for image message');
       throw Exception('WebSocket not connected');
     }
 
     if (_currentUserId == null) {
-      print('User ID not set for image message');
+      L.e('User ID not set for image message');
       throw Exception('User ID not set');
     }
 
     if (_shouldThrottleSend()) {
-      print('Image message send throttled - too frequent');
+      L.e('Image message send throttled - too frequent');
       return;
     }
 
     // Validate input parameters
     if (receiverId.trim().isEmpty) {
-      print('Error: receiverId is empty');
+      L.e('Error: receiverId is empty');
       throw Exception('Receiver ID cannot be empty');
     }
 
     if (base64Content.trim().isEmpty) {
-      print('Error: image content is empty');
+      L.e('Error: image content is empty');
       throw Exception('Image content cannot be empty');
     }
 
@@ -330,8 +331,8 @@ Future<void> sendImageMessage(String receiverId, String base64Content, String fi
         base64Content: base64Content.trim(),
         fileType: fileType.toLowerCase(),
       );
-      print('Sending image message: sender=${_currentUserId}, recipient=${receiverId}, fileType=${fileType}');
-      print('Message size: ${base64Content.length} characters');
+      L.i('Sending image message: sender=${_currentUserId}, recipient=${receiverId}, fileType=${fileType}');
+      L.i('Message size: ${base64Content.length} characters');
       
       // _channel!.sink.add(jsonString);
       // print('Image message sent successfully via WebSocket');
@@ -339,10 +340,10 @@ Future<void> sendImageMessage(String receiverId, String base64Content, String fi
       // Save to local database immediately
       final localMessage = ChatMessage.fromJson(messageData);
       objectBox.saveMessage(localMessage);
-      print('Image message saved to local database');
+      L.i('Image message saved to local database');
 
     } catch (e) {
-      print('Error sending image message: $e');
+      L.e('Error sending image message: $e');
       throw Exception('Failed to send image message: $e');
     }
   }
@@ -351,12 +352,12 @@ Future<void> sendImageMessage(String receiverId, String base64Content, String fi
   // Send typing indicator with validation
   Future<void> sendTypingIndicator(String receiverId, bool isTyping) async {
     if (!_isConnected || _channel == null || _currentUserId == null) {
-      print('Cannot send typing indicator: not connected or user ID not set');
+      L.e('Cannot send typing indicator: not connected or user ID not set');
       return;
     }
 
     if (receiverId.trim().isEmpty) {
-      print('Cannot send typing indicator: receiverId is empty');
+      L.e('Cannot send typing indicator: receiverId is empty');
       return;
     }
 
@@ -370,27 +371,27 @@ Future<void> sendImageMessage(String receiverId, String base64Content, String fi
       };
 
       final jsonString = jsonEncode(typingData);
-      print('Sending typing indicator: $jsonString');
+      L.i('Sending typing indicator: $jsonString');
       _channel!.sink.add(jsonString);
     } catch (e) {
-      print('Error sending typing indicator: $e');
+      L.e('Error sending typing indicator: $e');
     }
   }
 
   // Mark message as read with validation
   Future<void> markAsRead(String messageId, String senderId) async {
     if (!_isConnected || _channel == null || _currentUserId == null) {
-      print('Cannot mark as read: not connected or user ID not set');
+      L.e('Cannot mark as read: not connected or user ID not set');
       return;
     }
 
     if (messageId.trim().isEmpty) {
-      print('Cannot mark as read: messageId is empty');
+      L.e('Cannot mark as read: messageId is empty');
       return;
     }
 
     if (senderId.trim().isEmpty) {
-      print('Cannot mark as read: senderId is empty');
+      L.e('Cannot mark as read: senderId is empty');
       return;
     }
 
@@ -404,10 +405,10 @@ Future<void> sendImageMessage(String receiverId, String base64Content, String fi
       };
 
       final jsonString = jsonEncode(readData);
-      print('Sending read receipt: $jsonString');
+      L.i('Sending read receipt: $jsonString');
       _channel!.sink.add(jsonString);
     } catch (e) {
-      print('Error marking message as read: $e');
+      L.e('Error marking message as read: $e');
     }
   }
 
@@ -423,11 +424,11 @@ Future<void> sendImageMessage(String receiverId, String base64Content, String fi
           };
 
           final pingJson = jsonEncode(pingMessage);
-          print('Sending heartbeat ping: $pingJson');
+          L.json('Sending heartbeat ping: $pingJson');
           _channel!.sink.add(pingJson);
-          print('Heartbeat ping sent successfully');
+          L.i('Heartbeat ping sent successfully');
         } catch (e) {
-          print('Error sending heartbeat: $e');
+          L.e('Error sending heartbeat: $e');
         }
       } else {
         timer.cancel();
@@ -451,11 +452,11 @@ Future<void> sendImageMessage(String receiverId, String base64Content, String fi
         };
 
         final pongJson = jsonEncode(pongMessage);
-        print('Sending pong response: $pongJson');
+        L.json('Sending pong response: $pongJson');
         _channel!.sink.add(pongJson);
-        print('Pong response sent successfully');
+        L.i('Pong response sent successfully');
       } catch (e) {
-        print('Error sending pong: $e');
+        L.e('Error sending pong: $e');
       }
     }
   }
@@ -463,7 +464,7 @@ Future<void> sendImageMessage(String receiverId, String base64Content, String fi
   // Schedule reconnection
   void _scheduleReconnect() {
     if (_reconnectAttempts >= _maxReconnectAttempts) {
-      print('Max reconnection attempts reached');
+      L.i('Max reconnection attempts reached');
       _connectionController.add('max_reconnect_attempts_reached');
       return;
     }
@@ -472,13 +473,13 @@ Future<void> sendImageMessage(String receiverId, String base64Content, String fi
     _reconnectTimer = Timer(_reconnectDelay, () {
       if (_currentUserId != null && !_isConnected) {
         _reconnectAttempts++;
-        print('Reconnection attempt $_reconnectAttempts');
+        L.i('Reconnection attempt $_reconnectAttempts');
         final url =
             // 'wss://chatterg-go-production.up.railway.app/ws?userID=$_currentUserId';
             // 'wss://abfcbf7ad979.ngrok-free.app/ws?userID=$_currentUserId';
             '${dotenv.env['WEBSOCKET_URL']}/ws?userID=$_currentUserId';
         connect(url).catchError((e) {
-          print('Reconnection failed: $e');
+          L.wtf('Reconnection failed: $e');
         });
       }
     });
@@ -500,9 +501,9 @@ Future<void> sendImageMessage(String receiverId, String base64Content, String fi
       _reconnectAttempts = 0;
       _connectionController.add('disconnected');
 
-      print('WebSocket disconnected successfully');
+      L.i('WebSocket disconnected successfully');
     } catch (e) {
-      print('Error disconnecting WebSocket: $e');
+      L.e('Error disconnecting WebSocket: $e');
     }
   }
 

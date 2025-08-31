@@ -3,6 +3,8 @@ import 'package:chatterg/data/models/user_model.dart';
 import 'package:chatterg/data/datasources/remote/api_value.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dev_log/dev_log.dart';
+
 
 // ProfileScreenProvider using Riverpod
 final reciverprofileScreenProvider = ChangeNotifierProvider((ref) {
@@ -27,7 +29,7 @@ class ReciverProfileScreenState extends ChangeNotifier {
       user = AppUser.fromJson(userData);
       notifyListeners();
     } catch (e) {
-      print('Error fetching user profile: $e');
+      L.e('Error fetching user profile: $e');
     }
   }
 
@@ -58,7 +60,7 @@ class ReciverProfileScreenState extends ChangeNotifier {
       user = AppUser.fromJson(updatedData);
       notifyListeners();
     } catch (e) {
-      print('Error updating user profile: $e');
+      L.e('Error updating user profile: $e');
     }
   }
 }

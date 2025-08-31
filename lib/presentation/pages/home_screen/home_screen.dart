@@ -189,7 +189,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withAlpha(76),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -216,7 +216,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             icon: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withAlpha(76),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.notifications_rounded, color: Colors.white),
@@ -232,7 +232,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             icon: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withAlpha(76),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.person_rounded, color: Colors.white),
@@ -257,7 +257,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.primary.withAlpha(76),
             blurRadius: 20,
             offset: const Offset(8, 8),
           ),
@@ -271,12 +271,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Colors.white.withOpacity(0.9),
-                Colors.white.withOpacity(0.8),
+                Colors.white.withAlpha(255),
+                Colors.white.withAlpha(230),
               ],
             ),
             border: Border.all(
-              color: Colors.white.withOpacity(0.3),
+              color: Colors.white.withAlpha(76),
               width: 1,
             ),
           ),
@@ -286,7 +286,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             backgroundColor: Colors.transparent,
             selectedItemColor: Theme.of(context).colorScheme.primary,
             unselectedItemColor:
-                Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                Theme.of(context).colorScheme.primary.withAlpha(128),
             selectedColorOpacity: 0.1,
             margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             items: [
@@ -329,7 +329,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           end: Alignment.bottomCenter,
           colors: [
             Theme.of(context).colorScheme.surface,
-            Theme.of(context).colorScheme.surface.withOpacity(0.8),
+            Theme.of(context).colorScheme.surface.withAlpha(230),
           ],
         ),
       ),
@@ -380,7 +380,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           end: Alignment.bottomCenter,
           colors: [
             Theme.of(context).colorScheme.surface,
-            Theme.of(context).colorScheme.surface.withOpacity(0.8),
+            Theme.of(context).colorScheme.surface.withAlpha(230),
           ],
         ),
       ),
@@ -405,7 +405,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           end: Alignment.bottomCenter,
           colors: [
             Theme.of(context).colorScheme.surface,
-            Theme.of(context).colorScheme.surface.withOpacity(0.8),
+            Theme.of(context).colorScheme.surface.withAlpha(230),
           ],
         ),
       ),
@@ -416,7 +416,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             Container(
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                color: Theme.of(context).colorScheme.primary.withAlpha(51),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Icon(
@@ -439,7 +439,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               'Call history coming soon!',
               style: TextStyle(
                 fontSize: 16,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withAlpha(192),
               ),
             ),
           ],
@@ -456,7 +456,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              color: Theme.of(context).colorScheme.primary.withAlpha(51),
               borderRadius: BorderRadius.circular(24),
             ),
             child: Icon(
@@ -471,7 +471,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              color: Theme.of(context).colorScheme.onSurface.withAlpha(192),
             ),
           ),
         ],
@@ -487,7 +487,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            color: Theme.of(context).colorScheme.primary.withAlpha(51),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

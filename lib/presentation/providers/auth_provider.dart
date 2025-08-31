@@ -10,6 +10,8 @@ import '../../data/datasources/remote/api_value.dart';
 import '../../data/datasources/remote/notification_service.dart';
 import '../../data/models/user_model.dart';
 import '../pages/home_screen/home_screen.dart'; // Required for StreamSubscription
+import 'package:dev_log/dev_log.dart';
+
 
 // Provider for FirebaseAuth instance
 final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
@@ -99,9 +101,9 @@ class AuthService extends ChangeNotifier {
 
       // Use full initialization with AppUser for complete setup
       await NotificationService.initialize(user, authToken: token ?? '');
-      debugPrint('Notifications initialized and FCM token sent to server');
+      L.i('Notifications initialized and FCM token sent to server');
     } catch (e) {
-      debugPrint('Failed to initialize notifications: $e');
+      L.e('Failed to initialize notifications: $e');
       // Fallback to basic initialization to at least send FCM token
       await NotificationService.initializeBasic();
     }
@@ -119,7 +121,7 @@ class AuthService extends ChangeNotifier {
 
   //getting uid of the current user
   Future<String> getUid() async {
-    print('Getting UID of the current user...${_firebaseAuth.currentUser}');
+    L.i('Getting UID of the current user...${_firebaseAuth.currentUser}');
     return _firebaseAuth.currentUser!.uid;
   }
 

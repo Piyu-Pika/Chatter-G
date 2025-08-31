@@ -1,4 +1,5 @@
 // navigation_service.dart
+import 'package:dev_log/dev_log.dart';
 import 'package:flutter/material.dart';
 
 class NavigationService {
@@ -24,7 +25,7 @@ class NavigationService {
     if (context != null) {
       // TODO: Replace with your actual navigation logic
       // Example: Navigator.of(context).pushNamed('/chat', arguments: senderId);
-      debugPrint('Navigate to chat with user: $senderId');
+      L.i('Navigate to chat with user: $senderId');
     }
   }
 }
