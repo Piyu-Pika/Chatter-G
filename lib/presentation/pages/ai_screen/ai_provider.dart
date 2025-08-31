@@ -12,6 +12,8 @@ class AIChatMessage {
   final DateTime timestamp;
   final String? messageType;
   final String? fileType;
+  final String? currentUserUuid;
+
 
   AIChatMessage({
     required this.id,
@@ -20,6 +22,7 @@ class AIChatMessage {
     required this.timestamp,
     this.messageType,
     this.fileType,
+    this.currentUserUuid,
   });
 }
 

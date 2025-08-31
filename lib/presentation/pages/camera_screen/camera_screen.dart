@@ -5,15 +5,18 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../../../util/image_encoding.dart';
+import '../../../data/datasources/remote/api_value.dart'; // Add this import
+import '../../../data/models/message_model.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/websocket_provider.dart';
 import 'package:dev_log/dev_log.dart';
 
+import '../chat_screen/chat_provider.dart';
 
 class ChatCameraScreen extends ConsumerStatefulWidget {
   final String receiverUuid;
   final String receiverName;
-  
+
   const ChatCameraScreen({
     super.key,
     required this.receiverUuid,
@@ -27,6 +30,7 @@ class ChatCameraScreen extends ConsumerStatefulWidget {
 class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
   int _selectedIndex = 0;
   final ImagePicker _picker = ImagePicker();
+  final ApiClient _apiClient = ApiClient(); // Add this
   List<XFile> _capturedImages = [];
   bool _isLoading = false;
   bool _isSending = false;
@@ -137,68 +141,105 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
     }
   }
 
-  // FIXED: Enhanced image sending with better error handling and feedback
-  Future<void> _sendImage(XFile imageFile) async {
+  // UPDATED: Send image via HTTP form data instead of WebSocket base64
+  // Updated _sendImage method in camera_screen.dart
+Future<void> _sendImage(XFile imageFile) async {
+  try {
+    setState(() => _isSending = true);
+    L.i('Starting image send process via HTTP...');
+
+    // Get current user UUID from auth provider
+    final authService = ref.read(authServiceProvider);
+    final currentUserUuid = authService.currentUser?.uid ?? '';
+    
+    if (currentUserUuid.isEmpty) {
+      throw Exception('User not authenticated');
+    }
+
+    // Create File object from XFile
+    final file = File(imageFile.path);
+    
+    L.i('Sending image file - Size: ${await file.length()} bytes');
+    L.i('Current user UUID: $currentUserUuid');
+    L.i('Receiver UUID: ${widget.receiverUuid}');
+
+    // Send via HTTP API using form data
+    final response = await _apiClient.sendImageMessage(
+      userUuid: currentUserUuid,
+      receiverId: widget.receiverUuid,
+      imageFile: file,
+    );
+
+    L.i('Image sent successfully via HTTP: $response');
+
+    // IMPORTANT: Update the chat provider immediately
     try {
-      setState(() => _isSending = true);
-
-      L.i('Starting image send process...');
+      final chatNotifier = ref.read(chatScreenProvider(widget.receiverUuid).notifier);
       
-      // Read image file
-      final bytes = await File(imageFile.path).readAsBytes();
-      L.i('Image file read - Size: ${bytes.length} bytes');
-      
-      // Use optimized encoding
-      final base64Image = ImageEncoding.encodeImage(bytes, quality: 85);
-      final fileExtension = imageFile.path.split('.').last.toLowerCase();
-      
-      L.i('Image encoded - Base64 length: ${base64Image.length}, Extension: $fileExtension');
-
-      // Check WebSocket connection
-      final webSocketService = ref.read(webSocketServiceProvider);
-      if (!webSocketService.isConnected) {
-        throw Exception('WebSocket not connected. Please check your internet connection.');
-      }
-
-      L.i('Sending image via WebSocket...');
-      
-      // Send via WebSocket
-      await webSocketService.sendImageMessage(
-        widget.receiverUuid,
-        base64Image,
-        fileExtension,
+      // Create the message object
+      final message = ChatMessage(
+        senderId: currentUserUuid,
+        recipientId: widget.receiverUuid,
+        content: response['data']['message_id'], // Store the returned message ID
+        timestamp: DateTime.now().toIso8601String(),
+        messageType: 'image',
+        fileType: file.path.split('.').last.toLowerCase(),
       );
 
-      L.i('Image sent successfully!');
-
-      // Show success message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text('Image sent to ${widget.receiverName}'),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-
-        // Navigate back to chat after successful send
-        Navigator.of(context).pop();
-      }
+      // Add to both WebSocket provider and local state
+      ref.read(chatMessagesProvider.notifier).addMessage(message);
+      
+      // Force immediate local state update
+      final currentMessages = List<ChatMessage>.from(chatNotifier.state.messages);
+      currentMessages.add(message);
+      currentMessages.sort((a, b) {
+        try {
+          final aTime = DateTime.parse(a.timestamp);
+          final bTime = DateTime.parse(b.timestamp);
+          return aTime.compareTo(bTime);
+        } catch (e) {
+          return 0;
+        }
+      });
+      
+      // Update the chat provider's state
+      final newState = chatNotifier.state.copyWith(messages: currentMessages);
+      chatNotifier.state = newState;
+      
+      L.i('Chat state updated from camera screen');
     } catch (e) {
-      L.e('Error sending image: $e');
-      _showErrorSnackbar('Failed to send image: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _isSending = false);
-      }
+      L.e('Error updating chat state: $e');
+    }
+
+    // Show success message
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white),
+              const SizedBox(width: 8),
+              Text('Image sent to ${widget.receiverName}'),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+
+      // Navigate back to chat after successful send
+      Navigator.of(context).pop();
+    }
+  } catch (e) {
+    L.e('Error sending image: $e');
+    _showErrorSnackbar('Failed to send image: $e');
+  } finally {
+    if (mounted) {
+      setState(() => _isSending = false);
     }
   }
+}
+
 
   void _showPermissionDialog(String permission) {
     showDialog(
@@ -228,8 +269,8 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
       SnackBar(
         content: Row(
           children: [
-            Icon(Icons.error, color: Colors.white),
-            SizedBox(width: 8),
+            const Icon(Icons.error, color: Colors.white),
+            const SizedBox(width: 8),
             Expanded(child: Text(message)),
           ],
         ),
@@ -244,7 +285,6 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
     );
   }
 
-  // FIXED: Enhanced image tile with better visual feedback
   Widget _buildImageTile(XFile image, int index) {
     return GestureDetector(
       onTap: () => _showImagePreview(image),
@@ -274,7 +314,7 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: IconButton(
-                  icon: _isSending 
+                  icon: _isSending
                       ? const SizedBox(
                           width: 20,
                           height: 20,
@@ -294,12 +334,12 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
               bottom: 8,
               left: 8,
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.black.withAlpha(178),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.visibility, color: Colors.white, size: 16),
@@ -318,10 +358,9 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
     );
   }
 
-  // FIXED: Enhanced image preview with prominent send button
   void _showImagePreview(XFile image) {
     showDialog(
-      context: context, // Add this line
+      context: context,
       barrierColor: Colors.black.withAlpha(229),
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
@@ -330,23 +369,23 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
           children: [
             // Header with receiver info
             Container(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  Icon(Icons.person, color: Colors.white),
-                  SizedBox(width: 8),
+                  const Icon(Icons.person, color: Colors.white),
+                  const SizedBox(width: 8),
                   Text(
                     'Send to ${widget.receiverName}',
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Spacer(),
+                  const Spacer(),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: Icon(Icons.close, color: Colors.white, size: 28),
+                    icon: const Icon(Icons.close, color: Colors.white, size: 28),
                   ),
                 ],
               ),
@@ -354,7 +393,7 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
             // Image preview
             Expanded(
               child: Container(
-                margin: EdgeInsets.symmetric(horizontal: 16),
+                margin: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.white.withAlpha(76)),
@@ -370,19 +409,19 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
             ),
             // Action buttons
             Container(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   // Cancel button
                   ElevatedButton.icon(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: Icon(Icons.cancel),
-                    label: Text('Cancel'),
+                    icon: const Icon(Icons.cancel),
+                    label: const Text('Cancel'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.grey[700],
                       foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     ),
                   ),
                   // Send button
@@ -392,7 +431,7 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
                       _sendImage(image);
                     },
                     icon: _isSending
-                        ? SizedBox(
+                        ? const SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
@@ -400,12 +439,12 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
                               color: Colors.white,
                             ),
                           )
-                        : Icon(Icons.send),
+                        : const Icon(Icons.send),
                     label: Text(_isSending ? 'Sending...' : 'Send Image'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                       foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     ),
                   ),
                 ],
@@ -431,8 +470,8 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
               onPressed: () {
                 setState(() => _capturedImages.clear());
               },
-              icon: Icon(Icons.clear_all, color: Colors.red),
-              label: Text('Clear All', style: TextStyle(color: Colors.red)),
+              icon: const Icon(Icons.clear_all, color: Colors.red),
+              label: const Text('Clear All', style: TextStyle(color: Colors.red)),
             ),
         ],
       ),
@@ -454,10 +493,10 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
                 _buildTabButton('Camera', 0),
                 const SizedBox(width: 12),
                 _buildTabButton('Gallery', 1),
-                Spacer(),
+                const Spacer(),
                 if (_capturedImages.isNotEmpty)
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: Colors.blue.withAlpha(51),
                       borderRadius: BorderRadius.circular(16),
@@ -498,7 +537,7 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
                           child: ElevatedButton.icon(
                             onPressed: _isSending ? null : () => _sendImage(_capturedImages.first),
                             icon: _isSending
-                                ? SizedBox(
+                                ? const SizedBox(
                                     width: 16,
                                     height: 16,
                                     child: CircularProgressIndicator(
@@ -506,7 +545,7 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
                                       color: Colors.white,
                                     ),
                                   )
-                                : Icon(Icons.send, size: 18),
+                                : const Icon(Icons.send, size: 18),
                             label: Text(_isSending ? 'Sending...' : 'Send'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue,
@@ -722,10 +761,10 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
                 _buildTabButton('Camera', 0),
                 const SizedBox(width: 12),
                 _buildTabButton('Gallery', 1),
-                Spacer(),
+                const Spacer(),
                 if (_capturedImages.isNotEmpty)
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: Colors.blue.withAlpha(51),
                       borderRadius: BorderRadius.circular(16),
@@ -769,8 +808,8 @@ class _ChatCameraScreenState extends ConsumerState<ChatCameraScreen> {
                         const SizedBox(height: 24),
                         ElevatedButton.icon(
                           onPressed: _captureFromCamera,
-                          icon: Icon(Icons.camera_alt),
-                          label: Text('Take Photo'),
+                          icon: const Icon(Icons.camera_alt),
+                          label: const Text('Take Photo'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blue,
                             foregroundColor: Colors.white,

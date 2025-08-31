@@ -118,52 +118,80 @@ class WebSocketService {
   }
 
   // Handle incoming messages without relying on 'type'
-  void _handleMessage(dynamic data) {
-    _isProcessingMessage = true;
-    try {
-      L.json('Raw WebSocket message received: $data');
-      if (data is String) {
-        final jsonData = jsonDecode(data) as Map<String, dynamic>;
-        L.json('Parsed JSON: $jsonData');
+  // Updated _handleMessage method in websocket_data_source.dart
+void _handleMessage(dynamic data) {
+  _isProcessingMessage = true;
+  try {
+    L.json('Raw WebSocket message received: $data');
+    if (data is String) {
+      final jsonData = jsonDecode(data) as Map<String, dynamic>;
+      L.json('Parsed JSON: $jsonData');
+      
+      // Handle server responses
+      if (jsonData.containsKey('error')) {
+        L.e('Server error: ${jsonData['error']}');
+        return;
+      }
 
-        // Handle server responses
-        if (jsonData.containsKey('error')) {
-          L.e('Server error: ${jsonData['error']}');
+      // Handle ping/pong
+      if (jsonData.containsKey('type')) {
+        final messageType = jsonData['type'];
+        if (messageType == 'ping') {
+          L.i('Received ping from server, sending pong');
+          _sendPong();
           return;
         }
 
-        // Handle ping/pong
-        if (jsonData.containsKey('type')) {
-          final messageType = jsonData['type'];
-          if (messageType == 'ping') {
-            L.i('Received ping from server, sending pong');
-            _sendPong();
-            return;
-          }
-          if (messageType == 'pong') {
-            L.i('Received pong from server');
-            return;
-          }
-        }
-
-        // Add to messages stream for provider to handle
-        _messagesController.add(jsonData);
-
-        // Try to parse as ChatMessage
-        try {
-          final message = ChatMessage.fromJson(jsonData);
-          _messageController.add(message);
-          L.i('Message processed - Type: ${message.messageType ?? 'text'}, Content length: ${message.content.length}');
-        } catch (e) {
-          L.e('Failed to parse as ChatMessage: $e');
+        if (messageType == 'pong') {
+          L.i('Received pong from server');
+          return;
         }
       }
-    } catch (e) {
-      L.e('Error processing WebSocket message: $e');
-    } finally {
-      _isProcessingMessage = false;
+
+      // Check if this is an image notification
+      if (jsonData['message_type'] == 'image_notification') {
+        L.i('Processing image notification: ${jsonData['id']}');
+        
+        // Convert notification to ChatMessage format
+        final notificationMessage = ChatMessage(
+          senderId: jsonData['sender_id']?.toString() ?? '',
+          recipientId: jsonData['recipient_id']?.toString() ?? '',
+          content: jsonData['id']?.toString() ?? '', // Store image ID as content
+          timestamp: jsonData['timestamp']?.toString() ?? DateTime.now().toIso8601String(),
+          messageType: 'image',
+          fileType: jsonData['file_type']?.toString() ?? '',
+          isRead: false,
+        );
+        
+        L.i('Created image notification message: ${notificationMessage.toJson()}');
+        
+        // Add to message stream
+        _messageController.add(notificationMessage);
+        
+        // Also add to the messages stream for the provider
+        _messagesController.add(notificationMessage.toJson());
+        
+        return;
+      }
+
+      // Add to messages stream for provider to handle
+      _messagesController.add(jsonData);
+      
+      // Try to parse as regular ChatMessage
+      try {
+        final message = ChatMessage.fromJson(jsonData);
+        _messageController.add(message);
+        L.i('Message processed - Type: ${message.messageType ?? 'text'}, Content length: ${message.content.length}');
+      } catch (e) {
+        L.e('Failed to parse as ChatMessage: $e');
+      }
     }
+  } catch (e) {
+    L.e('Error processing WebSocket message: $e');
+  } finally {
+    _isProcessingMessage = false;
   }
+}
 
   // Handle WebSocket errors
   void _handleError(dynamic error) {
@@ -284,70 +312,6 @@ class WebSocketService {
       throw Exception('Failed to send chat message: $e');
     }
   }
-
-  // Add this method to your WebSocketService class
-Future<void> sendImageMessage(String receiverId, String base64Content, String fileType) async {
-    if (!_isConnected || _channel == null) {
-      L.e('WebSocket not connected for image message');
-      throw Exception('WebSocket not connected');
-    }
-
-    if (_currentUserId == null) {
-      L.e('User ID not set for image message');
-      throw Exception('User ID not set');
-    }
-
-    if (_shouldThrottleSend()) {
-      L.e('Image message send throttled - too frequent');
-      return;
-    }
-
-    // Validate input parameters
-    if (receiverId.trim().isEmpty) {
-      L.e('Error: receiverId is empty');
-      throw Exception('Receiver ID cannot be empty');
-    }
-
-    if (base64Content.trim().isEmpty) {
-      L.e('Error: image content is empty');
-      throw Exception('Image content cannot be empty');
-    }
-
-    try {
-      final messageData = {
-        'sender_id': _currentUserId!,
-        'recipient_id': receiverId.trim(),
-        'content': base64Content.trim(),
-        'message_type': 'image',
-        'file_type': fileType.toLowerCase(),
-        'timestamp': _generateTimestamp(),
-      };
-
-      jsonEncode(messageData);
-
-      ApiClient().sendImageMessage(
-        userUuid: _currentUserId!,
-        receiverId: receiverId.trim(),
-        base64Content: base64Content.trim(),
-        fileType: fileType.toLowerCase(),
-      );
-      L.i('Sending image message: sender=${_currentUserId}, recipient=${receiverId}, fileType=${fileType}');
-      L.i('Message size: ${base64Content.length} characters');
-      
-      // _channel!.sink.add(jsonString);
-      // print('Image message sent successfully via WebSocket');
-
-      // Save to local database immediately
-      final localMessage = ChatMessage.fromJson(messageData);
-      objectBox.saveMessage(localMessage);
-      L.i('Image message saved to local database');
-
-    } catch (e) {
-      L.e('Error sending image message: $e');
-      throw Exception('Failed to send image message: $e');
-    }
-  }
-
 
   // Send typing indicator with validation
   Future<void> sendTypingIndicator(String receiverId, bool isTyping) async {

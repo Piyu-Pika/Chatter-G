@@ -13,7 +13,8 @@ class Messagebox extends StatelessWidget {
   final DateTime timestamp;
   final String? messageType;
   final String? fileType;
-  
+  final String currentUserUuid; // Add this parameter
+
   const Messagebox({
     super.key,
     required this.text,
@@ -21,27 +22,47 @@ class Messagebox extends StatelessWidget {
     required this.recipientId,
     required this.timestamp,
     required this.isUser,
+    required this.currentUserUuid, // Add this
     this.messageType,
     this.fileType,
   });
 
   // FIXED: Better image message detection
   bool get isImageMessage {
-    // First check the explicit message type
-    if (messageType == 'image') {
-      L.i('Message detected as image via messageType field');
-      return true;
-    }
-    
-    // Then check if content looks like base64 image
-    if (_isBase64Image(text)) {
-      L.i('Message detected as image via base64 content analysis');
-      return true;
-    }
-    
-    L.i('Message detected as text message');
-    return false;
+  // First check the explicit message type
+  if (messageType == 'image') {
+    L.i('Message detected as image via messageType field');
+    return true;
   }
+
+  // Check if content looks like an image ID (short alphanumeric string)
+  if (_isImageId(text)) {
+    L.i('Message detected as image via ID pattern: $text');
+    return true;
+  }
+
+  // Then check if content looks like base64 image
+  if (_isBase64Image(text)) {
+    L.i('Message detected as image via base64 content analysis');
+    return true;
+  }
+
+  L.i('Message detected as text message');
+  return false;
+}
+
+// Add this new method to detect image IDs
+bool _isImageId(String content) {
+  // Image IDs are typically 20-30 character alphanumeric strings
+  if (content.length >= 20 && content.length <= 30) {
+    // Check if it's only alphanumeric (no spaces, special chars)
+    final imageIdPattern = RegExp(r'^[a-zA-Z0-9]+$');
+    if (imageIdPattern.hasMatch(content)) {
+      return true;
+    }
+  }
+  return false;
+}
 
   // FIXED: Improved base64 image detection
   bool _isBase64Image(String content) {
@@ -97,19 +118,18 @@ class Messagebox extends StatelessWidget {
   Widget build(BuildContext context) {
     L.i('Building message widget - isImage: $isImageMessage, messageType: $messageType, contentLength: ${text.length}');
     
-    // If this is an image message, use the optimized image widget
     if (isImageMessage) {
       return ImageMessageBox(
-        base64Image: text,
+        imageIdOrBase64: text,
         isUser: isUser,
         senderId: senderId,
         recipientId: recipientId,
         timestamp: timestamp,
         fileType: fileType,
+        currentUserUuid: currentUserUuid, // Pass this parameter
       );
     }
 
-    // Regular text message
     return _buildTextMessage(context);
   }
 

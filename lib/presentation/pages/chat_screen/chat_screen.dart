@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -8,35 +10,66 @@ import '../../../data/datasources/remote/notification_service.dart';
 import '../../../data/models/message_model.dart';
 import '../../../data/models/user_model.dart';
 import '../../../util/image_encoding.dart';
-import '../../reciver_profile/reciver_profile.dart';
+import '../reciver_profile/reciver_profile.dart';
 import '../../widgets/message_box.dart';
 import '../../providers/websocket_provider.dart';
 import '../camera_screen/camera_screen.dart';
 import 'chat_provider.dart';
 import 'package:dev_log/dev_log.dart';
+// import 'package:flutter_hooks/flutter_hooks.dart';
 
 
-class ChatScreen extends ConsumerWidget {
+class ChatScreen extends ConsumerStatefulWidget {
   final AppUser receiver;
-
   const ChatScreen({super.key, required this.receiver});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final chatState = ref.watch(chatScreenProvider(receiver.uuid));
-    final chatNotifier = ref.read(chatScreenProvider(receiver.uuid).notifier);
+  ConsumerState<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends ConsumerState<ChatScreen> {
+  Timer? _refreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Start the periodic refresh timer
+    _startPeriodicRefresh();
+  }
+
+  void _startPeriodicRefresh() {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 2000), (_) {
+      final chatState = ref.read(chatScreenProvider(widget.receiver.uuid));
+      if (chatState.isInitialized) {
+        final chatNotifier = ref.read(chatScreenProvider(widget.receiver.uuid).notifier);
+        chatNotifier.refreshMessages();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final chatState = ref.watch(chatScreenProvider(widget.receiver.uuid));
+    final chatNotifier = ref.read(chatScreenProvider(widget.receiver.uuid).notifier);
     final messages = chatState.messages;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      NavigationService.setCurrentChatUser(receiver.uuid);
-      NotificationService.clearNotificationsForUser(receiver.uuid);
+      NavigationService.setCurrentChatUser(widget.receiver.uuid);
+      NotificationService.clearNotificationsForUser(widget.receiver.uuid);
     });
+    
 
-    L.i('Rendering ${messages.length} messages for ${receiver.name}');
+    L.i('Rendering ${messages.length} messages for ${widget.receiver.name}');
 
     if (!chatState.isInitialized) {
       return Scaffold(
-        appBar: AppBar(title: Text(receiver.name)),
+        appBar: AppBar(title: Text(widget.receiver.name)),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -101,7 +134,7 @@ class ChatScreen extends ConsumerWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ReciverProfileScreen(uuid: receiver.uuid),
+                    builder: (context) => ReciverProfileScreen(uuid: widget.receiver.uuid),
                   ),
                 );
               },
@@ -109,17 +142,17 @@ class ChatScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    receiver.name,
+                    widget.receiver.name,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
-                    receiver.isOnline == true ? 'Online' : 'Offline',
+                    widget.receiver.isOnline == true ? 'Online' : 'Offline',
                     style: TextStyle(
                       fontSize: 12,
-                      color: receiver.isOnline == true ? Colors.green : Colors.grey,
+                      color: widget.receiver.isOnline == true ? Colors.green : Colors.grey,
                     ),
                   ),
                 ],
@@ -177,7 +210,7 @@ class ChatScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Say hello to ${receiver.name}!',
+                            'Say hello to ${widget.receiver.name}!',
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey.withAlpha(192),
@@ -235,6 +268,7 @@ class ChatScreen extends ConsumerWidget {
                                     timestamp: DateTime.parse(message.timestamp),
                                     messageType: message.messageType,
                                     fileType: message.fileType,
+                                    currentUserUuid: chatState.currentUserUuid,
                                   ),
                                   if (isUser)
                                     Padding(
@@ -408,8 +442,8 @@ class ChatScreen extends ConsumerWidget {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => ChatCameraScreen(
-                      receiverUuid: receiver.uuid,
-                      receiverName: receiver.name,
+                      receiverUuid: widget.receiver.uuid,
+                      receiverName: widget.receiver.name,
                     ),
                   ),
                 );
@@ -431,49 +465,41 @@ class ChatScreen extends ConsumerWidget {
   }
 
   Future<void> _pickImageFromGallery(BuildContext context, WidgetRef ref) async {
-    try {
-      final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 1920,
-        maxHeight: 1080,
-        imageQuality: 85,
-      );
+  try {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1920,
+      maxHeight: 1080,
+      imageQuality: 85,
+    );
 
-      if (image != null) {
-        // Read image bytes
-        final bytes = await File(image.path).readAsBytes();
-        
-        // Use optimized encoding
-        final base64Image = ImageEncoding.encodeImage(bytes, quality: 85);
-        final fileExtension = image.path.split('.').last.toLowerCase();
-
-        // Send via WebSocket with optimized encoding
-        final webSocketService = ref.read(webSocketServiceProvider);
-        await webSocketService.sendImageMessage(
-          receiver.uuid,
-          base64Image,
-          fileExtension,
-        );
-
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Image sent successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      }
-    } catch (e) {
+    if (image != null) {
+      final imageFile = File(image.path);
+      
+      // Send via HTTP instead of WebSocket
+      final chatNotifier = ref.read(chatScreenProvider(widget.receiver.uuid).notifier);
+      await chatNotifier.sendImageMessage(imageFile);
+      
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to send image: $e'),
-            backgroundColor: Colors.red,
+          const SnackBar(
+            content: Text('Image sent successfully'),
+            backgroundColor: Colors.green,
           ),
         );
       }
     }
+  } catch (e) {
+    L.e('Failed to send image: $e');
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to send image: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
+}
 }

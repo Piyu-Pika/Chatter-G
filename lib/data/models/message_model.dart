@@ -1,5 +1,7 @@
-import '../../presentation/widgets/message_box.dart';
+// Update the existing ChatMessage class
 import 'package:objectbox/objectbox.dart';
+
+import '../../presentation/widgets/message_box.dart';
 
 @Entity()
 class ChatMessage {

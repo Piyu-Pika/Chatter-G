@@ -58,47 +58,50 @@ class ChatMessagesNotifier
   }
 
   void addMessage(ChatMessage message) {
-    final roomName = getRoomName(message.senderId, message.recipientId);
-    L.i('Adding message to room: $roomName');
+  final roomName = getRoomName(message.senderId, message.recipientId);
+  L.i('Adding message to room: $roomName');
+  L.i('Message content: ${message.content}');
+  L.i('Message type: ${message.messageType}');
+  
+  // Save message to ObjectBox (local database)
+  objectBox.saveMessage(message);
+  
+  // Get current messages for the room
+  final currentMessages = state[roomName] ?? [];
+  L.i('Current messages in room $roomName: ${currentMessages.length}');
+  
+  // Check if message already exists to avoid duplicates
+  final messageExists = currentMessages.any((m) =>
+      m.timestamp == message.timestamp &&
+      m.senderId == message.senderId &&
+      m.content == message.content);
 
-    // Save message to ObjectBox (local database)
-    objectBox.saveMessage(message);
+  if (!messageExists) {
+    final updatedMessages = [...currentMessages, message];
+    // Sort messages by timestamp
+    updatedMessages.sort((a, b) {
+      try {
+        final aTime = DateTime.parse(a.timestamp);
+        final bTime = DateTime.parse(b.timestamp);
+        return aTime.compareTo(bTime);
+      } catch (e) {
+        L.e('Error parsing timestamp for sorting: $e');
+        return 0;
+      }
+    });
 
-    // Get current messages for the room
-    final currentMessages = state[roomName] ?? [];
-
-    // Check if message already exists to avoid duplicates
-    final messageExists = currentMessages.any((m) =>
-        m.timestamp == message.timestamp &&
-        m.senderId == message.senderId &&
-        m.content == message.content);
-
-    if (!messageExists) {
-      final updatedMessages = [...currentMessages, message];
-
-      // Sort messages by timestamp
-      updatedMessages.sort((a, b) {
-        try {
-          final aTime = DateTime.parse(a.timestamp);
-          final bTime = DateTime.parse(b.timestamp);
-          return aTime.compareTo(bTime);
-        } catch (e) {
-          L.e('Error parsing timestamp for sorting: $e');
-          return 0;
-        }
-      });
-
-      state = {
-        ...state,
-        roomName: updatedMessages,
-      };
-
-      L.i(
-          'Message added to room $roomName. Total messages: ${updatedMessages.length}');
-    } else {
-      L.i('Message already exists, skipping duplicate');
-    }
+    // CRITICAL: Create completely new Map instance to trigger Riverpod change detection
+    final newState = <String, List<ChatMessage>>{};
+    state.forEach((key, value) => newState[key] = value);
+    newState[roomName] = updatedMessages;
+    state = newState;
+    
+    L.i('State updated successfully. New message count: ${state[roomName]?.length ?? 0}');
+  } else {
+    L.i('Message already exists, skipping duplicate');
   }
+}
+
 
   // void _markMessageAsRead(String messageId, String senderId) {
   //   // Find the room containing this message

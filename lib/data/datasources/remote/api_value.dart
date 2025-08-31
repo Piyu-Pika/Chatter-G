@@ -1,9 +1,13 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:chatterg/data/models/user_model.dart';
 import 'package:dev_log/dev_log.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
+import 'dart:io';
+import 'package:http_parser/http_parser.dart';
 
 // API client class to interact with the Godzilla-Go backend API
 class ApiClient {
@@ -183,7 +187,7 @@ class ApiClient {
       final response = await _dio.get('/api/v1/users/$uuid');
 
       if (response.data['data'] != null) {
-        log('User data found in response: ${response.data['data']}');
+        L.json('User data found in response: ${response.data['data']}');
         return response.data['data'] as Map<String, dynamic>;
       } else {
         throw Exception('User data not found in response');
@@ -505,27 +509,83 @@ class ApiClient {
     }
   }
 
-  Future<Map<String, dynamic>> sendImageMessage({
+Future<Map<String, dynamic>> sendImageMessage({
   required String userUuid,
   required String receiverId,
-  required String base64Content,
-  required String fileType,
+  required File imageFile,
 }) async {
   try {
-    if (userUuid.isEmpty || receiverId.isEmpty || base64Content.isEmpty) {
-      throw Exception('User UUID, receiver ID, and content cannot be empty');
+    if (userUuid.isEmpty || receiverId.isEmpty) {
+      throw Exception('User UUID and receiver ID cannot be empty');
     }
+
+    // Get the file extension
+    final fileExtension = imageFile.path.split('.').last.toLowerCase();
+    
+    // Validate file type
+    final allowedTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    if (!allowedTypes.contains(fileExtension)) {
+      throw Exception('Unsupported file type: $fileExtension');
+    }
+
+    // Create FormData
+    final formData = FormData.fromMap({
+      'receiverId': receiverId,
+      'image': await MultipartFile.fromFile(
+        imageFile.path,
+        filename: 'image.$fileExtension',
+        contentType: MediaType('image', fileExtension == 'jpg' ? 'jpeg' : fileExtension),
+      ),
+    });
+
+    L.i('Sending image via Dio multipart: ${imageFile.path}');
+    L.i('File extension: $fileExtension');
 
     final response = await _dio.post(
       '/api/v1/messages/$userUuid/image',
-      data: {
-        'receiverId': receiverId,
-        'content': base64Content,
-        'filetype': fileType,
-      },
+      data: formData,
     );
 
-    return response.data as Map<String, dynamic>;
+    L.i('Response status: ${response.statusCode}');
+    L.i('Response body: ${response.data}');
+
+    if (response.statusCode == 200) {
+      L.i('Image sent successfully: ${response.data}');
+      return response.data as Map<String, dynamic>;
+    } else {
+      throw Exception('Failed to send image: ${response.statusCode} - ${response.data}');
+    }
+  } on DioException catch (e) {
+    L.e('Dio error sending image: ${e.response?.data}');
+    throw Exception(await _handleError(e));
+  } catch (e) {
+    L.e('Error sending image message: $e');
+    throw Exception('Failed to send image message: $e');
+  }
+}
+
+
+Future<List<int>> getImageMessage({
+  required String userUuid,
+  required String messageId,
+}) async {
+  try {
+    if (userUuid.isEmpty || messageId.isEmpty) {
+      throw Exception('User UUID and message ID cannot be empty');
+    }
+
+    final response = await _dio.get(
+      '/api/v1/messages/$userUuid/image/$messageId',
+      options: Options(
+        responseType: ResponseType.bytes,
+      ),
+    );
+
+    if (response.statusCode == 200) {
+      return response.data as List<int>;
+    } else {
+      throw Exception('Failed to get image: ${response.statusCode}');
+    }
   } on DioException catch (e) {
     throw Exception(await _handleError(e));
   }

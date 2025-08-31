@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 // import 'dart:convert';
 
+import '../../../data/datasources/remote/api_value.dart';
 import '../../../data/models/message_model.dart';
 import '../../../data/models/user_model.dart';
 import '../../../main.dart';
@@ -64,6 +67,7 @@ class ChatScreenState {
 class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
   final Ref ref;
   final String receiverUuid;
+  final ApiClient _apiClient = ApiClient();
 
   ChatScreenNotifier(this.ref, this.receiverUuid)
       : super(ChatScreenState(
@@ -187,6 +191,15 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
     _roomListeners.remove(roomName);
   }
 
+  void updateMessagesDirectly(List<ChatMessage> messages) {
+  if (mounted) {
+    state = state.copyWith(messages: messages);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToBottom();
+    });
+  }
+}
+
   void markAsRead(ChatMessage message) {
     if (!mounted) return;
 
@@ -221,52 +234,71 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
     }
   }
 
-  void sendMessage(String text) {
-    if (state.isLoading || text.trim().isEmpty || !mounted) return;
+void sendMessage(String text) {
+  if (state.isLoading || text.trim().isEmpty || !mounted) return;
+  
+  state = state.copyWith(isLoading: true);
+  
+  try {
+    final webSocketService = ref.read(webSocketServiceProvider);
+    if (!webSocketService.isConnected) {
+      throw Exception('WebSocket not connected');
+    }
 
-    state = state.copyWith(isLoading: true);
+    L.i('Sending message with text: ${text.trim()}');
+    L.i('Current user UUID: ${state.currentUserUuid}');
+    L.i('Receiver UUID: ${state.receiver.uuid}');
+    
+    // Create local message first
+    final message = ChatMessage(
+      senderId: state.currentUserUuid,
+      recipientId: state.receiver.uuid,
+      content: text.trim(),
+      timestamp: DateTime.now().toIso8601String(),
+    );
 
-    try {
-      final webSocketService = ref.read(webSocketServiceProvider);
-      if (!webSocketService.isConnected) {
-        throw Exception('WebSocket not connected');
+    L.i('Created local message: ${message.toJson()}');
+    
+    // Add to local state immediately for instant display
+    final currentMessages = List<ChatMessage>.from(state.messages);
+    currentMessages.add(message);
+    currentMessages.sort((a, b) {
+      try {
+        final aTime = DateTime.parse(a.timestamp);
+        final bTime = DateTime.parse(b.timestamp);
+        return aTime.compareTo(bTime);
+      } catch (e) {
+        return 0;
       }
-
-      L.i('Sending message with text: ${text.trim()}');
-      L.i('Current user UUID: ${state.currentUserUuid}');
-      L.i('Receiver UUID: ${state.receiver.uuid}');
-
-      webSocketService.sendChatMessage(state.receiver.uuid, text.trim());
-
-      final message = ChatMessage(
-        senderId: state.currentUserUuid,
-        recipientId: state.receiver.uuid,
-        content: text.trim(),
-        timestamp: DateTime.now().toIso8601String(),
-        // isRead: false,
-      );
-
-      L.i('Created local message: ${message.toJson()}');
-
-      ref.read(chatMessagesProvider.notifier).addMessage(message);
-
-      L.i('Message sent successfully');
-      state.textController.clear();
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollToBottom();
-      });
-    } catch (e) {
-      L.e('Failed to send message: $e');
-      if (mounted) {
-        state = state.copyWith(errorMessage: 'Failed to send message: $e');
-      }
-    } finally {
-      if (mounted) {
-        state = state.copyWith(isLoading: false);
-      }
+    });
+    
+    // Update local state first
+    state = state.copyWith(messages: currentMessages);
+    
+    // Then send via WebSocket
+    webSocketService.sendChatMessage(state.receiver.uuid, text.trim());
+    
+    // Add to WebSocket provider for other participants
+    ref.read(chatMessagesProvider.notifier).addMessage(message);
+    
+    L.i('Message sent successfully');
+    state.textController.clear();
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToBottom();
+    });
+    
+  } catch (e) {
+    L.e('Failed to send message: $e');
+    if (mounted) {
+      state = state.copyWith(errorMessage: 'Failed to send message: $e');
+    }
+  } finally {
+    if (mounted) {
+      state = state.copyWith(isLoading: false);
     }
   }
+}
 
   Map<String, List<ChatMessage>> groupMessagesByDate(
       List<ChatMessage> messages) {
@@ -304,49 +336,113 @@ class ChatScreenNotifier extends StateNotifier<ChatScreenState> {
       return DateFormat('MMMM d, yyyy').format(date);
     }
   }
+
+  // Add these methods to ChatScreenNotifier class
+void refreshMessages() {
+  final roomMessages = ref.read(chatMessagesProvider)[state.roomName] ?? [];
+  if (mounted) {
+    state = state.copyWith(messages: roomMessages);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToBottom();
+    });
+  }
+}
+
+void forceRefresh() {
+  // Refresh from both WebSocket provider and local database
+  final localMessages = objectBox.getMessagesFor(state.currentUserUuid, state.receiver.uuid);
+  final webSocketMessages = ref.read(chatMessagesProvider)[state.roomName] ?? [];
   
-  // Add this method to ChatScreenNotifier class
-void sendImageMessage(String base64Image, String fileType) {
-  if (state.isLoading || !mounted) return;
-
-  state = state.copyWith(isLoading: true);
-  try {
-    final webSocketService = ref.read(webSocketServiceProvider);
-    if (!webSocketService.isConnected) {
-      throw Exception('WebSocket not connected');
+  // Merge and deduplicate
+  final allMessages = <ChatMessage>[];
+  final messageMap = <String, ChatMessage>{};
+  
+  for (final msg in [...localMessages, ...webSocketMessages]) {
+    final key = '${msg.senderId}_${msg.timestamp}_${msg.content}';
+    messageMap[key] = msg;
+  }
+  
+  allMessages.addAll(messageMap.values);
+  allMessages.sort((a, b) {
+    try {
+      final aTime = DateTime.parse(a.timestamp);
+      final bTime = DateTime.parse(b.timestamp);
+      return aTime.compareTo(bTime);
+    } catch (e) {
+      return 0;
     }
+  });
+  
+  if (mounted) {
+    state = state.copyWith(messages: allMessages);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToBottom();
+    });
+  }
+}
 
-    L.i('Sending image message');
+  
+  // Enhanced sendImageMessage method in chat_provider.dart
+Future<void> sendImageMessage(File imageFile) async {
+  if (state.isLoading || !mounted) return;
+  
+  state = state.copyWith(isLoading: true);
+  
+  try {
+    L.i('Sending image message via HTTP');
     L.i('Current user UUID: ${state.currentUserUuid}');
     L.i('Receiver UUID: ${state.receiver.uuid}');
-    L.i('File type: $fileType');
-    L.i('Image size: ${base64Image.length} characters');
+    L.i('Image path: ${imageFile.path}');
 
-    webSocketService.sendImageMessage(state.receiver.uuid, base64Image, fileType);
+    // Send image via HTTP API
+    final response = await _apiClient.sendImageMessage(
+      userUuid: state.currentUserUuid,
+      receiverId: state.receiver.uuid,
+      imageFile: imageFile,
+    );
 
-    // Create local image message
+    L.i('Image sent successfully: $response');
+    
+    // Create local message immediately
     final message = ChatMessage(
       senderId: state.currentUserUuid,
       recipientId: state.receiver.uuid,
-      content: base64Image,
+      content: response['data']['message_id'], // Store the returned message ID
       timestamp: DateTime.now().toIso8601String(),
       messageType: 'image',
-      fileType: fileType,
+      fileType: imageFile.path.split('.').last.toLowerCase(),
     );
 
     L.i('Created local image message: ${message.toJson()}');
     
-    // Add to chat messages provider
+    // CRITICAL: Update local state FIRST for immediate UI response
+    final currentMessages = List<ChatMessage>.from(state.messages);
+    currentMessages.add(message);
+    currentMessages.sort((a, b) {
+      try {
+        final aTime = DateTime.parse(a.timestamp);
+        final bTime = DateTime.parse(b.timestamp);
+        return aTime.compareTo(bTime);
+      } catch (e) {
+        return 0;
+      }
+    });
+    
+    // Update local state immediately - this triggers UI rebuild
+    state = state.copyWith(messages: currentMessages);
+    
+    // THEN add to WebSocket provider for other participants
     ref.read(chatMessagesProvider.notifier).addMessage(message);
     
-    L.i('Image message sent successfully');
-
+    L.i('Image message sent successfully via HTTP and state updated');
+    
+    // Scroll to bottom
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottom();
     });
-
+    
   } catch (e) {
-    L.wtf('Failed to send image message: $e');
+    L.e('Failed to send image message: $e');
     if (mounted) {
       state = state.copyWith(errorMessage: 'Failed to send image: $e');
     }
@@ -356,6 +452,7 @@ void sendImageMessage(String base64Image, String fileType) {
     }
   }
 }
+
 
 
   @override

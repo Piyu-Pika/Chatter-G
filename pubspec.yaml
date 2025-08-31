@@ -57,6 +57,7 @@ dependencies:
   easy_stars: ^1.0.1
   google_generative_ai: ^0.4.7
   dev_log: ^1.0.1
+  flutter_hooks: ^0.21.3+1
   
   # flutter_webrtc: ^0.13.1+hotfix.1
   # flutter_facebook_auth: ^7.1.1

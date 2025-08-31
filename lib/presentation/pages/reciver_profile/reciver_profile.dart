@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../data/datasources/remote/api_value.dart';
+import '../../../../data/datasources/remote/api_value.dart';
 // import '../../../data/models/user_model.dart' as AppUser;
-import '../../../data/models/user_model.dart';
+import '../../../../data/models/user_model.dart';
 // import 'profileScreenProvider.dart';
 import 'package:dev_log/dev_log.dart';
 

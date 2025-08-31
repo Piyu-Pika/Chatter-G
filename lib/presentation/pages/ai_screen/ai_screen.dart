@@ -20,12 +20,13 @@ class AIMessageBox extends StatelessWidget {
   Widget build(BuildContext context) {
     if (isImageMessage) {
       return ImageMessageBox(
-        base64Image: message.content,
+        imageIdOrBase64: message.content,
         isUser: message.isUser,
         senderId: message.isUser ? 'user' : 'ai',
         recipientId: message.isUser ? 'ai' : 'user',
         timestamp: message.timestamp,
         fileType: message.fileType,
+        currentUserUuid: message.currentUserUuid??'',
       );
     }
 
