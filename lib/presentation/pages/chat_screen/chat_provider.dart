@@ -349,20 +349,17 @@ void refreshMessages() {
 }
 
 void forceRefresh() {
-  // Refresh from both WebSocket provider and local database
+  // Refresh from both local DB and WebSocket provider
   final localMessages = objectBox.getMessagesFor(state.currentUserUuid, state.receiver.uuid);
   final webSocketMessages = ref.read(chatMessagesProvider)[state.roomName] ?? [];
-  
-  // Merge and deduplicate
-  final allMessages = <ChatMessage>[];
-  final messageMap = <String, ChatMessage>{};
-  
+
+  // Merge and deduplicate using a map keyed by senderId+timestamp+content
+  final Map<String, ChatMessage> msgMap = {};
   for (final msg in [...localMessages, ...webSocketMessages]) {
     final key = '${msg.senderId}_${msg.timestamp}_${msg.content}';
-    messageMap[key] = msg;
+    msgMap[key] = msg;
   }
-  
-  allMessages.addAll(messageMap.values);
+  final allMessages = msgMap.values.toList();
   allMessages.sort((a, b) {
     try {
       final aTime = DateTime.parse(a.timestamp);
@@ -372,14 +369,25 @@ void forceRefresh() {
       return 0;
     }
   });
-  
+
   if (mounted) {
     state = state.copyWith(messages: allMessages);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToBottom();
+      scrollToBottom();
     });
   }
 }
+
+void scrollToBottom() {
+  if (state.scrollController.hasClients) {
+    state.scrollController.animateTo(
+      state.scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+}
+
 
   
   // Enhanced sendImageMessage method in chat_provider.dart
@@ -433,6 +441,7 @@ Future<void> sendImageMessage(File imageFile) async {
     
     // THEN add to WebSocket provider for other participants
     ref.read(chatMessagesProvider.notifier).addMessage(message);
+
     
     L.i('Image message sent successfully via HTTP and state updated');
     

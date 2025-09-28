@@ -9,7 +9,6 @@ import '../../../data/datasources/remote/navigation_service.dart';
 import '../../../data/datasources/remote/notification_service.dart';
 import '../../../data/models/message_model.dart';
 import '../../../data/models/user_model.dart';
-import '../../../util/image_encoding.dart';
 import '../reciver_profile/reciver_profile.dart';
 import '../../widgets/message_box.dart';
 import '../../providers/websocket_provider.dart';
